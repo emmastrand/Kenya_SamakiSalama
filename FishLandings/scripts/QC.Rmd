@@ -1,6 +1,6 @@
 ---
 title: "Quality Control of Fishing Landings dataset"
-author: "EL Strand"
+author: "Emma Strand; emma_strand@uri.edu"
 output:
   github_document: default
   pdf_document:
@@ -17,4 +17,18 @@ editor_options:
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
+## Load all libraries 
+
+```{r, message=FALSE, warning=FALSE}
+library(plyr)
+library(dplyr)
+library(tidyverse)
+library(ggplot2)
+```
+
+## Import raw dataset 
+
+```{r}
+
+```
 
