@@ -13,6 +13,6 @@ PI: Austin Humphries; University of Rhode Island
 
 All scripts created within a R project: `FishLandings`. 
 
-- `QC.Rmd`: reads in Fishing Landings  
+- `QC.Rmd`: reads in Fishing Landings raw dataframe and outputs a cleaned data file   
 - `Figures.Rmd`: figures produced from the above datasets  
 - `Statistics.Rmd`: statistical analyses on the above datasets  
