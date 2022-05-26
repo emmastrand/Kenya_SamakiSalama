@@ -58,9 +58,11 @@ head(df)
 ```
 
 
-**Operation_date**: in the above chunk, these dates are automatically read in as *dttm* format (date and time). 
+### Operation_date 
 
-**enumerator** 
+In the above chunk, these dates are automatically read in as *dttm* format (date and time). 
+
+### enumerator
 
 ```{r}
 

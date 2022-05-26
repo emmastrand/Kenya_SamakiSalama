@@ -63,7 +63,9 @@ head(df)
     ## #   take_home_value_KES <dbl>, `No. of fishers in crew` <dbl>,
     ## #   general_notes <lgl>, Kiswahili_name <chr>, SPECIES <chr>, …
 
-**Operation\_date**: in the above chunk, these dates are automatically
-read in as *dttm* format (date and time).
+### Operation\_date
 
-**enumerator**
+In the above chunk, these dates are automatically read in as *dttm*
+format (date and time).
+
+### enumerator
