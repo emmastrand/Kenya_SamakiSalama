@@ -10,12 +10,10 @@ Emma Strand; <emma_strand@uri.edu>
     or 2 different ones? A validation list for the fishing operation
     sheet? I have the validation list for the catch composition.  
 2.  Are phone numbers a certain \# of digits?  
-3.  What is the expected range of total traps collected?  
-4.  Time in water (effort) doesn’t have any data so I removed it for
+3.  Time in water (effort) doesn’t have any data so I removed it for
     now. Is this supposed to?  
-5.  Are the total traps collected, weight and value measures, and no of
-    fishers in crew all within ranges that are expected?  
-6.  
+4.  What are the expected ranges for total traps collected, weight and
+    value measures, and no of fishers in crew?
 
 ## Protocol to run this with a future xlsx file
 
