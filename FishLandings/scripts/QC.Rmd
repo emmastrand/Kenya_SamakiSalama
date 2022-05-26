@@ -10,16 +10,30 @@ output:
     toc_depth: 6
     toc_float: yes
 editor_options: 
-  chunk_output_type: console
+  chunk_output_type: inline
 ---
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-## How to run this with a future xlsx file
+## Questions for Austin 
 
-1. Replace raw data file name in the function that creates the following variables: fishing_operation, catch_composition, and validation_lists.  
+1. Is there a set list of options for categories like enumerator, landing_site, BMU, and trap_type that I can compare the dataset against? e.g. are "KIJANGWANI" and "KITANGANI" the same landing site or 2 different ones? A validation list for the fishing operation sheet? I have the validation list for the catch composition.        
+2. Are phone numbers a certain # of digits?   
+3. What is the expected range of total traps collected?  
+4. Time in water (effort) doesn't have any data so I removed it for now. Is this supposed to?  
+5. Are the total traps collected, weight and value measures, and no of fishers in crew all within ranges that are expected?  
+6. 
+
+
+## Protocol to run this with a future xlsx file
+
+1. In the toolbar above, hit the arrow next to `Knit`. Scroll down to `Knit Directory` and select the option `Project Directory`.    
+2. **In `Create dataframe` code chunk**: Replace raw data file name in the function that creates the following variables: fishing_operation, catch_composition, and validation_lists.    
+3. **In `Enumerator`, `Landing_site`, `BMU`, and `trap_type` code chunks**: Run the unique() function and double check that this list is the correct names.  
+4. **In `total_traps_collected`, `Weight and value measures`, and `No. of fishers in crew` code chunks**: Run range() functions on new dfs to double check these ranges are expected.   
+5. 
 
 ## Load all libraries 
 
@@ -29,6 +43,8 @@ library(dplyr)
 library(tidyverse)
 library(ggplot2)
 library(readxl)
+library(lubridate)
+library(Hmisc)
 ```
 
 ## Create dataframe 
@@ -38,35 +54,202 @@ library(readxl)
 [Reading in an excel datafile instead of a csv](http://www.sthda.com/english/wiki/reading-data-from-excel-files-xls-xlsx-into-r). This requires the `readxl` package listed in load all libraries step. 
 
 ```{r, message=FALSE, warning=FALSE}
+## when running future iterations of raw data file, replace the file name below 
 fishing_operation <- read_excel("data/Fishlandings-data_21052022-May_update-cleaning in progress.xlsx", sheet = "fishing_operation") %>%
   select(-'...21', -'...22', -'...23') %>%
   rename(Operation_date = date_dd_mm_yyyy)
 
+nrow(fishing_operation) #2407 fishing operations (keep this # in mind for sanity check at the end)
+
+## when running future iterations of raw data file, replace the file name below 
 catch_composition <- read_excel("data/Fishlandings-data_21052022-May_update-cleaning in progress.xlsx", sheet = "catch_composition") %>%
   select(-'...10', -'...11', -'...12', -'...13') %>%
   rename(Operation_date = Date)
 
-validation_lists <- read_excel("data/Fishlandings-data_21052022-May_update-cleaning in progress.xlsx", sheet = "validation_lists")
+nrow(catch_composition) #14761 fish observations (keep this # in mind for sanity check at the end)
 
-df <- full_join(fishing_operation, catch_composition, by = c("fisher_id", "Operation_date")) 
+## when running future iterations of raw data file, replace the file name below 
+validation_lists <- read_excel("data/Fishlandings-data_21052022-May_update-cleaning in progress.xlsx", sheet = "validation_lists")
+```
+
+Errors found in fisher_id column are mostly capitalization errors. 
+
+```{r}
+fishing_operation$fisher_id <- toupper(fishing_operation$fisher_id)
+catch_composition$fisher_id <- toupper(catch_composition$fisher_id)
+```
+
+Creating a larger dataframe to work with for the rest of quality control. 
+```{r}
+df <- full_join(fishing_operation, catch_composition, by = c("fisher_id", "Operation_date")) %>%
+  select(-`time_in_water (effort)`) %>% # take this out if we start collecting time in water data
+  rename(fishing_operation_notes= general_notes) %>%
+  rename(catch_composition_notes = notes_picture) %>%
+  rename(scientific_name = SPECIES)
 ```
 
 ## Quality Control 
-
-```{r}
-head(df)
-```
-
 
 ### Operation_date 
 
 In the above chunk, these dates are automatically read in as *dttm* format (date and time). 
 
-### enumerator
+### Enumerator
+
+[Replace character string with another in R](https://stackoverflow.com/questions/11936339/replace-specific-characters-within-strings)
+
+A lot of errors occur with different lower and upper case iterations of names. I replaced this information with all upper case to collapse this information. For example, "kadzo baya" and "Kadzo baya" are the same fisherman but were reading as different categories. 
 
 ```{r}
+# change all lower case to upper case
+df$enumerator <- toupper(df$enumerator)
 
+unique(df$enumerator) # prints all categories that show up in that column 
+## at this point, assess errors in that list for spelling mistakes to replace below 
+```
+
+```{r}
+# replace incorrect spellings 
+df$enumerator <- gsub("CELESTINAR N ALI", "CELESTINA NALI", df$enumerator)
+df$enumerator <- gsub("CLAPERTON", "CLAPERTON KAZUNGU", df$enumerator)
+df$enumerator <- gsub("CLAPERTON KAZUNGU KAZUNGU", "CLAPERTON KAZUNGU", df$enumerator)
+
+## Step #2 in protocol at the top of this script 
+unique(df$enumerator) # at this point, double check that this list are all individual fishermen 
+```
+
+### Landing_site 
+
+```{r}
+df$landing_site <- toupper(df$landing_site)
+unique(df$landing_site)
+
+## Step #3 in protocol to double check this output list is all the correct site names 
+```
+
+### BMU 
+
+```{r}
+df$BMU <- toupper(df$BMU)
+unique(df$BMU)
+## Step #4 in protocol to double check this output list is all the correct BMU names 
+```
+
+### fisher_phone 
+
+```{r}
+## circle back to checking if these are supposed to be a certain # of digits?
+```
+
+### household_id
+
+The only issue I can detect here is some lower case vs upper case. 
+
+```{r}
+df$household_id <- toupper(df$household_id)
+unique(df$household_id)
+```
+
+### trap_type 
+
+The only issue I can detect here is some lower case vs upper case. 
+
+```{r}
+df$trap_type <- toupper(df$trap_type)
+unique(df$trap_type)
+```
+
+### total_traps_collected 
+
+View the values put in the df here to double check all values make sense. 
+
+```{r}
+total_traps_collected <- df %>% select(total_traps_collected) %>% na.omit()
+range(total_traps_collected)
+
+## Step #4 of protocol with new df: double check the below range is expected 
+```
+
+### Date and time set; date and time collected
+
+In the first chunk of code, these dates are automatically read in as *dttm* format (date and time). This new columns will be more useful for data analysis later. 
+
+```{r, warning=FALSE}
+# making new columns for date and time 
+df$date_time_set <- paste(df$date_set_dd_mm_yyyy, df$`time_set_24hh:mm`, sep = " ")
+df$date_time_collected <- paste(df$date_collected_dd_mm_yyyy, df$`time_collected_24hh:mm`, sep = " ")
+
+# removing the 'hrs' from observations in this column
+df$date_time_set <- gsub("hrs", "", df$date_time_set)
+df$date_time_collected <- gsub("hrs", "", df$date_time_collected)
+
+# converting to date and time format 
+df$date_time_set <- parse_date_time(df$date_time_set, orders = "ymdHM")
+df$date_time_collected <- parse_date_time(df$date_time_collected, orders = "ymdHM")
+
+## any failed to parse error messages will be from rows that do not have a date and time
+```
+
+### Weight and value measures 
+
+```{r}
+total_weight_kg <- df %>% select(total_weight_kg) %>% na.omit()
+take_home_weight_kg <- df %>% select(take_home_weight_kg) %>% na.omit()
+total_value_KES <- df %>% select(total_value_KES) %>% na.omit()
+take_home_value_KES <- df %>% select(take_home_value_KES) %>% na.omit()
+
+## Step #4 from protocol: Double check the below values are in the correct ranges
+range(total_weight_kg)
+range(take_home_weight_kg)
+range(total_value_KES)
+range(take_home_value_KES)
+```
+
+### No. of fishers in crew
+
+```{r}
+fishermen_no <- df %>% select(`No. of fishers in crew`) %>% na.omit()
+
+## Step #4 from protocol: Double check the below values are in the correct ranges
+range(fishermen_no)
+```
+
+### Kiswahili_name
+
+```{r}
+df$Kiswahili_name <- toupper(df$Kiswahili_name)
+unique(sort(df$Kiswahili_name))
+```
+
+### SPECIES 
+
+We can pull in the validation_lists df to double check these spellings. 
+
+```{r}
+unique(sort(df$scientific_name)) # view the df we are working with first; can run this function after each modification to check
+
+# capitalize the genus name 
+df$scientific_name <- capitalize(df$scientific_name)
+
+# Taking out double spaces in between genus and species 
+df$scientific_name <- gsub("  ", " ", df$scientific_name)
+
+# Correcting commonly misspelled genus names 
+df$scientific_name <- gsub("Acanthrus", "Acanthurus", df$scientific_name)
+df$scientific_name <- gsub("Acantrus", "Acanthurus", df$scientific_name)
+df$scientific_name <- gsub("Abdefduf", "Abudefduf", df$scientific_name)
+
+####### left off at trying to make the species name lower case
+
+#unvalidated_names <- 
 ```
 
 
+### Final check: any notes from both datasets 
+
+```{r}
+## check for any notes that the data collectors left for analysis 
+unique(df$fishing_operation_notes)
+unique(df$catch_composition_notes)
+```
 
