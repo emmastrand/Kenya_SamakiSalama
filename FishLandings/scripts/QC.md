@@ -454,6 +454,11 @@ unique(sort(df$Kiswahili_name))
 We can pull in the validation\_lists df to double check these spellings.
 
 ``` r
+# Taking out double spaces in between genus and species 
+validation_lists$scientific_name <- gsub("  ", " ", validation_lists$scientific_name)
+```
+
+``` r
 unique(sort(df$scientific_name)) # view the df we are working with first; can run this function after each modification to check
 ```
 
@@ -570,8 +575,15 @@ unique(sort(df$scientific_name)) # view the df we are working with first; can ru
     ## [221] "Zanclus cornutus"
 
 ``` r
-# capitalize the genus name 
-df$scientific_name <- capitalize(df$scientific_name)
+# create capitalize function for upper case genus and lower case species 
+capitalize_fxn <- function(x){
+  first <- toupper(substr(x, start=1, stop=1)) ## capitalize first letter
+  rest <- tolower(substr(x, start=2, stop=nchar(x)))   ## everything else lowercase
+  paste0(first, rest)
+}
+
+df$scientific_name <- capitalize_fxn(df$scientific_name)
+validation_lists$scientific_name <- capitalize_fxn(validation_lists$scientific_name)
 
 # Taking out double spaces in between genus and species 
 df$scientific_name <- gsub("  ", " ", df$scientific_name)
@@ -579,12 +591,150 @@ df$scientific_name <- gsub("  ", " ", df$scientific_name)
 # Correcting commonly misspelled genus names 
 df$scientific_name <- gsub("Acanthrus", "Acanthurus", df$scientific_name)
 df$scientific_name <- gsub("Acantrus", "Acanthurus", df$scientific_name)
+df$scientific_name <- gsub("Acathurus", "Acanthurus", df$scientific_name)
+df$scientific_name <- gsub("Acronthurus", "Acanthurus", df$scientific_name)
 df$scientific_name <- gsub("Abdefduf", "Abudefduf", df$scientific_name)
+df$scientific_name <- gsub("Cheilo", "Cheilio", df$scientific_name)
+df$scientific_name <- gsub("inemis", "inermis", df$scientific_name)
+df$scientific_name <- gsub("argentmaculatus", "argentimaculatus", df$scientific_name)
+df$scientific_name <- gsub("Cheillinus", "Cheilinus", df$scientific_name)
+df$scientific_name <- gsub("candiculatus", "canaliculutus", df$scientific_name)
+df$scientific_name <- gsub("canaliculatus", "canaliculutus", df$scientific_name)
+df$scientific_name <- gsub("Cholurururs", "Chlorurus", df$scientific_name)
+df$scientific_name <- gsub("stronycephalus", "strongylocephalus", df$scientific_name)
+df$scientific_name <- gsub("Gymonthorax", "Gymnothorax", df$scientific_name)
+df$scientific_name <- gsub("javanicus", "favagineus", df$scientific_name)
+df$scientific_name <- gsub("vaiginsis", "vaigiensis", df$scientific_name)
+df$scientific_name <- gsub("semicirculatus", "semicirculatus", df$scientific_name)
+df$scientific_name <- gsub("semisulcatus", "semicirculatus", df$scientific_name)
+df$scientific_name <- gsub("Pomacnathus", "Pomacanthus", df$scientific_name)
+df$scientific_name <- gsub("granoculis", "grandoculis", df$scientific_name)
+df$scientific_name <- gsub("malanostigma", "melanostigma", df$scientific_name)
+df$scientific_name <- gsub("brachycentron", "brachycention", df$scientific_name)
+df$scientific_name <- gsub("hard", "harid", df$scientific_name)
+df$scientific_name <- gsub("sexfaciatus", "sexfasciatus", df$scientific_name)
+df$scientific_name <- gsub("dussumiera", "dussumieri", df$scientific_name)
+df$scientific_name <- gsub("caeruleopanctatus", "caeruleopunctatus", df$scientific_name)
+df$scientific_name <- gsub("hebei", "heberi", df$scientific_name)
+df$scientific_name <- gsub("kippos", "hippos", df$scientific_name)
+df$scientific_name <- gsub("Carnx", "Caranx", df$scientific_name)
+df$scientific_name <- gsub("coioidea", "coioides", df$scientific_name)
+df$scientific_name <- gsub("monochrou", "monochrous", df$scientific_name)
+df$scientific_name <- gsub("monochrouss", "monochrous", df$scientific_name)
+df$scientific_name <- gsub("Kyphasus", "Kyphosus", df$scientific_name)
+df$scientific_name <- gsub("Lenthrinus", "Lethrinus", df$scientific_name)
+df$scientific_name <- gsub("Leturinus", "Lethrinus", df$scientific_name)
+df$scientific_name <- gsub("vaiguensis", "vaigiensis", df$scientific_name)
+df$scientific_name <- gsub("bornonicus", "borbonicus", df$scientific_name)
+df$scientific_name <- gsub("nebulosis", "nebulosus", df$scientific_name)
+df$scientific_name <- gsub("nebulous", "nebulosus", df$scientific_name)
+df$scientific_name <- gsub("Leptoscaus", "Leptoscarus", df$scientific_name)
+df$scientific_name <- gsub("fluluiflamma", "fulviflamma", df$scientific_name)
+df$scientific_name <- gsub("flavlineathe", "flavolineatus", df$scientific_name)
+df$scientific_name <- gsub("taeniourous", "taeniorus", df$scientific_name)
+df$scientific_name <- gsub("Navaculichthys", "Novaculichthys", df$scientific_name)
+df$scientific_name <- gsub("taeniorus", "taeniourus", df$scientific_name)
+df$scientific_name <- gsub("Parupeneus sp nov.", "Parupeneus", df$scientific_name)
+df$scientific_name <- gsub("Platux", "Platax", df$scientific_name)
+df$scientific_name <- gsub("platyyuna", "platyura", df$scientific_name)
+df$scientific_name <- gsub("playfair", "playfairi", df$scientific_name)
+df$scientific_name <- gsub("Plectorhincus", "Plectorhinchus", df$scientific_name)
+df$scientific_name <- gsub("Plectorhnichus", "Plectorhinchus", df$scientific_name)
+df$scientific_name <- gsub("Plotasus", "Plotosus", df$scientific_name)
+df$scientific_name <- gsub("Pomatonus", "Pomatomus", df$scientific_name)
+df$scientific_name <- gsub("Rhinecanthurus", "Rhineacanthus", df$scientific_name)
 
-####### left off at trying to make the species name lower case
-
-#unvalidated_names <- 
+# correcting spellings in validation list 
+validation_lists$scientific_name <- gsub("Gymonthorax", "Gymnothorax", validation_lists$scientific_name)
+validation_lists$scientific_name <- gsub("Pomatonus", "Pomatomus", validation_lists$scientific_name)
 ```
+
+Double checking our df against the valid names so we know what names are
+typos.
+
+``` r
+# making df of names that are in the catch_composition (df) but are not in the validation_lists
+# these names are typos - fix with gsub functions above 
+valid_names <- validation_lists %>% select(scientific_name)
+catch_names <- df %>% select(scientific_name)
+
+unvalidated_names <- setdiff(catch_names, valid_names) %>% 
+  filter(!scientific_name == "NANA") %>% filter(!scientific_name == "Nana")
+
+unique(sort(unvalidated_names$scientific_name))
+```
+
+    ##  [1] "Acanthopagrus berda"         "Acanthurus blochii"         
+    ##  [3] "Acanthurus mata"             "Aethaloperca rogaa"         
+    ##  [5] "Auxis thazard"               "Caranx caninus"             
+    ##  [7] "Caranx heberi"               "Caranx hippos"              
+    ##  [9] "Cyrnecranius randoculis"     "Epinephelus faveatus"       
+    ## [11] "Epinephelus malabaricus"     "Epinephelus melanostigma"   
+    ## [13] "Epinephelus spilotoceps"     "Fistularia petimba"         
+    ## [15] "Gymnothorax flavimarginatus" "Gymnothorax monochrous"     
+    ## [17] "Himantura gerrardi"          "Kyphosus bigibbus"          
+    ## [19] "Lethrinus  harak"            "Lethrinus guttatus"         
+    ## [21] "Lethrinus vaigiensis"        "Monotaxis grandoculis"      
+    ## [23] "Mugil cephalus"              "Mugil cephalus"             
+    ## [25] "Mulloidichthys pfluegeri"    "Myripristis formosa"        
+    ## [27] "Novaculichthys nitaeniourus" "Ostracion nasus"            
+    ## [29] "Panulirus versicolor"        "Parupeneus"                 
+    ## [31] "Planiliza alata"             "Platybelone platyura"       
+    ## [33] "Plectorhinchus playfairi"    "Plotosus canius"            
+    ## [35] "Pomatomus semicirculatus"    "Pseudorhombus arsius"       
+    ## [37] "Rhineacanthus aculeatus"     "Sardinella melanura"        
+    ## [39] "Scarus guttatus"             "Scarus sirubroviolaceus"    
+    ## [41] "Scarus vubroviolaceus"       "Scromberomorus commerson"   
+    ## [43] "Sepia pharaonis"             "Siganus fuscescens"         
+    ## [45] "Siganus guttatus"            "Siganus luridus"            
+    ## [47] "Sphraena"                    "Sphyraena leiura"           
+    ## [49] "Taeniura meyeni"             "Taeniura meyeri"            
+    ## [51] "Thunnus albacares"           "Thysanophrys chiltonae"     
+    ## [53] "Upeneus japonicus"           "Uroteuthis duvaucelii"
+
+``` r
+## left off at #38 Sardinella melanura
+```
+
+In catch composition and in fishbase but not on validation list:  
+- Acanthopagrus berda  
+- Acanthurus blochii  
+- Acanthurus mata  
+- Aethaloperca rogaa  
+- Auxis thazard  
+- Caranx caninus  
+- Caranx heberi  
+- Caranx hippos  
+- Epinephelus faveatus  
+- Epinephelus malabaricus  
+- Epinephelus melanostigma  
+- Epinephelus spilotoceps  
+- Fistularia petimba  
+- Gymnothorax flavimarginatus  
+- Gymnothorax monochrous  
+- Himantura gerrardi  
+- Kyphosus bigibbus  
+- Monotaxis grandoculis  
+- Mugil cephalus  
+- Mulloidichthys pfluegeri  
+- Myripristis formosa  
+- Planiliza alata - Platybelone platyura - Plectorhinchus playfairi  
+- Plotasus canius - Pseudorhombus arsius  
+- Rhineacanthus aculeatus  
+- - Siganus guttatus  
+- Siganus luridus  
+- Upeneus japonicus
+
+In catch composition but not in validation list or on fishbase:  
+- Cyrnecranius randoculis  
+- Lethrinus guttatus  
+- Lethrinus vaigiensis  
+- Navaculichthys nitaeniourous  
+- Ostracion nasus  
+- Panulirus versicolor  
+- Pomatomus semicirculatus
+
+In validation list but is not on fish base: - Acanthurus vaigiensis
 
 ### Final check: any notes from both datasets
 
