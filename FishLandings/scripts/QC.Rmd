@@ -227,10 +227,9 @@ We can pull in the validation_lists df to double check these spellings.
 validation_lists$scientific_name <- gsub("  ", " ", validation_lists$scientific_name)
 ```
 
+Sorting through df for errors. 
 
 ```{r}
-unique(sort(df$scientific_name)) # view the df we are working with first; can run this function after each modification to check
-
 # create capitalize function for upper case genus and lower case species 
 capitalize_fxn <- function(x){
   first <- toupper(substr(x, start=1, stop=1)) ## capitalize first letter
