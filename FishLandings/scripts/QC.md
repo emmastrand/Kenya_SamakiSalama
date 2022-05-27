@@ -13,9 +13,21 @@ Emma Strand; <emma_strand@uri.edu>
 3.  Time in water (effort) doesn’t have any data so I removed it for
     now. Is this supposed to?  
 4.  What are the expected ranges for total traps collected, weight and
-    value measures, and no of fishers in crew?
+    value measures, and no of fishers in crew?  
+5.  In
 
-## Protocol to run this with a future xlsx file
+## Contents
+
+-   [**Protocol to run this with a future xlsx file**](#protocol)  
+-   [**Load all libraries**](#libraries)  
+-   [**Create dataframe**](#df)  
+-   [**Quality Control: enumerator**](#Enumerator)  
+-   [**Quality Control: landing\_site and BMU**](#Landing_site)  
+-   [**Quality Control: fisher information**](#fisher_info)  
+-   [**Quality Control: trap information**](#trap)  
+-   [**Quality Control: catch information**](#catch)
+
+## <a name="protocol"></a> **Protocol to run this with a future xlsx file**
 
 1.  In the toolbar above, hit the arrow next to `Knit`. Scroll down to
     `Knit Directory` and select the option `Project Directory`.  
@@ -30,7 +42,7 @@ Emma Strand; <emma_strand@uri.edu>
     dfs to double check these ranges are expected.  
 5.  
 
-## Load all libraries
+## <a name="libraries"></a> **Load all libraries**
 
 ``` r
 library(plyr)
@@ -42,7 +54,7 @@ library(lubridate)
 library(Hmisc)
 ```
 
-## Create dataframe
+## <a name="df"></a> **Create dataframe**
 
 **Load in raw data files.**
 
@@ -102,7 +114,7 @@ df <- full_join(fishing_operation, catch_composition, by = c("fisher_id", "Opera
 In the above chunk, these dates are automatically read in as *dttm*
 format (date and time).
 
-### Enumerator
+### <a name="Enumerator"></a> **Enumerator**
 
 [Replace character string with another in
 R](https://stackoverflow.com/questions/11936339/replace-specific-characters-within-strings)
@@ -148,7 +160,9 @@ unique(df$enumerator) # at this point, double check that this list are all indiv
     ## [13] "GARAMA YERI"       "KITSAO KARISA"     "KARIMA NYINGE"    
     ## [16] "NGALA"             "OMAR ALI"          NA
 
-### Landing\_site
+### <a name="Landing_site"></a> **Landing\_site and BMU**
+
+#### Landing site
 
 ``` r
 df$landing_site <- toupper(df$landing_site)
@@ -165,7 +179,7 @@ unique(df$landing_site)
 ## Step #3 in protocol to double check this output list is all the correct site names 
 ```
 
-### BMU
+#### BMU
 
 ``` r
 df$BMU <- toupper(df$BMU)
@@ -178,13 +192,15 @@ unique(df$BMU)
 ## Step #4 in protocol to double check this output list is all the correct BMU names 
 ```
 
-### fisher\_phone
+### <a name="Fisher_info"></a> **Fisher information**
+
+#### fisher\_phone
 
 ``` r
 ## circle back to checking if these are supposed to be a certain # of digits?
 ```
 
-### household\_id
+#### household\_id
 
 The only issue I can detect here is some lower case vs upper case.
 
@@ -264,7 +280,9 @@ unique(df$household_id)
     ## [273] "SS/NAT/SB/077"  "SS/NAT/SB/013"  "SS/NAT/SB/006"  "SS/NAT/SB/004" 
     ## [277] "SS/NAT/SB/034"  "SS/NAT/SB/033"  NA
 
-### trap\_type
+### <a name="trap"></a> **Trap information**
+
+#### trap\_type
 
 The only issue I can detect here is some lower case vs upper case.
 
@@ -278,7 +296,7 @@ unique(df$trap_type)
     ##  [9] "NYAVU YA UZI"   "NYAVU YA MKANO" "SPEAR"          "WAYAA"         
     ## [13] "MKANO"
 
-### total\_traps\_collected
+#### total\_traps\_collected
 
 View the values put in the df here to double check all values make
 sense.
@@ -294,7 +312,7 @@ range(total_traps_collected)
 ## Step #4 of protocol with new df: double check the below range is expected 
 ```
 
-### Date and time set; date and time collected
+#### Date and time set; date and time collected
 
 In the first chunk of code, these dates are automatically read in as
 *dttm* format (date and time). This new columns will be more useful for
@@ -316,7 +334,9 @@ df$date_time_collected <- parse_date_time(df$date_time_collected, orders = "ymdH
 ## any failed to parse error messages will be from rows that do not have a date and time
 ```
 
-### Weight and value measures
+### <a name="caych"></a> **Catch information**
+
+#### Weight and value measures
 
 ``` r
 total_weight_kg <- df %>% select(total_weight_kg) %>% na.omit()
@@ -348,7 +368,7 @@ range(take_home_value_KES)
 
     ## [1]   0 900
 
-### No. of fishers in crew
+#### No. of fishers in crew
 
 ``` r
 fishermen_no <- df %>% select(`No. of fishers in crew`) %>% na.omit()
@@ -359,7 +379,7 @@ range(fishermen_no)
 
     ## [1]  1 18
 
-### Kiswahili\_name
+#### Kiswahili\_name
 
 ``` r
 df$Kiswahili_name <- toupper(df$Kiswahili_name)
@@ -449,7 +469,12 @@ unique(sort(df$Kiswahili_name))
     ## [161] "VUMBAMA"                      "VUMBANA"                     
     ## [163] "VYEMBEU"                      "WAYO"
 
-### SPECIES
+#### SPECIES / Scientific name
+
+**This is a hard-coding way to do this.. ideally we could downloand a
+dataset from fishbase and create a compare function that could recognize
+a name that is a letter or 2 off from a name in fishbase and then create
+suggestions…**
 
 We can pull in the validation\_lists df to double check these spellings.
 
@@ -529,6 +554,11 @@ df$scientific_name <- gsub("Plectorhnichus", "Plectorhinchus", df$scientific_nam
 df$scientific_name <- gsub("Plotasus", "Plotosus", df$scientific_name)
 df$scientific_name <- gsub("Pomatonus", "Pomatomus", df$scientific_name)
 df$scientific_name <- gsub("Rhinecanthurus", "Rhineacanthus", df$scientific_name)
+df$scientific_name <- gsub("vubroviolaceus", "rubroviolaceus", df$scientific_name)
+df$scientific_name <- gsub("sirubroviolaceus", "rubroviolaceus", df$scientific_name)
+df$scientific_name <- gsub("Scromberomorus", "Scomerommorus", df$scientific_name)
+df$scientific_name <- gsub("Sphraena", "Sphyraena", df$scientific_name)
+df$scientific_name <- gsub("meyeri", "meyeni", df$scientific_name)
 
 # correcting spellings in validation list 
 validation_lists$scientific_name <- gsub("Gymonthorax", "Gymnothorax", validation_lists$scientific_name)
@@ -569,58 +599,78 @@ unique(sort(unvalidated_names$scientific_name))
     ## [33] "Plectorhinchus playfairi"    "Plotosus canius"            
     ## [35] "Pomatomus semicirculatus"    "Pseudorhombus arsius"       
     ## [37] "Rhineacanthus aculeatus"     "Sardinella melanura"        
-    ## [39] "Scarus guttatus"             "Scarus sirubroviolaceus"    
-    ## [41] "Scarus vubroviolaceus"       "Scromberomorus commerson"   
-    ## [43] "Sepia pharaonis"             "Siganus fuscescens"         
-    ## [45] "Siganus guttatus"            "Siganus luridus"            
-    ## [47] "Sphraena"                    "Sphyraena leiura"           
-    ## [49] "Taeniura meyeni"             "Taeniura meyeri"            
-    ## [51] "Thunnus albacares"           "Thysanophrys chiltonae"     
-    ## [53] "Upeneus japonicus"           "Uroteuthis duvaucelii"
+    ## [39] "Scarus guttatus"             "Scomerommorus commerson"    
+    ## [41] "Sepia pharaonis"             "Siganus fuscescens"         
+    ## [43] "Siganus guttatus"            "Siganus luridus"            
+    ## [45] "Sphyraena"                   "Sphyraena leiura"           
+    ## [47] "Taeniura meyeni"             "Thunnus albacares"          
+    ## [49] "Thysanophrys chiltonae"      "Upeneus japonicus"          
+    ## [51] "Uroteuthis duvaucelii"
 
-``` r
-## left off at #38 Sardinella melanura
-```
+1.) In catch composition and in fishbase but not on validation list.
+**Suggested fix: address if these are reasonable to find in Ghana and if
+they are, keep these entries.**
 
-In catch composition and in fishbase but not on validation list:  
-- Acanthopagrus berda  
-- Acanthurus blochii  
-- Acanthurus mata  
-- Aethaloperca rogaa  
-- Auxis thazard  
-- Caranx caninus  
-- Caranx heberi  
-- Caranx hippos  
-- Epinephelus faveatus  
-- Epinephelus malabaricus  
-- Epinephelus melanostigma  
-- Epinephelus spilotoceps  
-- Fistularia petimba  
-- Gymnothorax flavimarginatus  
-- Gymnothorax monochrous  
-- Himantura gerrardi  
-- Kyphosus bigibbus  
-- Monotaxis grandoculis  
-- Mugil cephalus  
-- Mulloidichthys pfluegeri  
-- Myripristis formosa  
-- Planiliza alata - Platybelone platyura - Plectorhinchus playfairi  
-- Plotasus canius - Pseudorhombus arsius  
-- Rhineacanthus aculeatus  
-- - Siganus guttatus  
-- Siganus luridus  
-- Upeneus japonicus
+-   Acanthopagrus berda  
+-   Acanthurus blochii  
+-   Acanthurus mata  
+-   Aethaloperca rogaa  
+-   Auxis thazard  
+-   Caranx caninus  
+-   Caranx heberi  
+-   Caranx hippos  
+-   Epinephelus faveatus  
+-   Epinephelus malabaricus  
+-   Epinephelus melanostigma  
+-   Epinephelus spilotoceps  
+-   Fistularia petimba  
+-   Gymnothorax flavimarginatus  
+-   Gymnothorax monochrous  
+-   Himantura gerrardi  
+-   Kyphosus bigibbus  
+-   Monotaxis grandoculis  
+-   Mugil cephalus  
+-   Mulloidichthys pfluegeri  
+-   Myripristis formosa  
+-   Planiliza alata
+-   Platybelone platyura
+-   Plectorhinchus playfairi  
+-   Plotasus canius
+-   Pseudorhombus arsius  
+-   Rhineacanthus aculeatus  
+-   Sardinella melanura  
+-   Scomerommorus commerson  
+-   Siganus fuscescens  
+-   Siganus guttatus  
+-   Siganus luridus  
+-   Thunnus albacares  
+-   Thysanophrys chiltonae  
+-   Upeneus japonicus
 
-In catch composition but not in validation list or on fishbase:  
-- Cyrnecranius randoculis  
-- Lethrinus guttatus  
-- Lethrinus vaigiensis  
-- Navaculichthys nitaeniourous  
-- Ostracion nasus  
-- Panulirus versicolor  
-- Pomatomus semicirculatus
+2.) In catch composition but not in validation list or on fishbase (not
+close to a name we have so unsure what it is supposed to be).
+**Suggested fix: if there is not a clear answer to what these are
+supposed to be, filter them out.**
 
-In validation list but is not on fish base: - Acanthurus vaigiensis
+-   Cyrnecranius randoculis  
+-   Lethrinus guttatus  
+-   Lethrinus vaigiensis  
+-   Navaculichthys nitaeniourous  
+-   Ostracion nasus  
+-   Panulirus versicolor  
+-   Pomatomus semicirculatus  
+-   Scarus guttatus  
+-   Scarus sirubroviolaceus  
+-   Sepia pharaonis  
+-   Sphyraena leiura  
+-   Taeniura meyeni (could be one of two: Taeniura sp. or Taeniurops
+    meyeni)
+-   Uroteuthis duvaucelii
+
+3.) In validation list but is not on fish base. **No fix needed here,
+just an FYI.**.
+
+-   Acanthurus vaigiensis
 
 ### Final check: any notes from both datasets
 
