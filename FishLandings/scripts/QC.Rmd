@@ -220,6 +220,8 @@ unique(sort(df$Kiswahili_name))
 
 ### SPECIES 
 
+**This is a hard-coding way to do this.. ideally we could downloand a dataset from fishbase and create a compare function that could recognize a name that is a letter or 2 off from a name in fishbase and then create suggestions...** 
+
 We can pull in the validation_lists df to double check these spellings. 
 
 ```{r}
