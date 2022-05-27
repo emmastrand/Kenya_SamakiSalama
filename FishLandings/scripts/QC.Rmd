@@ -23,7 +23,8 @@ knitr::opts_chunk$set(echo = TRUE)
 2. Are phone numbers a certain # of digits?   
 3. Time in water (effort) doesn't have any data so I removed it for now. Is this supposed to?  
 4. What are the expected ranges for total traps collected, weight and value measures, and no of fishers in crew?  
-5. In 
+5. In the catch information section, under "SPECIES/scientific name", can you see #1 and #2 and let me know your thoughts on that?  
+6.  
 
 ## Contents 
 
@@ -35,6 +36,7 @@ knitr::opts_chunk$set(echo = TRUE)
 - [**Quality Control: fisher information**](#fisher_info)  
 - [**Quality Control: trap information**](#trap)  
 - [**Quality Control: catch information**](#catch)  
+- [**Quality Control: final check for notes written by field team**](#notes)  
 
 ## <a name="protocol"></a> **Protocol to run this with a future xlsx file**
 
@@ -129,7 +131,7 @@ unique(df$enumerator) # at this point, double check that this list are all indiv
 
 ### <a name="Landing_site"></a> **Landing_site and BMU**
 
-#### Landing site
+### Landing site
 
 ```{r}
 df$landing_site <- toupper(df$landing_site)
@@ -138,7 +140,7 @@ unique(df$landing_site)
 ## Step #3 in protocol to double check this output list is all the correct site names 
 ```
 
-#### BMU 
+### BMU 
 
 ```{r}
 df$BMU <- toupper(df$BMU)
@@ -148,13 +150,13 @@ unique(df$BMU)
 
 ### <a name="Fisher_info"></a> **Fisher information**
 
-#### fisher_phone 
+### fisher_phone 
 
 ```{r}
 ## circle back to checking if these are supposed to be a certain # of digits?
 ```
 
-#### household_id
+### household_id
 
 The only issue I can detect here is some lower case vs upper case. 
 
@@ -165,7 +167,7 @@ unique(df$household_id)
 
 ### <a name="trap"></a> **Trap information**
 
-#### trap_type 
+### trap_type 
 
 The only issue I can detect here is some lower case vs upper case. 
 
@@ -174,7 +176,7 @@ df$trap_type <- toupper(df$trap_type)
 unique(df$trap_type)
 ```
 
-#### total_traps_collected 
+### total_traps_collected 
 
 View the values put in the df here to double check all values make sense. 
 
@@ -185,7 +187,7 @@ range(total_traps_collected)
 ## Step #4 of protocol with new df: double check the below range is expected 
 ```
 
-#### Date and time set; date and time collected
+### Date and time set; date and time collected
 
 In the first chunk of code, these dates are automatically read in as *dttm* format (date and time). This new columns will be more useful for data analysis later. 
 
@@ -207,7 +209,7 @@ df$date_time_collected <- parse_date_time(df$date_time_collected, orders = "ymdH
 
 ### <a name="caych"></a> **Catch information**
 
-#### Weight and value measures 
+### Weight and value measures 
 
 ```{r}
 total_weight_kg <- df %>% select(total_weight_kg) %>% na.omit()
@@ -222,7 +224,7 @@ range(total_value_KES)
 range(take_home_value_KES)
 ```
 
-#### No. of fishers in crew
+### No. of fishers in crew
 
 ```{r}
 fishermen_no <- df %>% select(`No. of fishers in crew`) %>% na.omit()
@@ -231,14 +233,14 @@ fishermen_no <- df %>% select(`No. of fishers in crew`) %>% na.omit()
 range(fishermen_no)
 ```
 
-#### Kiswahili_name
+### Kiswahili_name
 
 ```{r}
 df$Kiswahili_name <- toupper(df$Kiswahili_name)
 unique(sort(df$Kiswahili_name))
 ```
 
-#### SPECIES / Scientific name 
+### SPECIES / Scientific name 
 
 **This is a hard-coding way to do this.. ideally we could downloand a dataset from fishbase and create a compare function that could recognize a name that is a letter or 2 off from a name in fishbase and then create suggestions...** 
 
@@ -404,8 +406,82 @@ unique(sort(unvalidated_names$scientific_name))
 
 - Acanthurus vaigiensis
 
+### Length (cm)
 
-### Final check: any notes from both datasets 
+This column is a character for because of the "<" and "-". 
+
+1.) 3 observations (rows) have 2 length values and multiple fish. changed these values to NA for now. 
+
+- "16-20   ,46-50"    
+- "26-30,21- 25"   
+
+2.) Many operations by CLAPERTON KAZUNGU include a length value of 4488 which is not realistic so I changed these to NA for now. 
+
+3.) Some ranges weren't correct like "16-25" and only have <10 observations like that so I changed them to the nearest possible category. e.g. "16-25" to "16-20". "21-30" to "21-25". 
+
+
+```{r}
+## viewing those that have two observations in one row (should have been 2 rows)
+df %>% filter(length_cm == "16-20   ,46-50" | length_cm == "26-30,21- 25")
+
+## viewing what observation have a really high value  
+## many operations by CLAPERTON KAZUNGU include a length value of 44880
+df %>% filter(length_cm == "NA")
+
+# converting length values to NA that don't make sense
+df$length_cm <- gsub("44880", "NA", df$length_cm)
+df$length_cm <- gsub("16-20   ,46-50", "NA", df$length_cm)
+df$length_cm <- gsub("26-30,21- 25", "NA", df$length_cm)
+
+# fixing the < and > mix-up 
+df$length_cm <- gsub("<75", ">75", df$length_cm)
+
+# converting <10 to a range of 0-10 
+df <- df %>% 
+  mutate(length_cm = if_else(length_cm == "<10", "0-10", length_cm))
+
+# converting ranges that don't make sense 
+df$length_cm <- gsub("31-15", "31-35", df$length_cm)
+df$length_cm <- gsub("10-15", "11-15", df$length_cm)
+df$length_cm <- gsub("31-37", "31-35", df$length_cm)
+df$length_cm <- gsub("31-36", "31-35", df$length_cm)
+df$length_cm <- gsub("16-25", "16-20", df$length_cm)
+df$length_cm <- gsub("21-30", "21-25", df$length_cm)
+df$length_cm <- gsub("26-35", "26-30", df$length_cm)
+
+unique(sort(df$length_cm))
+```
+
+Converting the written in values to ranges. 
+
+```{r}
+## converting the numerical values to ranges 
+# isolating just the numerical values 
+numerical_values <- df %>% 
+  filter(!str_detect(length_cm, ">") & !str_detect(length_cm, "<") & !str_detect(length_cm, "-")) %>%
+  filter(!length_cm == "NA")
+
+# converting those to numerical values 
+numerical_values$length_cm <- as.numeric(numerical_values$length_cm)
+
+# converting those to be ranges 
+numerical_values <- numerical_values %>%
+  mutate(length_corrected = if_else(length_cm
+    length_cm
+  ))
+
+## double checking correct ranges here
+ranges <- df %>% 
+  filter(str_detect(length_cm, ">") | str_detect(length_cm, "<") | str_detect(length_cm, "-") | length_cm == "NA")
+
+unique(sort(ranges$length_cm))
+```
+
+left off at converting the numerical values to be within a bin... line 467 
+
+
+## <a name="notes"></a> **Final check: any notes from both datasets **
+
 
 ```{r}
 ## check for any notes that the data collectors left for analysis 
