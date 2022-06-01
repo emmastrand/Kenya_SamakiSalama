@@ -14,7 +14,7 @@ Emma Strand; <emma_strand@uri.edu>
     now. Is this supposed to?  
 4.  What are the expected ranges for total traps collected, weight and
     value measures, and no of fishers in crew?  
-5.  In
+5.  In the Catching information section under the Species / Scientific name section, take a look at #1 and #2 and the suggestion fixes on those. What do you think?
 
 ## Contents
 
