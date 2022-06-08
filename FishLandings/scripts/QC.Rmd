@@ -25,8 +25,6 @@ knitr::opts_chunk$set(echo = TRUE)
 4. What are the expected ranges for total traps collected, weight and value measures, no of fishers in crew, and number of fish caught?    
 5. In the Catching information section under the Species / Scientific name section, take a look at #1 and #2 and the suggestion fixes on those. What do you think?  
 
-
-
 ## Contents 
 
 - [**Protocol to run this with a future xlsx file**](#protocol)   
