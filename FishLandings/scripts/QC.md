@@ -13,8 +13,10 @@ Emma Strand; <emma_strand@uri.edu>
 3.  Time in water (effort) doesn’t have any data so I removed it for
     now. Is this supposed to?  
 4.  What are the expected ranges for total traps collected, weight and
-    value measures, and no of fishers in crew?  
-5.  In the Catching information section under the Species / Scientific name section, take a look at #1 and #2 and the suggestion fixes on those. What do you think?
+    value measures, no of fishers in crew, and number of fish caught?  
+5.  In the Catching information section under the Species / Scientific
+    name section, take a look at \#1 and \#2 and the suggestion fixes on
+    those. What do you think?
 
 ## Contents
 
@@ -25,22 +27,47 @@ Emma Strand; <emma_strand@uri.edu>
 -   [**Quality Control: landing\_site and BMU**](#Landing_site)  
 -   [**Quality Control: fisher information**](#fisher_info)  
 -   [**Quality Control: trap information**](#trap)  
--   [**Quality Control: catch information**](#catch)
+-   [**Quality Control: catch information**](#catch)  
+-   [**Gear type, and fish numbers/final destination**](#gear)  
+-   [**Quality Control: final check for notes written by field
+    team**](#notes)  
+-   [**Exporting cleaned dataset**](#export)
 
 ## <a name="protocol"></a> **Protocol to run this with a future xlsx file**
 
 1.  In the toolbar above, hit the arrow next to `Knit`. Scroll down to
     `Knit Directory` and select the option `Project Directory`.  
+
 2.  **In `Create dataframe` code chunk**: Replace raw data file name in
     the function that creates the following variables:
     fishing\_operation, catch\_composition, and validation\_lists.  
-3.  **In `Enumerator`, `Landing_site`, `BMU`, and `trap_type` code
-    chunks**: Run the unique() function and double check that this list
-    is the correct names.  
-4.  **In `total_traps_collected`, `Weight and value measures`, and
+
+3.  **In `Enumerator`, `Landing_site`, and `BMU` code chunks**: Run the
+    unique() function and double check that this list is the correct
+    names.  
+
+4.  **In Trap information**, run code chunk functions for `trap_type`
+    and `total_traps_collected` sections and double check the output is
+    as expected.  
+
+5.  **In catch information**, run code chunk functions for
+    `weight and value measures`, `number of fishers in crew`, and
+    `Kiswahili_name` and double check the output is as expected.  
+
+6.  **In Species/Scientific name**, run code chunk functions and check
+    output to make sure it is as expected.  
+
+7.  **In length, gear type, number of fish, and desintation sections**,
+    run code chunk to double check the output of ranges is as
+    expected.  
+
+8.  In the export section, rename the new datafile excel file.
+
+9.  **In `total_traps_collected`, `Weight and value measures`, and
     `No. of fishers in crew` code chunks**: Run range() functions on new
     dfs to double check these ranges are expected.  
-5.  
+
+10. 
 
 ## <a name="libraries"></a> **Load all libraries**
 
@@ -52,6 +79,7 @@ library(ggplot2)
 library(readxl)
 library(lubridate)
 library(Hmisc)
+library(writexl)
 ```
 
 ## <a name="df"></a> **Create dataframe**
@@ -162,7 +190,7 @@ unique(df$enumerator) # at this point, double check that this list are all indiv
 
 ### <a name="Landing_site"></a> **Landing\_site and BMU**
 
-#### Landing site
+### Landing site
 
 ``` r
 df$landing_site <- toupper(df$landing_site)
@@ -179,7 +207,7 @@ unique(df$landing_site)
 ## Step #3 in protocol to double check this output list is all the correct site names 
 ```
 
-#### BMU
+### BMU
 
 ``` r
 df$BMU <- toupper(df$BMU)
@@ -194,13 +222,13 @@ unique(df$BMU)
 
 ### <a name="Fisher_info"></a> **Fisher information**
 
-#### fisher\_phone
+### fisher\_phone
 
 ``` r
 ## circle back to checking if these are supposed to be a certain # of digits?
 ```
 
-#### household\_id
+### household\_id
 
 The only issue I can detect here is some lower case vs upper case.
 
@@ -282,7 +310,7 @@ unique(df$household_id)
 
 ### <a name="trap"></a> **Trap information**
 
-#### trap\_type
+### trap\_type
 
 The only issue I can detect here is some lower case vs upper case.
 
@@ -296,7 +324,7 @@ unique(df$trap_type)
     ##  [9] "NYAVU YA UZI"   "NYAVU YA MKANO" "SPEAR"          "WAYAA"         
     ## [13] "MKANO"
 
-#### total\_traps\_collected
+### total\_traps\_collected
 
 View the values put in the df here to double check all values make
 sense.
@@ -312,7 +340,7 @@ range(total_traps_collected)
 ## Step #4 of protocol with new df: double check the below range is expected 
 ```
 
-#### Date and time set; date and time collected
+### Date and time set; date and time collected
 
 In the first chunk of code, these dates are automatically read in as
 *dttm* format (date and time). This new columns will be more useful for
@@ -334,9 +362,9 @@ df$date_time_collected <- parse_date_time(df$date_time_collected, orders = "ymdH
 ## any failed to parse error messages will be from rows that do not have a date and time
 ```
 
-### <a name="caych"></a> **Catch information**
+### <a name="catch"></a> **Catch information**
 
-#### Weight and value measures
+### Weight and value measures
 
 ``` r
 total_weight_kg <- df %>% select(total_weight_kg) %>% na.omit()
@@ -368,7 +396,7 @@ range(take_home_value_KES)
 
     ## [1]   0 900
 
-#### No. of fishers in crew
+### No. of fishers in crew
 
 ``` r
 fishermen_no <- df %>% select(`No. of fishers in crew`) %>% na.omit()
@@ -379,7 +407,7 @@ range(fishermen_no)
 
     ## [1]  1 18
 
-#### Kiswahili\_name
+### Kiswahili\_name
 
 ``` r
 df$Kiswahili_name <- toupper(df$Kiswahili_name)
@@ -469,7 +497,7 @@ unique(sort(df$Kiswahili_name))
     ## [161] "VUMBAMA"                      "VUMBANA"                     
     ## [163] "VYEMBEU"                      "WAYO"
 
-#### SPECIES / Scientific name
+### SPECIES / Scientific name
 
 **This is a hard-coding way to do this.. ideally we could downloand a
 dataset from fishbase and create a compare function that could recognize
@@ -672,7 +700,171 @@ just an FYI.**.
 
 -   Acanthurus vaigiensis
 
-### Final check: any notes from both datasets
+### Length (cm)
+
+This column is a character for because of the “&lt;” and “-”.
+
+1.) 3 observations (rows) have 2 length values and multiple fish.
+changed these values to NA for now.
+
+-   “16-20 ,46-50”  
+-   “26-30,21- 25”
+
+2.) Many operations by CLAPERTON KAZUNGU include a length value of 4488
+which is not realistic so I changed these to NA for now.
+
+3.) Some ranges weren’t correct like “16-25” and only have &lt;10
+observations like that so I changed them to the nearest possible
+category. e.g. “16-25” to “16-20”. “21-30” to “21-25”.
+
+``` r
+## viewing those that have two observations in one row (should have been 2 rows)
+df %>% filter(length_cm == "16-20   ,46-50" | length_cm == "26-30,21- 25")
+```
+
+    ## # A tibble: 3 × 28
+    ##   Operation_date      enumerator landing_site BMU     fisher_id     fisher_phone
+    ##   <dttm>              <chr>      <chr>        <chr>   <chr>         <chr>       
+    ## 1 2021-06-27 00:00:00 KADZO BAYA MAYUNGU      MAYUNGU SS/UYO/SB/07… 0755223621  
+    ## 2 2021-06-27 00:00:00 KADZO BAYA MAYUNGU      MAYUNGU SS/UYO/SB/07… 0755223621  
+    ## 3 2021-06-14 00:00:00 <NA>       <NA>         <NA>    SS/UYO/SB/09… <NA>        
+    ## # … with 22 more variables: household_id <chr>, trap_type <chr>,
+    ## #   total_traps_collected <dbl>, date_set_dd_mm_yyyy <dttm>,
+    ## #   `time_set_24hh:mm` <chr>, date_collected_dd_mm_yyyy <dttm>,
+    ## #   `time_collected_24hh:mm` <chr>, total_weight_kg <dbl>,
+    ## #   take_home_weight_kg <dbl>, total_value_KES <dbl>,
+    ## #   take_home_value_KES <dbl>, `No. of fishers in crew` <dbl>,
+    ## #   fishing_operation_notes <lgl>, Kiswahili_name <chr>, …
+
+``` r
+## viewing what observation have a really high value  
+## many operations by CLAPERTON KAZUNGU include a length value of 44880
+df %>% filter(length_cm == "NA")
+```
+
+    ## # A tibble: 0 × 28
+    ## # … with 28 variables: Operation_date <dttm>, enumerator <chr>,
+    ## #   landing_site <chr>, BMU <chr>, fisher_id <chr>, fisher_phone <chr>,
+    ## #   household_id <chr>, trap_type <chr>, total_traps_collected <dbl>,
+    ## #   date_set_dd_mm_yyyy <dttm>, time_set_24hh:mm <chr>,
+    ## #   date_collected_dd_mm_yyyy <dttm>, time_collected_24hh:mm <chr>,
+    ## #   total_weight_kg <dbl>, take_home_weight_kg <dbl>, total_value_KES <dbl>,
+    ## #   take_home_value_KES <dbl>, No. of fishers in crew <dbl>, …
+
+``` r
+# converting length values to NA that don't make sense
+df$length_cm <- gsub("44880", "NA", df$length_cm)
+df$length_cm <- gsub("16-20   ,46-50", "NA", df$length_cm)
+df$length_cm <- gsub("26-30,21- 25", "NA", df$length_cm)
+
+# fixing the < and > mix-up 
+df$length_cm <- gsub("<75", ">75", df$length_cm)
+
+# converting <10 to a range of 0-10 
+df <- df %>% 
+  mutate(length_cm = if_else(length_cm == "<10", "0-10", length_cm))
+
+# converting ranges that don't make sense 
+df$length_cm <- gsub("31-15", "31-35", df$length_cm)
+df$length_cm <- gsub("10-15", "11-15", df$length_cm)
+df$length_cm <- gsub("31-37", "31-35", df$length_cm)
+df$length_cm <- gsub("31-36", "31-35", df$length_cm)
+df$length_cm <- gsub("16-25", "16-20", df$length_cm)
+df$length_cm <- gsub("21-30", "21-25", df$length_cm)
+df$length_cm <- gsub("26-35", "26-30", df$length_cm)
+
+# converting numerical values to ranges 
+df <- df %>% 
+ mutate(length_corrected = case_when(
+    length_cm >= 0 & length_cm <= 10.5 ~ "0-10",
+    length_cm >= 10.5 & length_cm <= 15.4 ~ "11-15",
+    length_cm >= 15.5 & length_cm <= 20.4 ~ "16-20",
+    length_cm >= 20.5 & length_cm <= 25.4 ~ "21-25",
+    length_cm >= 25.5 & length_cm <= 30.4 ~ "26-30",
+    length_cm >= 30.5 & length_cm <= 35.4 ~ "31-35",
+    length_cm >= 35.5 & length_cm <= 40.4 ~ "36-40",
+    length_cm >= 40.5 & length_cm <= 45.4 ~ "41-45",
+    length_cm >= 45.5 & length_cm <= 50.4 ~ "46-50",
+    length_cm >= 50.5 & length_cm <= 75 ~ ">50",
+    length_cm > 75 ~ ">75"))
+
+# double checking that worked for the corrected column 
+unique(sort(df$length_cm))
+```
+
+    ##  [1] ">50"   ">75"   "0-10"  "101"   "105"   "109"   "11-15" "110"   "111"  
+    ## [10] "112"   "115"   "117"   "119"   "122"   "123"   "125"   "126"   "129"  
+    ## [19] "16-20" "167"   "168"   "170"   "198"   "21-25" "26-30" "31-35" "36-40"
+    ## [28] "41-45" "42.5"  "46-50" "51"    "52"    "53"    "54.25" "56"    "57"   
+    ## [37] "58"    "58.2"  "59"    "60"    "61"    "62"    "63"    "63.2"  "64"   
+    ## [46] "65.5"  "65.7"  "66"    "67"    "67.8"  "68"    "68.3"  "68.5"  "69.1" 
+    ## [55] "69.7"  "70"    "70.2"  "70.4"  "70.6"  "71"    "72.1"  "72.5"  "72.7" 
+    ## [64] "73"    "74"    "74.1"  "74.4"  "75.5"  "76"    "77"    "78.3"  "78.5" 
+    ## [73] "80"    "81"    "82"    "86"    "87"    "90"    "92"    "93"    "96"   
+    ## [82] "98"    "99"    "NA"
+
+``` r
+unique(sort(df$length_corrected))
+```
+
+    ##  [1] ">50"   ">75"   "0-10"  "11-15" "16-20" "21-25" "26-30" "31-35" "36-40"
+    ## [10] "41-45" "46-50"
+
+Correct output for length\_corrected:
+`">50"   ">75"   "0-10"  "11-15" "16-20" "21-25" "26-30" "31-35" "36-40" "41-45" "46-50"`.
+
+## <a name="gear"></a> **Gear type, and fish numbers/final destination**
+
+### Gear type
+
+Double check that this list looks right. Left off at looking at this
+list and then
+
+``` r
+df$`gear type` <- toupper(df$`gear type`)
+
+df$`gear type` <- gsub("MONOFILLAMENT", "MONOFILAMENT", df$`gear type`)
+df$`gear type` <- gsub("UNMODIFIED TRAP", "UNMODIFIED", df$`gear type`)
+df$`gear type` <- gsub("MODIFIED TRAP", "MODIFIED", df$`gear type`)
+
+unique(sort(df$`gear type`))
+```
+
+    ## [1] "GILLNET"                 "HANDLINE"               
+    ## [3] "MODIFIED"                "MONOFILAMENT"           
+    ## [5] "MONOFILAMENT/HOOK&STICK" "SPEAR"                  
+    ## [7] "SPEARGUN"                "UNMODIFIED"
+
+### Number of fish
+
+Doube check this range is what is expected.
+
+``` r
+unique(sort(df$number_of_fish))
+```
+
+    ##  [1]   1   2   3   4   5   6   7   8   9  10  11  12  13  14  15  16  17  18  19
+    ## [20]  20  21  22  23  24  25  26  27  28  29  30  32  33  34  35  36  37  38  39
+    ## [39]  40  42  43  44  46  47  48  50  51  53  57  58  59  60  68  70 120 140 216
+    ## [58] 310 351 480
+
+### Destination of fish
+
+``` r
+df$destination <- toupper(df$destination)
+
+df <- df %>%
+  filter(!destination == "OTHER WRITE IN:")
+
+df$destination <- gsub("OTHER WRITE IN:", "", df$destination)
+
+unique(sort(df$destination))
+```
+
+    ## [1] "FISH DEALER"    "GIFT"           "HOME"           "LOCAL CONSUMER"
+    ## [5] "MAMA KARANGA"
+
+## <a name="notes"></a> **Final check: any notes from both datasets**
 
 ``` r
 ## check for any notes that the data collectors left for analysis 
@@ -686,3 +878,36 @@ unique(df$catch_composition_notes)
 ```
 
     ## [1] NA
+
+## <a name="export"></a> **Exporting cleaned dataset**
+
+``` r
+head(df)
+```
+
+    ## # A tibble: 6 × 29
+    ##   Operation_date      enumerator     landing_site BMU     fisher_id fisher_phone
+    ##   <dttm>              <chr>          <chr>        <chr>   <chr>     <chr>       
+    ## 1 2021-12-02 00:00:00 CELESTINA NALI MAYUNGU      MAYUNGU SS/MAY/S… <NA>        
+    ## 2 2021-12-02 00:00:00 CELESTINA NALI MAYUNGU      MAYUNGU SS/MAY/S… <NA>        
+    ## 3 2021-12-02 00:00:00 CELESTINA NALI MAYUNGU      MAYUNGU SS/MAY/S… <NA>        
+    ## 4 2021-12-02 00:00:00 CELESTINA NALI MAYUNGU      MAYUNGU SS/MAY/S… <NA>        
+    ## 5 2021-12-02 00:00:00 CELESTINA NALI MAYUNGU      MAYUNGU SS/MAY/S… <NA>        
+    ## 6 2021-12-02 00:00:00 CELESTINA NALI MAYUNGU      MAYUNGU SS/MAY/S… <NA>        
+    ## # … with 23 more variables: household_id <chr>, trap_type <chr>,
+    ## #   total_traps_collected <dbl>, date_set_dd_mm_yyyy <dttm>,
+    ## #   `time_set_24hh:mm` <chr>, date_collected_dd_mm_yyyy <dttm>,
+    ## #   `time_collected_24hh:mm` <chr>, total_weight_kg <dbl>,
+    ## #   take_home_weight_kg <dbl>, total_value_KES <dbl>,
+    ## #   take_home_value_KES <dbl>, `No. of fishers in crew` <dbl>,
+    ## #   fishing_operation_notes <lgl>, Kiswahili_name <chr>, …
+
+``` r
+nrow(df)
+```
+
+    ## [1] 25478
+
+``` r
+write_xlsx(df, "data/Fishlandings-cleaned-21052022-May.xlsx")
+```

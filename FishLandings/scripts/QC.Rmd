@@ -19,12 +19,13 @@ knitr::opts_chunk$set(echo = TRUE)
 
 ## Questions for Austin 
 
-1. Is there a set list of options for categories like enumerator, landing_site, BMU, and trap_type that I can compare the dataset against? e.g. are "KIJANGWANI" and "KITANGANI" the same landing site or 2 different ones? A validation list for the fishing operation sheet? I have the validation list for the catch composition.        
-2. Are phone numbers a certain # of digits?   
-3. Time in water (effort) doesn't have any data so I removed it for now. Is this supposed to?  
-4. What are the expected ranges for total traps collected, weight and value measures, and no of fishers in crew?  
-5. In the catch information section, under "SPECIES/scientific name", can you see #1 and #2 and let me know your thoughts on that?  
-6.  
+1. Is there a set list of options for categories like enumerator, landing_site, BMU, and trap_type that I can compare the dataset against? e.g. are “KIJANGWANI” and “KITANGANI” the same landing site or 2 different ones? A validation list for the fishing operation sheet? I have the validation list for the catch composition.  
+2. Are phone numbers a certain # of digits?  
+3. Time in water (effort) doesn’t have any data so I removed it for now. Is this supposed to?  
+4. What are the expected ranges for total traps collected, weight and value measures, no of fishers in crew, and number of fish caught?    
+5. In the Catching information section under the Species / Scientific name section, take a look at #1 and #2 and the suggestion fixes on those. What do you think?  
+
+
 
 ## Contents 
 
@@ -36,13 +37,22 @@ knitr::opts_chunk$set(echo = TRUE)
 - [**Quality Control: fisher information**](#fisher_info)  
 - [**Quality Control: trap information**](#trap)  
 - [**Quality Control: catch information**](#catch)  
-- [**Quality Control: final check for notes written by field team**](#notes)  
+- [**Gear type, and fish numbers/final destination**](#gear)  
+- [**Quality Control: final check for notes written by field team**](#notes)   
+- [**Exporting cleaned dataset**](#export)  
 
 ## <a name="protocol"></a> **Protocol to run this with a future xlsx file**
 
 1. In the toolbar above, hit the arrow next to `Knit`. Scroll down to `Knit Directory` and select the option `Project Directory`.    
 2. **In `Create dataframe` code chunk**: Replace raw data file name in the function that creates the following variables: fishing_operation, catch_composition, and validation_lists.    
-3. **In `Enumerator`, `Landing_site`, `BMU`, and `trap_type` code chunks**: Run the unique() function and double check that this list is the correct names.  
+3. **In `Enumerator`, `Landing_site`, and `BMU` code chunks**: Run the unique() function and double check that this list is the correct names.  
+4. **In Trap information**, run code chunk functions for `trap_type` and `total_traps_collected` sections and double check the output is as expected.  
+5. **In catch information**, run code chunk functions for `weight and value measures`, `number of fishers in crew`, and `Kiswahili_name` and double check the output is as expected.  
+6. **In Species/Scientific name**, run code chunk functions and check output to make sure it is as expected.  
+7. **In length, gear type, number of fish, and desintation sections**, run code chunk to double check the output of ranges is as expected.  
+8. In the export section, rename the new datafile excel file.  
+
+
 4. **In `total_traps_collected`, `Weight and value measures`, and `No. of fishers in crew` code chunks**: Run range() functions on new dfs to double check these ranges are expected.   
 5. 
 
@@ -56,6 +66,7 @@ library(ggplot2)
 library(readxl)
 library(lubridate)
 library(Hmisc)
+library(writexl)
 ```
 
 ## <a name="df"></a> **Create dataframe**
@@ -207,7 +218,7 @@ df$date_time_collected <- parse_date_time(df$date_time_collected, orders = "ymdH
 ## any failed to parse error messages will be from rows that do not have a date and time
 ```
 
-### <a name="caych"></a> **Catch information**
+### <a name="catch"></a> **Catch information**
 
 ### Weight and value measures 
 
@@ -449,38 +460,66 @@ df$length_cm <- gsub("16-25", "16-20", df$length_cm)
 df$length_cm <- gsub("21-30", "21-25", df$length_cm)
 df$length_cm <- gsub("26-35", "26-30", df$length_cm)
 
+# converting numerical values to ranges 
+df <- df %>% 
+ mutate(length_corrected = case_when(
+    length_cm >= 0 & length_cm <= 10.5 ~ "0-10",
+    length_cm >= 10.5 & length_cm <= 15.4 ~ "11-15",
+    length_cm >= 15.5 & length_cm <= 20.4 ~ "16-20",
+    length_cm >= 20.5 & length_cm <= 25.4 ~ "21-25",
+    length_cm >= 25.5 & length_cm <= 30.4 ~ "26-30",
+    length_cm >= 30.5 & length_cm <= 35.4 ~ "31-35",
+    length_cm >= 35.5 & length_cm <= 40.4 ~ "36-40",
+    length_cm >= 40.5 & length_cm <= 45.4 ~ "41-45",
+    length_cm >= 45.5 & length_cm <= 50.4 ~ "46-50",
+    length_cm >= 50.5 & length_cm <= 75 ~ ">50",
+    length_cm > 75 ~ ">75"))
+
+# double checking that worked for the corrected column 
 unique(sort(df$length_cm))
+unique(sort(df$length_corrected))
 ```
 
-Converting the written in values to ranges. 
+Correct output for length_corrected: `">50"   ">75"   "0-10"  "11-15" "16-20" "21-25" "26-30" "31-35" "36-40" "41-45" "46-50"`. 
+
+## <a name="gear"></a> **Gear type, and fish numbers/final destination**
+
+### Gear type 
+
+Double check that this list looks right. Left off at looking at this list and then 
 
 ```{r}
-## converting the numerical values to ranges 
-# isolating just the numerical values 
-numerical_values <- df %>% 
-  filter(!str_detect(length_cm, ">") & !str_detect(length_cm, "<") & !str_detect(length_cm, "-")) %>%
-  filter(!length_cm == "NA")
+df$`gear type` <- toupper(df$`gear type`)
 
-# converting those to numerical values 
-numerical_values$length_cm <- as.numeric(numerical_values$length_cm)
+df$`gear type` <- gsub("MONOFILLAMENT", "MONOFILAMENT", df$`gear type`)
+df$`gear type` <- gsub("UNMODIFIED TRAP", "UNMODIFIED", df$`gear type`)
+df$`gear type` <- gsub("MODIFIED TRAP", "MODIFIED", df$`gear type`)
 
-# converting those to be ranges 
-numerical_values <- numerical_values %>%
-  mutate(length_corrected = if_else(length_cm
-    length_cm
-  ))
-
-## double checking correct ranges here
-ranges <- df %>% 
-  filter(str_detect(length_cm, ">") | str_detect(length_cm, "<") | str_detect(length_cm, "-") | length_cm == "NA")
-
-unique(sort(ranges$length_cm))
+unique(sort(df$`gear type`))
 ```
 
-left off at converting the numerical values to be within a bin... line 467 
+### Number of fish 
 
+Doube check this range is what is expected. 
 
-## <a name="notes"></a> **Final check: any notes from both datasets **
+```{r}
+unique(sort(df$number_of_fish))
+```
+
+### Destination of fish
+
+```{r}
+df$destination <- toupper(df$destination)
+
+df <- df %>%
+  filter(!destination == "OTHER WRITE IN:")
+
+df$destination <- gsub("OTHER WRITE IN:", "", df$destination)
+
+unique(sort(df$destination))
+```
+
+## <a name="notes"></a> **Final check: any notes from both datasets**
 
 
 ```{r}
@@ -488,4 +527,14 @@ left off at converting the numerical values to be within a bin... line 467
 unique(df$fishing_operation_notes)
 unique(df$catch_composition_notes)
 ```
+
+## <a name="export"></a> **Exporting cleaned dataset**
+
+```{r}
+head(df)
+nrow(df)
+
+write_xlsx(df, "data/Fishlandings-cleaned-21052022-May.xlsx")
+```
+
 
