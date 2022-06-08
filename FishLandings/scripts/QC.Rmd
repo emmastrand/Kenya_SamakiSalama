@@ -50,10 +50,6 @@ knitr::opts_chunk$set(echo = TRUE)
 7. **In length, gear type, number of fish, and desintation sections**, run code chunk to double check the output of ranges is as expected.  
 8. In the export section, rename the new datafile excel file.  
 
-
-4. **In `total_traps_collected`, `Weight and value measures`, and `No. of fishers in crew` code chunks**: Run range() functions on new dfs to double check these ranges are expected.   
-5. 
-
 ## <a name="libraries"></a> **Load all libraries**
 
 ```{r, message=FALSE, warning=FALSE}

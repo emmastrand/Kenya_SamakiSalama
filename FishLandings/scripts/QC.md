@@ -37,37 +37,24 @@ Emma Strand; <emma_strand@uri.edu>
 
 1.  In the toolbar above, hit the arrow next to `Knit`. Scroll down to
     `Knit Directory` and select the option `Project Directory`.  
-
 2.  **In `Create dataframe` code chunk**: Replace raw data file name in
     the function that creates the following variables:
     fishing\_operation, catch\_composition, and validation\_lists.  
-
 3.  **In `Enumerator`, `Landing_site`, and `BMU` code chunks**: Run the
     unique() function and double check that this list is the correct
     names.  
-
 4.  **In Trap information**, run code chunk functions for `trap_type`
     and `total_traps_collected` sections and double check the output is
     as expected.  
-
 5.  **In catch information**, run code chunk functions for
     `weight and value measures`, `number of fishers in crew`, and
     `Kiswahili_name` and double check the output is as expected.  
-
 6.  **In Species/Scientific name**, run code chunk functions and check
     output to make sure it is as expected.  
-
 7.  **In length, gear type, number of fish, and desintation sections**,
     run code chunk to double check the output of ranges is as
     expected.  
-
 8.  In the export section, rename the new datafile excel file.
-
-9.  **In `total_traps_collected`, `Weight and value measures`, and
-    `No. of fishers in crew` code chunks**: Run range() functions on new
-    dfs to double check these ranges are expected.  
-
-10. 
 
 ## <a name="libraries"></a> **Load all libraries**
 
