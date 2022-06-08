@@ -79,7 +79,7 @@ This requires the `readxl` package listed in load all libraries step.
 
 ``` r
 ## when running future iterations of raw data file, replace the file name below 
-fishing_operation <- read_excel("data/Fishlandings-data_21052022-May_update-cleaning in progress.xlsx", sheet = "fishing_operation") %>%
+fishing_operation <- read_excel("data/Fishlandings-data_21052022-May_update-27052022.xlsx", sheet = "fishing_operation") %>%
   select(-'...21', -'...22', -'...23') %>%
   rename(Operation_date = date_dd_mm_yyyy)
 
@@ -90,18 +90,18 @@ nrow(fishing_operation) #2407 fishing operations (keep this # in mind for sanity
 
 ``` r
 ## when running future iterations of raw data file, replace the file name below 
-catch_composition <- read_excel("data/Fishlandings-data_21052022-May_update-cleaning in progress.xlsx", sheet = "catch_composition") %>%
+catch_composition <- read_excel("data/Fishlandings-data_21052022-May_update-27052022.xlsx", sheet = "catch_composition") %>%
   select(-'...10', -'...11', -'...12', -'...13') %>%
   rename(Operation_date = Date)
 
 nrow(catch_composition) #14761 fish observations (keep this # in mind for sanity check at the end)
 ```
 
-    ## [1] 14761
+    ## [1] 14760
 
 ``` r
 ## when running future iterations of raw data file, replace the file name below 
-validation_lists <- read_excel("data/Fishlandings-data_21052022-May_update-cleaning in progress.xlsx", sheet = "validation_lists")
+validation_lists <- read_excel("data/Fishlandings-data_21052022-May_update-27052022.xlsx", sheet = "validation_lists")
 ```
 
 Errors found in fisher\_id column are mostly capitalization errors.
@@ -143,16 +143,16 @@ fisherman but were reading as different categories.
 # change all lower case to upper case
 df$enumerator <- toupper(df$enumerator)
 
-unique(df$enumerator) # prints all categories that show up in that column 
+unique(sort(df$enumerator)) # prints all categories that show up in that column 
 ```
 
-    ##  [1] "CELESTINAR N ALI"  "KADZO BAYA"        "CLAPERTON KAZUNGU"
-    ##  [4] "EDWARD YAA"        "CELESTINA NALI"    "BIDALA RASHID"    
-    ##  [7] "KADZO KAZUNGU"     "GILBERT NZAI"      "MACKSON KAZUNGU"  
-    ## [10] "BRUNO MUYE"        "FRANKLINE KAZUNGU" "ALI"              
-    ## [13] "BASHIR SAID"       "GARAMA YERI"       "KITSAO KARISA"    
-    ## [16] "KARIMA NYINGE"     "NGALA"             "CLAPERTON"        
-    ## [19] "OMAR ALI"          NA
+    ##  [1] "ALI"               "BASHIR SAID"       "BIDALA RASHID"    
+    ##  [4] "BRUNO MUYE"        "CELESTINA NALI"    "CELESTINAR N ALI" 
+    ##  [7] "CLAPERTON"         "CLAPERTON KAZUNGU" "EDWARD YAA"       
+    ## [10] "FRANKLINE KAZUNGU" "GARAMA YERI"       "GILBERT NZAI"     
+    ## [13] "KADZO BAYA"        "KADZO KAZUNGU"     "KARIMA NYINGE"    
+    ## [16] "KITSAO KARISA"     "MACKSON KAZUNGU"   "NGALA"            
+    ## [19] "OMAR ALI"
 
 ``` r
 ## at this point, assess errors in that list for spelling mistakes to replace below 
@@ -165,15 +165,15 @@ df$enumerator <- gsub("CLAPERTON", "CLAPERTON KAZUNGU", df$enumerator)
 df$enumerator <- gsub("CLAPERTON KAZUNGU KAZUNGU", "CLAPERTON KAZUNGU", df$enumerator)
 
 ## Step #2 in protocol at the top of this script 
-unique(df$enumerator) # at this point, double check that this list are all individual fishermen 
+unique(sort(df$enumerator)) # at this point, double check that this list are all individual fishermen 
 ```
 
-    ##  [1] "CELESTINA NALI"    "KADZO BAYA"        "CLAPERTON KAZUNGU"
-    ##  [4] "EDWARD YAA"        "BIDALA RASHID"     "KADZO KAZUNGU"    
-    ##  [7] "GILBERT NZAI"      "MACKSON KAZUNGU"   "BRUNO MUYE"       
-    ## [10] "FRANKLINE KAZUNGU" "ALI"               "BASHIR SAID"      
-    ## [13] "GARAMA YERI"       "KITSAO KARISA"     "KARIMA NYINGE"    
-    ## [16] "NGALA"             "OMAR ALI"          NA
+    ##  [1] "ALI"               "BASHIR SAID"       "BIDALA RASHID"    
+    ##  [4] "BRUNO MUYE"        "CELESTINA NALI"    "CLAPERTON KAZUNGU"
+    ##  [7] "EDWARD YAA"        "FRANKLINE KAZUNGU" "GARAMA YERI"      
+    ## [10] "GILBERT NZAI"      "KADZO BAYA"        "KADZO KAZUNGU"    
+    ## [13] "KARIMA NYINGE"     "KITSAO KARISA"     "MACKSON KAZUNGU"  
+    ## [16] "NGALA"             "OMAR ALI"
 
 ### <a name="Landing_site"></a> **Landing\_site and BMU**
 
@@ -181,14 +181,14 @@ unique(df$enumerator) # at this point, double check that this list are all indiv
 
 ``` r
 df$landing_site <- toupper(df$landing_site)
-unique(df$landing_site)
+unique(sort(df$landing_site))
 ```
 
-    ##  [1] "MAYUNGU"         "UYOMBO"          "MAWE YA KATI"    "KANAMAI"        
-    ##  [5] "KIJANGWANI"      "KURUWITU"        "KIRKLAND"        "NGOLOKO"        
-    ##  [9] "KITANGANI"       "KIVUKONI"        "CHAUREMBO"       "SUN N SAND"     
-    ## [13] "MWANAMIA"        "VUMA"            "KIVULINI"        "BURENI"         
-    ## [17] "MWENDO WA PANYA" NA
+    ##  [1] "BURENI"          "CHAUREMBO"       "KANAMAI"         "KIJANGWANI"     
+    ##  [5] "KIRKLAND"        "KITANGANI"       "KIVUKONI"        "KIVULINI"       
+    ##  [9] "KURUWITU"        "MAWE YA KATI"    "MAYUNGU"         "MWANAMIA"       
+    ## [13] "MWENDO WA PANYA" "NGOLOKO"         "SUN N SAND"      "UYOMBO"         
+    ## [17] "VUMA"
 
 ``` r
 ## Step #3 in protocol to double check this output list is all the correct site names 
@@ -198,10 +198,10 @@ unique(df$landing_site)
 
 ``` r
 df$BMU <- toupper(df$BMU)
-unique(df$BMU)
+unique(sort(df$BMU))
 ```
 
-    ## [1] "MAYUNGU"  "UYOMBO"   "KANAMAI"  "KURUWITU" "TAKAUNGU" NA
+    ## [1] "KANAMAI"  "KURUWITU" "MAYUNGU"  "TAKAUNGU" "UYOMBO"
 
 ``` r
 ## Step #4 in protocol to double check this output list is all the correct BMU names 
@@ -224,76 +224,92 @@ df$household_id <- toupper(df$household_id)
 unique(df$household_id)
 ```
 
-    ##   [1] "SS/MAY/SB/047"  "SS/MAY/SB/045"  "SS/MAY/SB/048"  "SS/MAY/SB/017" 
-    ##   [5] "SS/MAY/SB/083"  "SS/MAY/SB/082"  "SS/MAY/SB/028"  "SS/MAY/SB/052" 
-    ##   [9] "SS/MAY/SB/029"  "SS/MAY/SB/011"  "SS/MAY/SB/074"  "SS/MAY/SB/062" 
-    ##  [13] "SS/MAY/SB/078"  "SS/MAY/SB/004"  "SS/MAY/SB/003"  "SS/MAY/SB/072" 
-    ##  [17] "SS/MAY/SB/006"  "SS/MAY/SB/038"  "SS/MAY/SB/034"  "SS/MAY/SB/049" 
-    ##  [21] "SS/MAY/SB/081"  "SS/MAY/SB/058"  "SS/MAY/SB/063"  "SS/MAY/SB/064" 
-    ##  [25] "SS/MAY/SB/036"  "SS/MAY/SB/014"  "SS/MAY/SB/015"  "SS/MAY/SB/077" 
-    ##  [29] "SS/MAY/SB/030"  "SS/MAY/SB/021"  "SS/MAY/SB/018"  "SS/MAY/SB/032" 
-    ##  [33] "SS/MAY/SB/010"  "SS/MAY/SB/002"  "SS/MAY/SB/001"  "SS/MAY/SB/013" 
-    ##  [37] "SS/MAY/SB/035"  "SS/MAY/SB/033"  "SS/MAY/SB/012"  "SS/MAY/SB/005" 
-    ##  [41] "SS/MAY/SB/007"  "SS/MAY/SB/031"  "SS/MAY/SB/076"  "SS/MAY/SB/066" 
-    ##  [45] "SS/MAY/SB/067"  "SS/MAY/SB/068"  "SS/MAY/SB/019"  "SS/MAY/SB/041" 
-    ##  [49] "SS/UYO/SB/100"  "SS/UYO/SB/099"  "SS/MAY/SB/042"  "SS/MAY/SB/071" 
-    ##  [53] "SS/MAY/SB/070"  "SS/UYO/SB/091"  "SS/UYO/SB/090"  "SS/UYO/SB/095" 
-    ##  [57] "SS/UYO/SB/085"  "SS/UYO/SB/089"  "SS/UYO/SB/094"  "SS/UYO/SB/086" 
-    ##  [61] "SS/UYO/SB/088"  "SS/UYO/SB/096"  "SS/UYO/SB/092"  "SS/UYO/SB/028" 
-    ##  [65] "SS/UYO/SB/071"  "SS/UYO/SB/91"   "SS/UYO/SB/079"  "SS/UYO/SB/097" 
-    ##  [69] "SS/UYO/SB/098"  "SS/MAY/SB/022"  "SS/UYO/SB/070"  "SS/UYO/SB/002" 
-    ##  [73] "SS/UYO/SB/074"  "SS/UYO/SB/003"  "SS/UYO/SB/011"  "SS/UYO/SB/036" 
-    ##  [77] "SS/UYO/SB/010"  "SS/UYO/SB/015"  "SS/UYO/SB/001"  "SS/UYO/SB/013" 
-    ##  [81] "SS/UYO/SB/030"  "SS/UYO/SB/031"  "SS/UYO/SB/052"  "SS/UYO/SB/017" 
-    ##  [85] "SS/UYO/SB/076"  "SS/UYO/SB/082"  "SS/UYO/SB/063"  "SS/UYO/SB/048" 
-    ##  [89] "SS/UYO/SB/020"  "SS/UYO/SB/021"  "SS/UYO/SB/018"  "SS/UYO/SB/045" 
-    ##  [93] "SS/UYO/SB/049"  "SS/MAY/SB/088"  "SS/MAY/SB/060"  "SS/KAN/CO/140" 
-    ##  [97] "SS/KAN/CO/085"  "SS/KAN/CO/076"  "SS/UYO/SB/99"   "SS/UYO/SB/004" 
-    ## [101] "SS/UYO/SB/014"  "SS/UYO/SB/038"  "SS/UYO/SB/006"  "SS/MAY/SB/085" 
-    ## [105] "SS/KUR/SG/100"  "SS/KUR/SG/077"  "SS/KUR/SG/069"  "SS/KUR/SG/0077"
-    ## [109] "SS/KUR/SG/060"  "SS/KUR/SG/018"  "SS/KUR/SG/010"  "SS/KUR/SG/016" 
-    ## [113] "SS/KUR/SG/072"  "SS/KUR/SG/071"  "SS/KUR/SG/068"  "SS/KUR/SG/064" 
-    ## [117] "SS/KUR/SG/073"  "SS/KUR/SG/061"  "SS/KUR/SG/011"  "SS/KUR/SG/062" 
-    ## [121] "SS/KAN/CO/135"  "SS/KAN/CO/031"  "SS/KAN/CO/035"  "SS/KAN/CO/030" 
-    ## [125] "SS/KAN/CO/113"  "SS/KAN/CO/036"  "SS/KAN/CO/088"  "SS/KAN/CO/026" 
-    ## [129] "SS/KAN/CO/117"  "SS/KAN/CO/023"  "SS/KAN/CO/020"  "SS/KAN/CO/024" 
-    ## [133] "SS/KAN/CO/133"  "SS/KAN/CO/078"  "SS/KAN/CO/075"  "SS/KAN/CO/072" 
-    ## [137] "SS/KAN/CO/077"  "SS/KAN/CO/051"  "SS/MAY/SB/026"  "SS/KAN/CO/012" 
-    ## [141] "SS/KAN/CO/013"  "SS/KAN/CO/014"  "SS/KAN/CO/015"  "SS/TAK/CO/145" 
-    ## [145] "SS/TAK/CO/152"  "SS/TAK/CO/146"  "SS/TAK/CO/147"  "SS/TAK/CO/151" 
-    ## [149] "SS/TAK/CO/154"  "SS/TAK/CO/165"  "SS/TAK/CO/160"  "SS/KAN/CO/044" 
-    ## [153] "SS/KAN/CO/038"  "SS/KAN/CO/043"  "SS/KAN/CO/042"  "SS/KAN/CO/041" 
-    ## [157] "SS/KAN/CO/064"  "SS/KAN/CO/O41"  "SS/KAN/CO/034"  "SS/KAN/CO/037" 
-    ## [161] "SS/KUR/SG/097"  "SS/KUR/SG/037"  "SS/KUR/SG/038"  "SS/KUR/SG/034" 
-    ## [165] "SS/KUR/SG/050"  "SS/KUR/SG/40"   "SS/KUR/SG/035"  "SS/KUR/SG/098" 
-    ## [169] "SS/KUR/SG/033"  "SS/KUR/SG/041"  "SS/KUR/SG/046"  "SS/KUR/SG/036" 
-    ## [173] "SS/TAK/CO/183"  "SS/TAK/CO/173"  "SS/TAK/CO/172"  "SS/TAK/CO/168" 
-    ## [177] "SS/TAK/CO/167"  "SS/TAK/CO/191"  "SS/TAK/CO/182"  "SS/TAK/CO/170" 
-    ## [181] "SS/TAK/CO/171"  "SS/TAK/CO/164"  "SS/TAK/CO/077"  "SS/MAY/SB/065" 
-    ## [185] "SS/MAY/SB/009"  "SS/MAY/SB/025"  "SS/MAY/SB/023"  "SS/MAY/SB/027" 
-    ## [189] "SS/MAT/SB/001"  "SS/MAT/SB/045"  "SS/MAT/SB/072"  "SS/MAT/SB/068" 
-    ## [193] "SS/MAT/SB/066"  "SS/MAT/SB/034"  "SS/MAT/SB/033"  "SS/MAT/SB/032" 
-    ## [197] "SS/MAT/SB/006"  "SS/MAT/SB/004"  "SS/MAT/SB/031"  "SS/MAT/SB/077" 
-    ## [201] "SS/MAT/SB/010"  "SS/MAT/SB/003"  "SS/MAT/SB/011"  "SS/MAT/SB/019" 
-    ## [205] "SS/MAT/SB/013"  "SS/MAT/SB/014"  "SS/MAT/SB/036"  "SS/MAT/SB/074" 
-    ## [209] "SS/MAT/SB/049"  "SS/MAT/SB/022"  "SS/MAT/SB/018"  "SS/KUR/SG/065" 
-    ## [213] "SS/KUR/SG/054"  "SS/KUR/SG/082"  "SS/KUR/SG/099"  "SS/KUR/SG/043" 
-    ## [217] "SS/KUR/SG/021"  "SS/KUR/SG/090"  "SS/KUR/SG/029"  "SS/KUR/SG/020" 
-    ## [221] "SS/KUR/SG/030"  "SS/KUR/SG/022"  "SS/KUR/SG/081"  "SS/KUR/SG/086" 
-    ## [225] "SS/TAK/CO/176"  "SS/TAK/CO/174"  "SS/TAK/CO/144"  "SS/TAK/CO/142" 
-    ## [229] "SS/TAK/CO/195"  "SS/TAK/CO/198"  "SS/TAK/CO/179"  "SS/TAK/CO/194" 
-    ## [233] "SS/TAK/CO/175"  "SS/TAK/CO/197"  "SS/TAK/CO/178"  "SS/TAK/CO/180" 
-    ## [237] "SS/KAN/CO/136"  "SS/KAN/CO/084"  "SS/KAN/CO/083"  "SS/KAN/CO/018" 
-    ## [241] "SS/KAN/CO/017"  "SS/KAN/CO/086"  "SS/KAN/CO/082"  "SS/KAN/CO/016" 
-    ## [245] "SS/TAK/CO/150"  "SS/TAK/CO/161"  "SS/TAK/CO/192"  "SS/TAK/CO/205" 
-    ## [249] "SS/TAK/CO/166"  "SS/KAN/CO/073"  "SS/KAN/CO/102"  "SS/UYO/SB/039" 
-    ## [253] "SS/UYO/SB/093"  "SS/UYO/SB/029"  "SS/KAN/CO/106"  "SS/KAN/CO/127" 
-    ## [257] "SS/TAK/CO/177"  "SS/TAK/CO/102"  "SS/TAK/CO/072"  "SS/TAK/CO/071" 
-    ## [261] "SS/NAT/SB/019"  "SS/NAT/SB/045"  "SS/NAT/SB/001"  "SS/NAT/SB/018" 
-    ## [265] "SS/NAT/SB/022"  "SS/NAT/SB/010"  "SS/NAT/SB/072"  "SS/NAT/SB/074" 
-    ## [269] "SS/NAT/SB/011"  "SS/NAT/SB/003"  "SS/NAT/SB/031"  "SS/NAT/SB/049" 
-    ## [273] "SS/NAT/SB/077"  "SS/NAT/SB/013"  "SS/NAT/SB/006"  "SS/NAT/SB/004" 
-    ## [277] "SS/NAT/SB/034"  "SS/NAT/SB/033"  NA
+    ##   [1] "SS/MAY/SB/047"    "SS/MAY/SB/045"    "SS/MAY/SB/048"   
+    ##   [4] "SS/MAY/SB/017"    "SS/MAY/SB/083"    "SS/MAY/SB/082"   
+    ##   [7] "SS/MAY/SB/028"    "SS/MAY/SB/052"    "SS/MAY/SB/029"   
+    ##  [10] "SS/MAY/SB/011"    "SS/MAY/SB/074"    "SS/MAY/SB/062"   
+    ##  [13] "SS/MAY/SB/078"    "SS/MAY/SB/004"    "SS/MAY/SB/003"   
+    ##  [16] "SS/MAY/SB/072"    "SS/MAY/SB/006"    "SS/MAY/SB/038"   
+    ##  [19] "SS/MAY/SB/034"    "SS/MAY/SB/049"    "SS/MAY/SB/081"   
+    ##  [22] "SS/MAY/SB/058"    "SS/MAY/SB/063"    "SS/MAY/SB/064"   
+    ##  [25] "SS/MAY/SB/036"    "SS/MAY/SB/014"    "SS/MAY/SB/015"   
+    ##  [28] "SS/MAY/SB/077"    "SS/MAY/SB/030"    "SS/MAY/SB/021"   
+    ##  [31] "SS/MAY/SB/018"    "SS/MAY/SB/032"    "SS/MAY/SB/010"   
+    ##  [34] "SS/MAY/SB/002"    "SS/MAY/SB/001"    "SS/MAY/SB/013"   
+    ##  [37] "SS/MAY/SB/035"    "SS/MAY/SB/033"    "SS/MAY/SB/012"   
+    ##  [40] "SS/MAY/SB/005"    "SS/MAY/SB/007"    "SS/MAY/SB/031"   
+    ##  [43] "SS/MAY/SB/076"    "SS/MAY/SB/066"    "SS/MAY/SB/067"   
+    ##  [46] "SS/MAY/SB/068"    "SS/MAY/SB/019"    "SS/MAY/SB/041"   
+    ##  [49] "SS/UYO/SB/100"    "SS/UYO/SB/099"    "SS/MAY/SB/042"   
+    ##  [52] "SS/MAY/SB/071"    "SS/MAY/SB/070"    "SS/UYO/SB/091"   
+    ##  [55] "SS/UYO/SB/090"    "SS/UYO/SB/095"    "SS/UYO/SB/085"   
+    ##  [58] "SS/UYO/SB/089"    "SS/UYO/SB/094"    "SS/UYO/SB/086"   
+    ##  [61] "SS/UYO/SB/088"    "SS/UYO/SB/096"    "SS/UYO/SB/092"   
+    ##  [64] "SS/UYO/SB/028"    "SS/UYO/SB/071"    "SS/UYO/SB/91"    
+    ##  [67] "SS/UYO/SB/079"    "SS/UYO/SB/097"    "SS/UYO/SB/098"   
+    ##  [70] "SS/MAY/SB/022"    "SS/UYO/SB/070"    "SS/UYO/SB/002"   
+    ##  [73] "SS/UYO/SB/074"    "SS/UYO/SB/003"    "SS/UYO/SB/011"   
+    ##  [76] "SS/UYO/SB/036"    "SS/UYO/SB/010"    "SS/UYO/SB/015"   
+    ##  [79] "SS/UYO/SB/001"    "SS/UYO/SB/013"    "SS/UYO/SB/030"   
+    ##  [82] "SS/UYO/SB/031"    "SS/UYO/SB/052"    "SS/UYO/SB/017"   
+    ##  [85] "SS/UYO/SB/076"    "SS/UYO/SB/082"    "SS/UYO/SB/063"   
+    ##  [88] "SS/UYO/SB/048"    "SS/UYO/SB/020"    "SS/UYO/SB/021"   
+    ##  [91] "SS/UYO/SB/018"    "SS/UYO/SB/045"    "SS/UYO/SB/049"   
+    ##  [94] "SS/MAY/SB/088"    "SS/MAY/SB/060"    "SS/KAN/CO/140"   
+    ##  [97] "SS/KAN/CO/085"    "SS/KAN/CO/076"    "SS/UYO/SB/99"    
+    ## [100] "SS/UYO/SB/004"    "SS/UYO/SB/014"    "SS/UYO/SB/038"   
+    ## [103] "SS/UYO/SB/006"    "SS/MAY/SB/085"    "SS/KUR/SG/100"   
+    ## [106] "SS/KUR/SG/077"    "SS/KUR/SG/069"    "SS/KUR/SG/0077"  
+    ## [109] "SS/KUR/SG/060"    "SS/KUR/SG/018"    "SS/KUR/SG/010"   
+    ## [112] "SS/KUR/SG/016"    "SS/KUR/SG/072"    "SS/KUR/SG/071"   
+    ## [115] "SS/KUR/SG/068"    "SS/KUR/SG/064"    "SS/KUR/SG/073"   
+    ## [118] "SS/KUR/SG/061"    "SS/KUR/SG/011"    "SS/KUR/SG/062"   
+    ## [121] "SS/KAN/CO/135"    "SS/KAN/CO/031"    "SS/KAN/CO/035"   
+    ## [124] "SS/KAN/CO/030"    "SS/KAN/CO/113"    "SS/KAN/CO/036"   
+    ## [127] "SS/KAN/CO/088"    "SS/KAN/CO/026"    "SS/KAN/CO/117"   
+    ## [130] "SS/KAN/CO/023"    "SS/KAN/CO/020"    "SS/KAN/CO/024"   
+    ## [133] "SS/KAN/CO/133"    "SS/KAN/CO/078"    "SS/KAN/CO/075"   
+    ## [136] "SS/KAN/CO/072"    "SS/KAN/CO/077"    "SS/KAN/CO/051"   
+    ## [139] "SS/MAY/SB/026"    "SS/KAN/CO/012"    "SS/KAN/CO/013"   
+    ## [142] "SS/KAN/CO/014"    "SS/KAN/CO/015"    "SS/TAK/CO/145"   
+    ## [145] "SS/TAK/CO/152"    "SS/TAK/CO/146"    "SS/TAK/CO/147"   
+    ## [148] "SS/TAK/CO/151"    "SS/TAK/CO/154"    "SS/TAK/CO/165"   
+    ## [151] "SS/TAK/CO/160"    "SS/KAN/CO/044"    "SS/KAN/CO/038"   
+    ## [154] "SS/KAN/CO/043"    "SS/KAN/CO/042"    "SS/KAN/CO/041"   
+    ## [157] "SS/KAN/CO/064"    "SS/KAN/CO/O41"    "SS/KAN/CO/034"   
+    ## [160] "SS/KAN/CO/037"    "SS/KUR/SG/097"    "SS/KUR/SG/037"   
+    ## [163] "SS/KUR/SG/038"    "SS/KUR/SG/034"    "SS/KUR/SG/050"   
+    ## [166] "SS/KUR/SG/40"     "SS/KUR/SG/035"    "SS/KUR/SG/098"   
+    ## [169] "SS/KUR/SG/033"    "SS/KUR/SG/041"    "SS/KUR/SG/046"   
+    ## [172] "SS/KUR/SG/036"    "SS/TAK/CO/183"    "SS/TAK/CO/173"   
+    ## [175] "SS/TAK/CO/172"    "SS/TAK/CO/168"    "SS/TAK/CO/167"   
+    ## [178] "SS/TAK/CO/191"    "SS/TAK/CO/182"    "SS/TAK/CO/170"   
+    ## [181] "SS/TAK/CO/171"    "SS/TAK/CO/164"    "SS/TAK/CO/077"   
+    ## [184] "SS/MAY/SB/065"    "SS/MAY/SB/009"    "SS/MAY/SB/025"   
+    ## [187] "SS/MAY/SB/023"    "SS/MAY/SB/027"    "SS/MAY/SB/O72"   
+    ## [190] "SS/MAY/SB/019/FF" "SS/MAY/SB/045/FF" "SS/MAY/SB/001/FF"
+    ## [193] "SS/MAY/SB/018/FF" "SS/MAY/SB/022/FF" "SS/MAY/SB/010/FF"
+    ## [196] "SS/MAY/SB/072/FF" "SS/MAY/SB/074/FF" "SS/MAY/SB/011/FF"
+    ## [199] "SS/MAY/SB/003/FF" "SS/MAY/SB/031/FF" "SS/MAY/SB/049/FF"
+    ## [202] "SS/MAY/SB/077/FF" "SS/MAY/SB/013/FF" "SS/MAY/SB/006/FF"
+    ## [205] "SS/MAY/SB/004/FF" "SS/MAY/SB/034/FF" "SS/MAY/SB/033/FF"
+    ## [208] "SS/KUR/SG/099"    "SS/KUR/SG/082"    "SS/KUR/SG/054"   
+    ## [211] "SS/KUR/SG/043"    "SS/KUR/SG/021"    "SS/KUR/SG/090"   
+    ## [214] "SS/KUR/SG/029"    "SS/KUR/SG/020"    "SS/KUR/SG/030"   
+    ## [217] "SS/KUR/SG/022"    "SS/KUR/SG/081"    "SS/KUR/SG/086"   
+    ## [220] "SS/KUR/SG/065"    "SS/TAK/CO/176"    "SS/TAK/CO/174"   
+    ## [223] "SS/TAK/CO/144"    "SS/TAK/CO/142"    "SS/TAK/CO/195"   
+    ## [226] "SS/TAK/CO/198"    "SS/TAK/CO/179"    "SS/TAK/CO/194"   
+    ## [229] "SS/TAK/CO/175"    "SS/TAK/CO/197"    "SS/TAK/CO/178"   
+    ## [232] "SS/TAK/CO/180"    "SS/KAN/CO/136"    "SS/KAN/CO/084"   
+    ## [235] "SS/KAN/CO/083"    "SS/KAN/CO/018"    "SS/KAN/CO/017"   
+    ## [238] "SS/KAN/CO/086"    "SS/KAN/CO/082"    "SS/KAN/CO/016"   
+    ## [241] "SS/TAK/CO/150"    "SS/TAK/CO/161"    "SS/TAK/CO/192"   
+    ## [244] "SS/TAK/CO/205"    "SS/TAK/CO/166"    "SS/KAN/CO/073"   
+    ## [247] "SS/KAN/CO/102"    "SS/UYO/SB/039"    "SS/UYO/SB/093"   
+    ## [250] "SS/UYO/SB/029"    "SS/KAN/CO/106"    "SS/KAN/CO/127"   
+    ## [253] "SS/TAK/CO/177"    "SS/TAK/CO/102"    "SS/TAK/CO/072"   
+    ## [256] "SS/TAK/CO/071"    NA
 
 ### <a name="trap"></a> **Trap information**
 
@@ -303,13 +319,12 @@ The only issue I can detect here is some lower case vs upper case.
 
 ``` r
 df$trap_type <- toupper(df$trap_type)
-unique(df$trap_type)
+unique(sort(df$trap_type))
 ```
 
-    ##  [1] "UNMODIFIED"     NA               "BUNDUKI"        "NYAVU UZI"     
-    ##  [5] "MSHIPI"         "NYAVU"          "MODIFIED"       "NETI YA MKANO" 
-    ##  [9] "NYAVU YA UZI"   "NYAVU YA MKANO" "SPEAR"          "WAYAA"         
-    ## [13] "MKANO"
+    ##  [1] "BUNDUKI"        "MKANO"          "MODIFIED"       "MSHIPI"        
+    ##  [5] "NETI YA MKANO"  "NYAVU"          "NYAVU UZI"      "NYAVU YA MKANO"
+    ##  [9] "NYAVU YA UZI"   "SPEAR"          "UNMODIFIED"     "WAYAA"
 
 ### total\_traps\_collected
 
@@ -324,7 +339,7 @@ range(total_traps_collected)
     ## [1]  2 24
 
 ``` r
-## Step #4 of protocol with new df: double check the below range is expected 
+## Protocol with new df: double check the below range is expected 
 ```
 
 ### Date and time set; date and time collected
@@ -385,14 +400,22 @@ range(take_home_value_KES)
 
 ### No. of fishers in crew
 
+Are 14, 16, and 18 real?
+
 ``` r
 fishermen_no <- df %>% select(`No. of fishers in crew`) %>% na.omit()
 
-## Step #4 from protocol: Double check the below values are in the correct ranges
+## Protocol: Double check the below values are in the correct ranges
 range(fishermen_no)
 ```
 
     ## [1]  1 18
+
+``` r
+unique(sort(fishermen_no$`No. of fishers in crew`))
+```
+
+    ## [1]  1.0  2.0  2.2  3.0  4.0 14.0 16.0 18.0
 
 ### Kiswahili\_name
 
@@ -893,7 +916,7 @@ head(df)
 nrow(df)
 ```
 
-    ## [1] 25478
+    ## [1] 26180
 
 ``` r
 write_xlsx(df, "data/Fishlandings-cleaned-21052022-May.xlsx")

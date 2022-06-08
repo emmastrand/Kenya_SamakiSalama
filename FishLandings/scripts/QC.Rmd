@@ -71,21 +71,21 @@ library(writexl)
 
 ```{r, message=FALSE, warning=FALSE}
 ## when running future iterations of raw data file, replace the file name below 
-fishing_operation <- read_excel("data/Fishlandings-data_21052022-May_update-cleaning in progress.xlsx", sheet = "fishing_operation") %>%
+fishing_operation <- read_excel("data/Fishlandings-data_21052022-May_update-27052022.xlsx", sheet = "fishing_operation") %>%
   select(-'...21', -'...22', -'...23') %>%
   rename(Operation_date = date_dd_mm_yyyy)
 
 nrow(fishing_operation) #2407 fishing operations (keep this # in mind for sanity check at the end)
 
 ## when running future iterations of raw data file, replace the file name below 
-catch_composition <- read_excel("data/Fishlandings-data_21052022-May_update-cleaning in progress.xlsx", sheet = "catch_composition") %>%
+catch_composition <- read_excel("data/Fishlandings-data_21052022-May_update-27052022.xlsx", sheet = "catch_composition") %>%
   select(-'...10', -'...11', -'...12', -'...13') %>%
   rename(Operation_date = Date)
 
 nrow(catch_composition) #14761 fish observations (keep this # in mind for sanity check at the end)
 
 ## when running future iterations of raw data file, replace the file name below 
-validation_lists <- read_excel("data/Fishlandings-data_21052022-May_update-cleaning in progress.xlsx", sheet = "validation_lists")
+validation_lists <- read_excel("data/Fishlandings-data_21052022-May_update-27052022.xlsx", sheet = "validation_lists")
 ```
 
 Errors found in fisher_id column are mostly capitalization errors. 
@@ -120,7 +120,7 @@ A lot of errors occur with different lower and upper case iterations of names. I
 # change all lower case to upper case
 df$enumerator <- toupper(df$enumerator)
 
-unique(df$enumerator) # prints all categories that show up in that column 
+unique(sort(df$enumerator)) # prints all categories that show up in that column 
 ## at this point, assess errors in that list for spelling mistakes to replace below 
 ```
 
@@ -131,7 +131,7 @@ df$enumerator <- gsub("CLAPERTON", "CLAPERTON KAZUNGU", df$enumerator)
 df$enumerator <- gsub("CLAPERTON KAZUNGU KAZUNGU", "CLAPERTON KAZUNGU", df$enumerator)
 
 ## Step #2 in protocol at the top of this script 
-unique(df$enumerator) # at this point, double check that this list are all individual fishermen 
+unique(sort(df$enumerator)) # at this point, double check that this list are all individual fishermen 
 ```
 
 ### <a name="Landing_site"></a> **Landing_site and BMU**
@@ -140,7 +140,7 @@ unique(df$enumerator) # at this point, double check that this list are all indiv
 
 ```{r}
 df$landing_site <- toupper(df$landing_site)
-unique(df$landing_site)
+unique(sort(df$landing_site))
 
 ## Step #3 in protocol to double check this output list is all the correct site names 
 ```
@@ -149,7 +149,7 @@ unique(df$landing_site)
 
 ```{r}
 df$BMU <- toupper(df$BMU)
-unique(df$BMU)
+unique(sort(df$BMU))
 ## Step #4 in protocol to double check this output list is all the correct BMU names 
 ```
 
@@ -178,7 +178,7 @@ The only issue I can detect here is some lower case vs upper case.
 
 ```{r}
 df$trap_type <- toupper(df$trap_type)
-unique(df$trap_type)
+unique(sort(df$trap_type))
 ```
 
 ### total_traps_collected 
@@ -189,7 +189,7 @@ View the values put in the df here to double check all values make sense.
 total_traps_collected <- df %>% select(total_traps_collected) %>% na.omit()
 range(total_traps_collected)
 
-## Step #4 of protocol with new df: double check the below range is expected 
+## Protocol with new df: double check the below range is expected 
 ```
 
 ### Date and time set; date and time collected
@@ -231,11 +231,14 @@ range(take_home_value_KES)
 
 ### No. of fishers in crew
 
+Are 14, 16, and 18 real?
+
 ```{r}
 fishermen_no <- df %>% select(`No. of fishers in crew`) %>% na.omit()
 
-## Step #4 from protocol: Double check the below values are in the correct ranges
+## Protocol: Double check the below values are in the correct ranges
 range(fishermen_no)
+unique(sort(fishermen_no$`No. of fishers in crew`))
 ```
 
 ### Kiswahili_name
