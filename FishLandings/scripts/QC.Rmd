@@ -1,6 +1,6 @@
 ---
 title: "Quality Control of Fishing Landings dataset"
-author: "Emma Strand; emma_strand@uri.edu"
+author: "Author: Emma Strand; emma_strand@uri.edu"
 output:
   github_document: default
   pdf_document:
@@ -20,10 +20,8 @@ knitr::opts_chunk$set(echo = TRUE)
 ## Questions for Austin 
 
 1. Is there a set list of options for categories like enumerator, landing_site, BMU, and trap_type that I can compare the dataset against? e.g. are “KIJANGWANI” and “KITANGANI” the same landing site or 2 different ones? A validation list for the fishing operation sheet? I have the validation list for the catch composition.  
-2. Are phone numbers a certain # of digits?  
-3. Time in water (effort) doesn’t have any data so I removed it for now. Is this supposed to?  
-4. What are the expected ranges for total traps collected, weight and value measures, no of fishers in crew, and number of fish caught?    
-5. In the Catching information section under the Species / Scientific name section, take a look at #1 and #2 and the suggestion fixes on those. What do you think?  
+2. What are the expected ranges for total traps collected, weight and value measures, no of fishers in crew, and number of fish caught?
+3. In the Catching information section under the Species / Scientific name section, take a look at #1 and #2 and the suggestion fixes on those. What do you think?  
 
 ## Contents 
 
@@ -61,6 +59,7 @@ library(readxl)
 library(lubridate)
 library(Hmisc)
 library(writexl)
+library(naniar)
 ```
 
 ## <a name="df"></a> **Create dataframe**
@@ -155,11 +154,7 @@ unique(sort(df$BMU))
 
 ### <a name="Fisher_info"></a> **Fisher information**
 
-### fisher_phone 
-
-```{r}
-## circle back to checking if these are supposed to be a certain # of digits?
-```
+We don't have a current need to correct fisher phone number right now. 
 
 ### household_id
 
@@ -231,7 +226,7 @@ range(take_home_value_KES)
 
 ### No. of fishers in crew
 
-Are 14, 16, and 18 real?
+Crews above 5 people are unrealistic. I'm changing that data to 'NA' for now. 
 
 ```{r}
 fishermen_no <- df %>% select(`No. of fishers in crew`) %>% na.omit()
@@ -239,6 +234,23 @@ fishermen_no <- df %>% select(`No. of fishers in crew`) %>% na.omit()
 ## Protocol: Double check the below values are in the correct ranges
 range(fishermen_no)
 unique(sort(fishermen_no$`No. of fishers in crew`))
+# 
+# df %>% filter(`No. of fishers in crew` > 5)
+# 
+# df <- df %>% 
+#  mutate(crew_size = case_when(
+#     `No. of fishers in crew` > 5 ~ "NA"))
+
+df$crew_size_corrected <- df$`No. of fishers in crew`
+
+# replacing values higher than 5 with NA
+df <- df %>%
+ replace_with_na_at(
+    .vars = 'crew_size_corrected',
+    condition = ~(.x > 6))
+  
+# double checking that the above worked
+unique(sort(df$crew_size_corrected))
 ```
 
 ### Kiswahili_name
