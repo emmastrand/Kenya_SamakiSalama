@@ -23,6 +23,8 @@ knitr::opts_chunk$set(echo = TRUE)
 2. What are the expected ranges for total traps collected, weight and value measures, no of fishers in crew, and number of fish caught?
 3. In the Catching information section under the Species / Scientific name section, take a look at #1 and #2 and the suggestion fixes on those. What do you think?  
 
+Fisher ID and enumerators are mixed up. e.g. CELESTINA NALI has several different fisher ID's connected to it... Originally I merged the two survey file by fisher ID. But this column might have errors that I can't correct for in this script. 
+
 ## Contents 
 
 - [**Protocol to run this with a future xlsx file**](#protocol)   
