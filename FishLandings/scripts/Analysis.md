@@ -24,7 +24,7 @@ Author: Emma Strand; <emma_strand@uri.edu>
 ## Contents
 
 -   [**Reading in datafiles**](#data)  
--   [**Total catch per unit effort**](#catch_effort)
+-   [**Total catch (grams) per unit effort (trap set)**](#catch_effort)
 
 ## <a name="data"></a> **Reading in datafiles**
 
@@ -39,6 +39,7 @@ library(Hmisc)
 library(writexl)
 library(naniar)
 library(Rmisc)
+library(stats)
 ```
 
 Read in the data frame that is the output of the QC script.
@@ -48,7 +49,7 @@ Read in the data frame that is the output of the QC script.
 data <- read_excel("data/Fishlandings-cleaned-21052022-May.xlsx") 
 ```
 
-## <a name="catch_effort"></a> **Total catch per unit effort**
+## <a name="catch_effort"></a> **Total catch (grams) per unit effort (trap set)**
 
 Grouping by fisher\_id but this might be effective to group by
 enumerator once I have correct list of names. There are 3 boat trips
@@ -58,35 +59,135 @@ ID names but all the same enumerator.. come back to this in QC.
 Goal: grams captured per trap set.
 
 ``` r
-data <- data %>% unite(survey_id, Operation_date, fisher_id, sep = " ") %>%
+modified_trap_df <- data %>% unite(survey_id, Operation_date, fisher_id, sep = " ", remove = FALSE) %>%
   dplyr::group_by(survey_id) %>% 
   mutate(total_catch = sum(number_of_fish),
-         grams_per_trap = total_weight_kg/total_traps_collected)
-
-modified_trap_df <- data %>% subset(trap_type == "MODIFIED" | trap_type == "UNMODIFIED")
-
-modified_trap_df %>% 
-  ggplot(aes(x=trap_type, y=grams_per_trap, color=trap_type)) + geom_boxplot() + theme_bw() + 
-  ylab("Grams of fish per trap") + xlab("Type of trap") +
-  theme(axis.text.x = element_text(angle = 60, vjust = 1.1, hjust = 1.3)) #Set the text angle
+         grams_per_trap = total_weight_kg/total_traps_collected) %>%
+  dplyr::ungroup(survey_id) %>%
+  subset(trap_type == "MODIFIED" | trap_type == "UNMODIFIED") %>%
+  select(survey_id, enumerator, trap_type, `No. of fishers in crew`, total_catch, grams_per_trap) %>%
+  distinct()
 ```
 
-    ## Warning: Removed 231 rows containing non-finite values (stat_boxplot).
-
-![](Analysis_files/figure-gfm/unnamed-chunk-3-1.png)<!-- -->
+### Plotting figures.
 
 ``` r
-t.test(grams_per_trap~trap_type, data = modified_trap_df)
+# basic total catch 
+modified_trap_df %>% 
+  ggplot(aes(x=trap_type, y=total_catch, color=trap_type)) +
+  geom_boxplot(aes(color=trap_type), outlier.size = 0, lwd=0.5) +
+    geom_point(aes(fill=trap_type), pch = 21, size=1) +
+  theme_bw() + 
+  ylab("Total catch") + xlab("Type of trap") +
+  theme(axis.text.x = element_text(vjust = 1.1)) #Set the text angle
+```
+
+    ## Warning: Removed 6 rows containing non-finite values (stat_boxplot).
+
+    ## Warning: Removed 6 rows containing missing values (geom_point).
+
+![](Analysis_files/figure-gfm/unnamed-chunk-4-1.png)<!-- -->
+
+``` r
+# basic grams per trap plot with no other variables 
+modified_trap_df %>% 
+  ggplot(aes(x=trap_type, y=grams_per_trap, color=trap_type)) + 
+  geom_boxplot(aes(color=trap_type), outlier.size = 0, lwd=0.5) +
+    geom_point(aes(fill=trap_type), pch = 21, size=1) +
+  theme_bw() + 
+  ylab("Grams of fish per trap") + xlab("Type of trap") +
+  theme(axis.text.x = element_text(vjust = 1.1)) #Set the text angle
+```
+
+    ## Warning: Removed 32 rows containing non-finite values (stat_boxplot).
+
+    ## Warning: Removed 32 rows containing missing values (geom_point).
+
+![](Analysis_files/figure-gfm/unnamed-chunk-4-2.png)<!-- -->
+
+``` r
+# visually seeing if this differs by fisherman 
+modified_trap_df %>% 
+  ggplot(aes(x=trap_type, y=grams_per_trap, color=trap_type)) + 
+  facet_wrap(~enumerator) +
+  geom_boxplot(aes(color=trap_type), outlier.size = 0, lwd=0.5) +
+    geom_point(aes(fill=trap_type), pch = 21, size=1) +
+  theme_bw() + 
+  ylab("Grams of fish per trap") + xlab("Type of trap") +
+  theme(axis.text.x = element_text(vjust = 1.1)) #Set the text angle
+```
+
+    ## Warning: Removed 32 rows containing non-finite values (stat_boxplot).
+    ## Removed 32 rows containing missing values (geom_point).
+
+![](Analysis_files/figure-gfm/unnamed-chunk-4-3.png)<!-- -->
+
+``` r
+# if this differs by 
+modified_trap_df %>% 
+  ggplot(aes(x=total_catch, y=grams_per_trap, color=trap_type)) +
+  theme_bw() + 
+  geom_smooth(aes(fill=trap_type), method="loess", se=TRUE, fullrange=TRUE, level=0.95, color="black") +
+  geom_point(aes(fill=trap_type), pch = 21, size=1)
+```
+
+    ## `geom_smooth()` using formula 'y ~ x'
+
+    ## Warning: Removed 38 rows containing non-finite values (stat_smooth).
+
+    ## Warning: Removed 64 rows containing missing values (geom_smooth).
+
+    ## Warning: Removed 38 rows containing missing values (geom_point).
+
+![](Analysis_files/figure-gfm/unnamed-chunk-4-4.png)<!-- -->
+
+### Statistics on the above.
+
+Default of t.test in R is a Welch t-test which is just an adaptation of
+t-test, and it is used when the two samples have possibly unequal
+variances. Use var.equal = TRUE or FALSE to specifiy the variances of
+the dataset.
+
+You can test equal variances with a Fisher’s F-test. If p &lt; 0.05 then
+we include var.equal = FALSE in below ttest. If p &gt; 0.05 then we
+include var.equal = TRUE in below ttest.
+
+We are using an unpaired two sample t-test for this dataset.
+
+``` r
+UN <- modified_trap_df %>% subset(trap_type == "MODIFIED") %>% select(grams_per_trap) %>% na.omit()
+MOD <- modified_trap_df %>% subset(trap_type == "UNMODIFIED") %>% select(grams_per_trap) %>% na.omit()
+
+var.test(UN$grams_per_trap, MOD$grams_per_trap)
+```
+
+    ## 
+    ##  F test to compare two variances
+    ## 
+    ## data:  UN$grams_per_trap and MOD$grams_per_trap
+    ## F = 0.53874, num df = 152, denom df = 983, p-value = 3.849e-06
+    ## alternative hypothesis: true ratio of variances is not equal to 1
+    ## 95 percent confidence interval:
+    ##  0.4274283 0.6939524
+    ## sample estimates:
+    ## ratio of variances 
+    ##          0.5387362
+
+``` r
+t.test(grams_per_trap~trap_type, data = modified_trap_df, var.equal = FALSE)
 ```
 
     ## 
     ##  Welch Two Sample t-test
     ## 
     ## data:  grams_per_trap by trap_type
-    ## t = -2.9848, df = 2003.7, p-value = 0.002872
+    ## t = -2.6535, df = 249.19, p-value = 0.008478
     ## alternative hypothesis: true difference in means between group MODIFIED and group UNMODIFIED is not equal to 0
     ## 95 percent confidence interval:
-    ##  -0.08549912 -0.01769500
+    ##  -0.27298168 -0.04038802
     ## sample estimates:
     ##   mean in group MODIFIED mean in group UNMODIFIED 
-    ##                0.9033104                0.9549074
+    ##                0.8711472                1.0278321
+
+**Current error :Error in is.finite(x) : default method not implemented
+for type ‘list’**. Circle back to this..
