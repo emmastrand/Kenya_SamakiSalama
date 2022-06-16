@@ -23,7 +23,8 @@ Author: Emma Strand; <emma_strand@uri.edu>
 
 ## Contents
 
--   [**Reading in datafiles**](#data)
+-   [**Reading in datafiles**](#data)  
+-   [**Total catch per unit effort**](#catch_effort)
 
 ## <a name="data"></a> **Reading in datafiles**
 
@@ -37,4 +38,35 @@ library(lubridate)
 library(Hmisc)
 library(writexl)
 library(naniar)
+library(Rmisc)
 ```
+
+Read in the data frame that is the output of the QC script.
+
+``` r
+# read in excel file
+data <- read_excel("data/Fishlandings-cleaned-21052022-May.xlsx") 
+```
+
+## <a name="catch_effort"></a> **Total catch per unit effort**
+
+Grouping by fisher\_id but this might be effective to group by
+enumerator once I have correct list of names. There are 3 boat trips
+recorded with the exact same fish data that are under 3 different fisher
+ID names but all the same enumerator.. come back to this in QC.
+
+Goal: grams captured per trap set.
+
+``` r
+data <- data %>% unite(survey_id, Operation_date, fisher_id, sep = " ") %>%
+  dplyr::group_by(survey_id) %>% 
+  mutate(total_catch = sum(number_of_fish),
+         grams_per_trap = total_weight_kg/total_traps_collected)
+
+ggplot(data, aes(x=trap_type, y=grams_per_trap, color=trap_type)) + geom_boxplot() + theme_bw() + 
+   theme(axis.text.x = element_text(angle = 60, vjust = 1.1, hjust = 1.3)) #Set the text angle
+```
+
+    ## Warning: Removed 4141 rows containing non-finite values (stat_boxplot).
+
+![](Analysis_files/figure-gfm/unnamed-chunk-3-1.png)<!-- -->
