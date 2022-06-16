@@ -63,10 +63,30 @@ data <- data %>% unite(survey_id, Operation_date, fisher_id, sep = " ") %>%
   mutate(total_catch = sum(number_of_fish),
          grams_per_trap = total_weight_kg/total_traps_collected)
 
-ggplot(data, aes(x=trap_type, y=grams_per_trap, color=trap_type)) + geom_boxplot() + theme_bw() + 
-   theme(axis.text.x = element_text(angle = 60, vjust = 1.1, hjust = 1.3)) #Set the text angle
+modified_trap_df <- data %>% subset(trap_type == "MODIFIED" | trap_type == "UNMODIFIED")
+
+modified_trap_df %>% 
+  ggplot(aes(x=trap_type, y=grams_per_trap, color=trap_type)) + geom_boxplot() + theme_bw() + 
+  ylab("Grams of fish per trap") + xlab("Type of trap") +
+  theme(axis.text.x = element_text(angle = 60, vjust = 1.1, hjust = 1.3)) #Set the text angle
 ```
 
-    ## Warning: Removed 4141 rows containing non-finite values (stat_boxplot).
+    ## Warning: Removed 231 rows containing non-finite values (stat_boxplot).
 
 ![](Analysis_files/figure-gfm/unnamed-chunk-3-1.png)<!-- -->
+
+``` r
+t.test(grams_per_trap~trap_type, data = modified_trap_df)
+```
+
+    ## 
+    ##  Welch Two Sample t-test
+    ## 
+    ## data:  grams_per_trap by trap_type
+    ## t = -2.9848, df = 2003.7, p-value = 0.002872
+    ## alternative hypothesis: true difference in means between group MODIFIED and group UNMODIFIED is not equal to 0
+    ## 95 percent confidence interval:
+    ##  -0.08549912 -0.01769500
+    ## sample estimates:
+    ##   mean in group MODIFIED mean in group UNMODIFIED 
+    ##                0.9033104                0.9549074

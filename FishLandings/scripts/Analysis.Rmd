@@ -64,8 +64,14 @@ data <- data %>% unite(survey_id, Operation_date, fisher_id, sep = " ") %>%
   mutate(total_catch = sum(number_of_fish),
          grams_per_trap = total_weight_kg/total_traps_collected)
 
-ggplot(data, aes(x=trap_type, y=grams_per_trap, color=trap_type)) + geom_boxplot() + theme_bw() + 
-   theme(axis.text.x = element_text(angle = 60, vjust = 1.1, hjust = 1.3)) #Set the text angle
+modified_trap_df <- data %>% subset(trap_type == "MODIFIED" | trap_type == "UNMODIFIED")
+
+modified_trap_df %>% 
+  ggplot(aes(x=trap_type, y=grams_per_trap, color=trap_type)) + geom_boxplot() + theme_bw() + 
+  ylab("Grams of fish per trap") + xlab("Type of trap") +
+  theme(axis.text.x = element_text(angle = 60, vjust = 1.1, hjust = 1.3)) #Set the text angle
+
+t.test(grams_per_trap~trap_type, data = modified_trap_df)
 ```
 
 
