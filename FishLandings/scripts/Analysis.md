@@ -5,9 +5,14 @@ Author: Emma Strand; <emma_strand@uri.edu>
 ## Potential dataset issues
 
 **Notes**:  
-- Modified traps were only recorded in February.. is this a problem?  
+- Modified traps were only recorded in February.. is this a problem? The
+month of June for unmodified traps might be influencing some of these
+conclusions.. can we make that claim across all months?  
 - Circle back to triple check the number of fish column in the QC
-script.
+script.  
+- Make sure trap type names have been changed/edited as needed in QC
+script.  
+- Will need a sanity check on reality of total catch values
 
 ## Goal
 
@@ -28,7 +33,9 @@ type. finish stats below for this.*
 traps. Take the top 3-5 species and run \#1 for them separately.**
 
 Results:  
-- Top species caught across all surveys:
+- Top species caught across all surveys: *Siganus sutor* (38174),
+*Leptoscarus vaigiensis* (11739), *Lethrinus nebulosus* (6830), *Scarus
+ghobban* (5081), and *Siganus canaliculutus* (4135).
 
 1.  Total mature fish catch per unit effort between modified and
     traditional traps. This will have to be for the top 3-5 species
@@ -72,12 +79,12 @@ Read in the data frame that is the output of the QC script.
 
 ``` r
 # read in excel file
-data <- read_excel("data/Fishlandings-cleaned-21052022-May.xlsx") 
+data <- read_excel("data/Fishlandings-cleaned-21052022-May.xlsx") #read in excel file 
 
 # creating a month column based on operation date column 
-data$month <- data$Operation_date
+data$month <- data$Operation_date #duplicating the operation date column to then modify in next steps 
 data$month <- format(data$month, "%m") #extracting only the month in the new column
-data$month <- as.numeric(data$month)
+data$month <- as.numeric(data$month) #changing this column to numeric instead of a character (needed for next fxn)
 data$month <- month.abb[data$month] #changing numeric months to month names 
 ```
 
@@ -92,12 +99,12 @@ Goal: grams captured per trap set.
 
 ``` r
 modified_trap_df <- data %>% unite(survey_id, Operation_date, fisher_id, sep = " ", remove = FALSE) %>%
-  dplyr::group_by(survey_id) %>% 
-  mutate(total_catch = sum(number_of_fish),
-         grams_per_trap = total_weight_kg/total_traps_collected,
-         catch_per_trap = total_catch/total_traps_collected) %>%
-  dplyr::ungroup(survey_id) %>%
-  subset(trap_type == "MODIFIED" | trap_type == "UNMODIFIED") %>%
+  dplyr::group_by(survey_id) %>% # group by survey id
+  mutate(total_catch = sum(number_of_fish), #count the number of fish caught for each survey id
+         grams_per_trap = total_weight_kg/total_traps_collected, #divide total weight for survey id by total traps 
+         catch_per_trap = total_catch/total_traps_collected) %>% #divide total catch per survey id by total traps 
+  dplyr::ungroup(survey_id) %>% #ungroup by this column  
+  subset(trap_type == "MODIFIED" | trap_type == "UNMODIFIED") %>% #subset for only modified and unmodified traps 
   select(survey_id, enumerator, trap_type, `No. of fishers in crew`, landing_site, total_catch, month, grams_per_trap, catch_per_trap) %>%
   distinct() 
 ```
@@ -402,20 +409,51 @@ in each modified and unmodified traps?
 Calculating which species were the most abundant across the entire
 survey.
 
-Left off at ordering this plot by the most abundant.. maybe do relative
-abundance next? for the whole survey?
+This might have to be number of fish caught per trap? So that the
+difference in \# of traps for modified and unmodified is accounted for?
+
+This is split for modified and unmodified so far.. but can be changed to
+combined.. the trend is about the same for most abundant type of fish in
+each trap..
 
 ``` r
-species_list <- data %>% select(scientific_name, number_of_fish) %>% na.omit() %>%
-  dplyr::group_by(scientific_name) %>%
+species_list <- data %>% select(scientific_name, number_of_fish, trap_type) %>% 
+  na.omit() %>% 
+  subset(trap_type == "MODIFIED" | trap_type == "UNMODIFIED") %>% #subset for only modified and unmodified traps 
+  dplyr::group_by(scientific_name, trap_type) %>%
   mutate(species_catch = sum(number_of_fish)) %>% select(-number_of_fish) %>% distinct()
 
-species_list %>% filter(species_catch > 1000) %>%
-  ggplot(., aes(x=scientific_name, y=species_catch)) + ylab("number of fish caught") + xlab("Genus species") +
+# above 250 cut off includes top each count for each type of trap 
+species_list %>% filter(species_catch > 250) %>%
+  ggplot(., aes(x=scientific_name, y=species_catch, group = trap_type, color = trap_type)) + ylab("number of fish caught") + xlab("Genus species") +
   geom_point() + theme_bw() + theme(axis.text.x = element_text(angle = 60, hjust=1)) #Set the text angle
 ```
 
 ![](Analysis_files/figure-gfm/unnamed-chunk-11-1.png)<!-- -->
+
+``` r
+# print top 5 species from whole survey
+species_list %>% group_by(trap_type) %>%                                    
+  arrange(desc(species_catch))
+```
+
+    ## # A tibble: 146 × 3
+    ## # Groups:   trap_type [2]
+    ##    scientific_name         trap_type  species_catch
+    ##    <chr>                   <chr>              <dbl>
+    ##  1 Siganus sutor           UNMODIFIED         29857
+    ##  2 Leptoscarus vaigiensis  UNMODIFIED          6644
+    ##  3 Siganus sutor           MODIFIED            4691
+    ##  4 Siganus canaliculutus   UNMODIFIED          3840
+    ##  5 Lethrinus nebulosus     UNMODIFIED          3662
+    ##  6 Scarus ghobban          UNMODIFIED          3333
+    ##  7 Acanthurus dussumieri   UNMODIFIED          3257
+    ##  8 Scarus rubroviolaceus   UNMODIFIED          2302
+    ##  9 Lethrinus nebulosus     MODIFIED            2293
+    ## 10 Plectorhinchus vittatus UNMODIFIED          1684
+    ## # … with 136 more rows
+
+Does this differ by type of trap?
 
 After this then subset for just top species and do the first goal with
 only those…
