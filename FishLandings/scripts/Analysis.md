@@ -588,3 +588,15 @@ unique(sort(species_df$scientific_name))
 
     ## [1] "Leptoscarus vaigiensis" "Lethrinus nebulosus"    "Scarus ghobban"        
     ## [4] "Siganus canaliculutus"  "Siganus sutor"
+
+With just the top 5 species, do catch per trap. I don’t think I can do
+weight of just these species by trap because the weight is for the whole
+catch.
+
+``` r
+species_df <- species_df %>% unite(survey_id, Operation_date, fisher_id, sep = " ", remove = FALSE) %>%
+  dplyr::group_by(survey_id) %>% # group by survey id
+  mutate(topspecies_catch = sum(number_of_fish),
+         catch_per_trap = topspecies_catch/total_traps_collected) %>% #divide total catch per survey id by total traps 
+  dplyr::ungroup(survey_id) #ungroup by this column
+```
