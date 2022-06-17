@@ -31,7 +31,7 @@ knitr::opts_chunk$set(echo = TRUE)
 
 Results:    
 - Modified traps had a significantly higher total catch per trap set. This pattern holds for all landing sites and individual fisherman (it does not appear that either of those variables influence this result).      
-- Unmodified traps had a significantly higher weight in grams per trap set. This pattern holds for all individual fisherman, but Mayungu landing site might drive this result more than the other sites.      
+- There is no significant difference in weight in grams per trap set. This pattern holds for all individual fisherman, but Mayungu landing site might drive this result more than the other sites.      
 - *insert statement about grams per trap vs catch per trap and trap type. finish stats below for this.* 
 
 **2. Species catch per unit effort between modified and traditional traps. Take the top 3-5 species and run #1 for them separately.**
@@ -41,6 +41,10 @@ Results:
 
 
 3. Total mature fish catch per unit effort between modified and traditional traps. This will have to be for the top 3-5 species separately. Go to Fishbase and find the length at first maturity for that particular species, then assign each fish a "mature" or "immature" status in the data and calculate.    
+
+
+
+
 4. Average length of catch versus length at first maturity (Lmat). Take the difference for each fish in the data against its length at first maturity and then calculate a weighted value for modified versus traditional traps where a value above 0 represents a fish above Lmat and a value below represents a fish below Lmat.   
 5. Length frequency of top 3-5 species in modified versus traditional (different colors) with Lmat etc. indicators pulled from Fishbase.
 
@@ -51,6 +55,7 @@ Results:
 - [**Reading in datafiles**](#data)  
 - [**Total catch (grams) per unit effort (trap set)**](#catch_effort)  
 - [**Calculate top species caught**](#species)  
+- [**Top species stats per trap and maturity**](#species_pertrap)  
 
 ## <a name="data"></a> **Reading in datafiles**
 
@@ -232,19 +237,25 @@ We use a linear mixed model for this so we can include other variables like fish
 
 Grams per trap is log transformed.
 
-I don't think this is the best way to do this.... circle back to a more proper model. Maybe just linear model for each type of trap? But then can't include name of fisherman and landing site as random factors.. 
+I'm not sure yet if this is the best way to do this... 
 
 ```{r}
-catch_model <- lmer(log(grams_per_trap) ~ catch_per_trap*trap_type + (1|enumerator) + (1|landing_site), na.action=na.omit, data=modified_trap_df)
+# unmodified
+un_catch_model <- lmer(log(grams_per_trap) ~ catch_per_trap + (1|enumerator) + (1|landing_site), na.action=na.omit, data=UN)
+qqPlot(residuals(un_catch_model)) 
+hist(residuals(un_catch_model))
 
-qqPlot(residuals(catch_model)) 
-hist(residuals(catch_model))
+# modified
+mod_catch_model <- lmer(log(grams_per_trap) ~ catch_per_trap + (1|enumerator) + (1|landing_site), na.action=na.omit, data=MOD)
+qqPlot(residuals(mod_catch_model)) 
+hist(residuals(mod_catch_model))
 
-Anova(catch_model, ddf="lme4", type='III')
+summary(un_catch_model)
+summary(mod_catch_model)
+
+Anova(un_catch_model, ddf="lme4", type='III')
+Anova(mod_catch_model, ddf="lme4", type='III')
 ```
-
-
-Left off at statistics and results for total catch per trap vs weight in grams per trap... question: does higher catch # result in higher weight in each modified and unmodified traps?
 
 ## <a name="species"></a> **Calculate top species caught**
 
@@ -263,21 +274,38 @@ species_list <- data %>% select(scientific_name, number_of_fish, trap_type) %>%
 
 # above 250 cut off includes top each count for each type of trap 
 species_list %>% filter(species_catch > 250) %>%
-  ggplot(., aes(x=scientific_name, y=species_catch, group = trap_type, color = trap_type)) + ylab("number of fish caught") + xlab("Genus species") +
+  ggplot(., aes(x=scientific_name, y=species_catch, group = trap_type, color = trap_type)) + 
+  ylab("number of fish caught") + xlab("Genus species") +
   geom_point() + theme_bw() + theme(axis.text.x = element_text(angle = 60, hjust=1)) #Set the text angle
 
-# print top 5 species from whole survey
-species_list %>% group_by(trap_type) %>%                                    
-  arrange(desc(species_catch))
+# print top 5 species from modified traps 
+species_list %>% subset(trap_type == "MODIFIED") %>%                                    
+  arrange(desc(species_catch)) %>% head(5)
+
+# print top 5 species from modified traps 
+species_list %>% subset(trap_type == "UNMODIFIED") %>%                                    
+  arrange(desc(species_catch)) %>% head(5)
 ```
 
-Does this differ by type of trap?
+Relative abundance plots? relative of total caught number? 
+
+## <a name="species_pertrap"></a> **Top species stats per trap and maturity**
+
+Create a subsetted df from the top 5 total species (break this down into modified and unmodified later?).
 
 ```{r}
+species_df <- data %>% filter(!is.na(number_of_fish)) %>%
+  subset(trap_type == "MODIFIED" | trap_type == "UNMODIFIED") %>%
+  group_by(scientific_name) %>%
+  mutate(species_total_catch = sum(number_of_fish)) %>% ungroup() #must ungroup for following commands 
 
+species_keep <- species_df %>% select(scientific_name, species_total_catch) %>% 
+  distinct() %>% slice_max(species_total_catch, n = 5)
+
+# filter species df based on the species_keep list 
+species_df <- species_df %>% filter(scientific_name %in% species_keep$scientific_name)
+
+# double checking the above command worked - output should be only 5 
+unique(sort(species_df$scientific_name))
 ```
-
-
-
-After this then subset for just top species and do the first goal with only those... 
 
