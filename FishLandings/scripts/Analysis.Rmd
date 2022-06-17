@@ -17,6 +17,12 @@ editor_options:
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
+## Potential dataset issues 
+
+**Notes**:  
+- Modified traps were only recorded in February.. is this a problem?   
+- Circle back to triple check the number of fish column in the QC script.   
+
 ## Goal 
 
 **1. Total catch per unit effort between modified and traditional traps. It would be great to see this as grams captured per trap set.**   
@@ -24,18 +30,25 @@ knitr::opts_chunk$set(echo = TRUE)
 Results:    
 - Modified traps had a significantly higher total catch per trap set. This pattern holds for all landing sites and individual fisherman (it does not appear that either of those variables influence this result).      
 - Unmodified traps had a significantly higher weight in grams per trap set. This pattern holds for all individual fisherman, but Mayungu landing site might drive this result more than the other sites.      
+- *insert statement about grams per trap vs catch per trap and trap type. finish stats below for this.* 
+
+**2. Species catch per unit effort between modified and traditional traps. Take the top 3-5 species and run #1 for them separately.**
+
+Results:  
+- Top species caught across all surveys: 
 
 
-
-2. Species catch per unit effort between modified and traditional traps. Take the top 3-5 species and run #1 for them separately.  
 3. Total mature fish catch per unit effort between modified and traditional traps. This will have to be for the top 3-5 species separately. Go to Fishbase and find the length at first maturity for that particular species, then assign each fish a "mature" or "immature" status in the data and calculate.    
 4. Average length of catch versus length at first maturity (Lmat). Take the difference for each fish in the data against its length at first maturity and then calculate a weighted value for modified versus traditional traps where a value above 0 represents a fish above Lmat and a value below represents a fish below Lmat.   
 5. Length frequency of top 3-5 species in modified versus traditional (different colors) with Lmat etc. indicators pulled from Fishbase.
+
+
 
 ## Contents 
 
 - [**Reading in datafiles**](#data)  
 - [**Total catch (grams) per unit effort (trap set)**](#catch_effort)  
+- [**Calculate top species caught**](#species)  
 
 ## <a name="data"></a> **Reading in datafiles**
 
@@ -51,6 +64,8 @@ library(writexl)
 library(naniar)
 library(Rmisc)
 library(stats)
+library(lme4)
+library(car)
 ```
 
 Read in the data frame that is the output of the QC script. 
@@ -58,6 +73,12 @@ Read in the data frame that is the output of the QC script.
 ```{r, message=FALSE, warning=FALSE}
 # read in excel file
 data <- read_excel("data/Fishlandings-cleaned-21052022-May.xlsx") 
+
+# creating a month column based on operation date column 
+data$month <- data$Operation_date
+data$month <- format(data$month, "%m") #extracting only the month in the new column
+data$month <- as.numeric(data$month)
+data$month <- month.abb[data$month] #changing numeric months to month names 
 ```
 
 ## <a name="catch_effort"></a> **Total catch (grams) per unit effort (trap set)**
@@ -74,8 +95,8 @@ modified_trap_df <- data %>% unite(survey_id, Operation_date, fisher_id, sep = "
          catch_per_trap = total_catch/total_traps_collected) %>%
   dplyr::ungroup(survey_id) %>%
   subset(trap_type == "MODIFIED" | trap_type == "UNMODIFIED") %>%
-  select(survey_id, enumerator, trap_type, `No. of fishers in crew`, landing_site, total_catch, grams_per_trap, catch_per_trap) %>%
-  distinct()
+  select(survey_id, enumerator, trap_type, `No. of fishers in crew`, landing_site, total_catch, month, grams_per_trap, catch_per_trap) %>%
+  distinct() 
 ```
 
 ### Plotting figures.
@@ -92,7 +113,7 @@ modified_trap_df %>%
   ylab("Total catch per trap") + xlab("Type of trap") +
   theme(axis.text.x = element_text(vjust = 1.1)) #Set the text angle
 
-# does this differ by fisherman or landing site?
+# by fisherman 
 modified_trap_df %>% 
   ggplot(aes(x=trap_type, y=catch_per_trap, color=trap_type)) + 
   facet_wrap(~enumerator) +
@@ -102,9 +123,20 @@ modified_trap_df %>%
   ylab("Grams of fish per trap") + xlab("Type of trap") +
   theme(axis.text.x = element_text(vjust = 1.1)) #Set the text angle
 
+# by landing site
 modified_trap_df %>% 
   ggplot(aes(x=trap_type, y=catch_per_trap, color=trap_type)) + 
   facet_wrap(~landing_site) +
+  geom_boxplot(aes(color=trap_type), outlier.size = 0, lwd=0.5) +
+    geom_point(aes(fill=trap_type), pch = 21, size=1) +
+  theme_bw() + 
+  ylab("Grams of fish per trap") + xlab("Type of trap") +
+  theme(axis.text.x = element_text(vjust = 1.1)) #Set the text angle
+
+# by month
+modified_trap_df %>% 
+  ggplot(aes(x=trap_type, y=catch_per_trap, color=trap_type)) + 
+  facet_wrap(~month) +
   geom_boxplot(aes(color=trap_type), outlier.size = 0, lwd=0.5) +
     geom_point(aes(fill=trap_type), pch = 21, size=1) +
   theme_bw() + 
@@ -143,6 +175,16 @@ modified_trap_df %>%
   theme_bw() + 
   ylab("Grams of fish per trap") + xlab("Type of trap") +
   theme(axis.text.x = element_text(vjust = 1.1)) #Set the text angle
+
+# by month
+modified_trap_df %>% 
+  ggplot(aes(x=trap_type, y=grams_per_trap, color=trap_type)) + 
+  facet_wrap(~month) +
+  geom_boxplot(aes(color=trap_type), outlier.size = 0, lwd=0.5) +
+    geom_point(aes(fill=trap_type), pch = 21, size=1) +
+  theme_bw() + 
+  ylab("Grams of fish per trap") + xlab("Type of trap") +
+  theme(axis.text.x = element_text(vjust = 1.1)) #Set the text angle
 ```
 
 The relationship between grams per trap and total catch per trap. 
@@ -157,8 +199,6 @@ modified_trap_df %>%
 
 ### Statistics on the above. 
 
-#### Grams per trap and total catch 
-
 Default of t.test in R is a Welch t-test which is just an adaptation of t-test, and it is used when the two samples have possibly unequal variances. Use var.equal = TRUE or FALSE to specifiy the variances of the dataset. 
 
 You can test equal variances with a Fisher's F-test. If p < 0.05 then we include var.equal = FALSE in below ttest. If p > 0.05 then we include var.equal = TRUE in below ttest.
@@ -170,26 +210,55 @@ UN <- modified_trap_df %>% subset(trap_type == "MODIFIED") %>% na.omit()
 MOD <- modified_trap_df %>% subset(trap_type == "UNMODIFIED") %>% na.omit()
 ```
 
-Grams per trap 
+#### Grams per trap 
 
 ```{r}
 var.test(UN$grams_per_trap, MOD$grams_per_trap)
 t.test(grams_per_trap~trap_type, data = modified_trap_df, var.equal = FALSE)
 ```
 
-Total catch per trap  
+#### Total catch per trap  
 
 ```{r}
 var.test(UN$catch_per_trap, MOD$catch_per_trap)
 t.test(catch_per_trap~trap_type, data = modified_trap_df, var.equal = FALSE)
 ```
 
-Total catch per trap vs weight in grams per trap. 
+#### Total catch per trap vs weight in grams per trap. 
+
+We use a linear mixed model for this so we can include other variables like fisherman and landing site. 
+
+Grams per trap is log transformed.
+
+I don't think this is the best way to do this.... circle back to a more proper model. Maybe just linear model for each type of trap? But then can't include name of fisherman and landing site as random factors.. 
 
 ```{r}
+catch_model <- lmer(log(grams_per_trap) ~ catch_per_trap*trap_type + (1|enumerator) + (1|landing_site), na.action=na.omit, data=modified_trap_df)
 
+qqPlot(residuals(catch_model)) 
+hist(residuals(catch_model))
+
+Anova(catch_model, ddf="lme4", type='III')
 ```
 
 
 Left off at statistics and results for total catch per trap vs weight in grams per trap... question: does higher catch # result in higher weight in each modified and unmodified traps?
+
+## <a name="species"></a> **Calculate top species caught**
+
+Calculating which species were the most abundant across the entire survey.  
+
+Left off at ordering this plot by the most abundant.. maybe do relative abundance next? for the whole survey?
+
+```{r}
+species_list <- data %>% select(scientific_name, number_of_fish) %>% na.omit() %>%
+  dplyr::group_by(scientific_name) %>%
+  mutate(species_catch = sum(number_of_fish)) %>% select(-number_of_fish) %>% distinct()
+
+species_list %>% filter(species_catch > 1000) %>%
+  ggplot(., aes(x=scientific_name, y=species_catch)) + ylab("number of fish caught") + xlab("Genus species") +
+  geom_point() + theme_bw() + theme(axis.text.x = element_text(angle = 60, hjust=1)) #Set the text angle
+```
+
+After this then subset for just top species and do the first goal with only those... 
 

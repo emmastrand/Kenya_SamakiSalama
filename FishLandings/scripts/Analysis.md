@@ -2,6 +2,13 @@ Analysis of Fishing Landings dataset
 ================
 Author: Emma Strand; <emma_strand@uri.edu>
 
+## Potential dataset issues
+
+**Notes**:  
+- Modified traps were only recorded in February.. is this a problem?  
+- Circle back to triple check the number of fish column in the QC
+script.
+
 ## Goal
 
 **1. Total catch per unit effort between modified and traditional traps.
@@ -13,27 +20,35 @@ This pattern holds for all landing sites and individual fisherman (it
 does not appear that either of those variables influence this result).  
 - Unmodified traps had a significantly higher weight in grams per trap
 set. This pattern holds for all individual fisherman, but Mayungu
-landing site might drive this result more than the other sites.
+landing site might drive this result more than the other sites.  
+- *insert statement about grams per trap vs catch per trap and trap
+type. finish stats below for this.*
 
-1.  Species catch per unit effort between modified and traditional
-    traps. Take the top 3-5 species and run \#1 for them separately.  
-2.  Total mature fish catch per unit effort between modified and
+**2. Species catch per unit effort between modified and traditional
+traps. Take the top 3-5 species and run \#1 for them separately.**
+
+Results:  
+- Top species caught across all surveys:
+
+1.  Total mature fish catch per unit effort between modified and
     traditional traps. This will have to be for the top 3-5 species
     separately. Go to Fishbase and find the length at first maturity for
     that particular species, then assign each fish a “mature” or
     “immature” status in the data and calculate.  
-3.  Average length of catch versus length at first maturity (Lmat). Take
+2.  Average length of catch versus length at first maturity (Lmat). Take
     the difference for each fish in the data against its length at first
     maturity and then calculate a weighted value for modified versus
     traditional traps where a value above 0 represents a fish above Lmat
     and a value below represents a fish below Lmat.  
-4.  Length frequency of top 3-5 species in modified versus traditional
+3.  Length frequency of top 3-5 species in modified versus traditional
     (different colors) with Lmat etc. indicators pulled from Fishbase.
 
 ## Contents
 
 -   [**Reading in datafiles**](#data)  
--   [**Total catch (grams) per unit effort (trap set)**](#catch_effort)
+-   [**Total catch (grams) per unit effort (trap
+    set)**](#catch_effort)  
+-   [**Calculate top species caught**](#species)
 
 ## <a name="data"></a> **Reading in datafiles**
 
@@ -49,6 +64,8 @@ library(writexl)
 library(naniar)
 library(Rmisc)
 library(stats)
+library(lme4)
+library(car)
 ```
 
 Read in the data frame that is the output of the QC script.
@@ -56,6 +73,12 @@ Read in the data frame that is the output of the QC script.
 ``` r
 # read in excel file
 data <- read_excel("data/Fishlandings-cleaned-21052022-May.xlsx") 
+
+# creating a month column based on operation date column 
+data$month <- data$Operation_date
+data$month <- format(data$month, "%m") #extracting only the month in the new column
+data$month <- as.numeric(data$month)
+data$month <- month.abb[data$month] #changing numeric months to month names 
 ```
 
 ## <a name="catch_effort"></a> **Total catch (grams) per unit effort (trap set)**
@@ -75,8 +98,8 @@ modified_trap_df <- data %>% unite(survey_id, Operation_date, fisher_id, sep = "
          catch_per_trap = total_catch/total_traps_collected) %>%
   dplyr::ungroup(survey_id) %>%
   subset(trap_type == "MODIFIED" | trap_type == "UNMODIFIED") %>%
-  select(survey_id, enumerator, trap_type, `No. of fishers in crew`, landing_site, total_catch, grams_per_trap, catch_per_trap) %>%
-  distinct()
+  select(survey_id, enumerator, trap_type, `No. of fishers in crew`, landing_site, total_catch, month, grams_per_trap, catch_per_trap) %>%
+  distinct() 
 ```
 
 ### Plotting figures.
@@ -101,7 +124,7 @@ modified_trap_df %>%
 ![](Analysis_files/figure-gfm/unnamed-chunk-4-1.png)<!-- -->
 
 ``` r
-# does this differ by fisherman or landing site?
+# by fisherman 
 modified_trap_df %>% 
   ggplot(aes(x=trap_type, y=catch_per_trap, color=trap_type)) + 
   facet_wrap(~enumerator) +
@@ -118,6 +141,7 @@ modified_trap_df %>%
 ![](Analysis_files/figure-gfm/unnamed-chunk-4-2.png)<!-- -->
 
 ``` r
+# by landing site
 modified_trap_df %>% 
   ggplot(aes(x=trap_type, y=catch_per_trap, color=trap_type)) + 
   facet_wrap(~landing_site) +
@@ -132,6 +156,23 @@ modified_trap_df %>%
     ## Removed 33 rows containing missing values (geom_point).
 
 ![](Analysis_files/figure-gfm/unnamed-chunk-4-3.png)<!-- -->
+
+``` r
+# by month
+modified_trap_df %>% 
+  ggplot(aes(x=trap_type, y=catch_per_trap, color=trap_type)) + 
+  facet_wrap(~month) +
+  geom_boxplot(aes(color=trap_type), outlier.size = 0, lwd=0.5) +
+    geom_point(aes(fill=trap_type), pch = 21, size=1) +
+  theme_bw() + 
+  ylab("Grams of fish per trap") + xlab("Type of trap") +
+  theme(axis.text.x = element_text(vjust = 1.1)) #Set the text angle
+```
+
+    ## Warning: Removed 33 rows containing non-finite values (stat_boxplot).
+    ## Removed 33 rows containing missing values (geom_point).
+
+![](Analysis_files/figure-gfm/unnamed-chunk-4-4.png)<!-- -->
 
 Grams per trap
 
@@ -186,6 +227,23 @@ modified_trap_df %>%
 
 ![](Analysis_files/figure-gfm/unnamed-chunk-5-3.png)<!-- -->
 
+``` r
+# by month
+modified_trap_df %>% 
+  ggplot(aes(x=trap_type, y=grams_per_trap, color=trap_type)) + 
+  facet_wrap(~month) +
+  geom_boxplot(aes(color=trap_type), outlier.size = 0, lwd=0.5) +
+    geom_point(aes(fill=trap_type), pch = 21, size=1) +
+  theme_bw() + 
+  ylab("Grams of fish per trap") + xlab("Type of trap") +
+  theme(axis.text.x = element_text(vjust = 1.1)) #Set the text angle
+```
+
+    ## Warning: Removed 32 rows containing non-finite values (stat_boxplot).
+    ## Removed 32 rows containing missing values (geom_point).
+
+![](Analysis_files/figure-gfm/unnamed-chunk-5-4.png)<!-- -->
+
 The relationship between grams per trap and total catch per trap.
 
 ``` r
@@ -208,8 +266,6 @@ modified_trap_df %>%
 
 ### Statistics on the above.
 
-#### Grams per trap and total catch
-
 Default of t.test in R is a Welch t-test which is just an adaptation of
 t-test, and it is used when the two samples have possibly unequal
 variances. Use var.equal = TRUE or FALSE to specifiy the variances of
@@ -226,7 +282,7 @@ UN <- modified_trap_df %>% subset(trap_type == "MODIFIED") %>% na.omit()
 MOD <- modified_trap_df %>% subset(trap_type == "UNMODIFIED") %>% na.omit()
 ```
 
-Grams per trap
+#### Grams per trap
 
 ``` r
 var.test(UN$grams_per_trap, MOD$grams_per_trap)
@@ -260,7 +316,7 @@ t.test(grams_per_trap~trap_type, data = modified_trap_df, var.equal = FALSE)
     ##   mean in group MODIFIED mean in group UNMODIFIED 
     ##                0.8711472                1.0278321
 
-Total catch per trap
+#### Total catch per trap
 
 ``` r
 var.test(UN$catch_per_trap, MOD$catch_per_trap)
@@ -294,8 +350,72 @@ t.test(catch_per_trap~trap_type, data = modified_trap_df, var.equal = FALSE)
     ##   mean in group MODIFIED mean in group UNMODIFIED 
     ##                 15.20394                 10.79785
 
-Total catch per trap vs weight in grams per trap.
+#### Total catch per trap vs weight in grams per trap.
+
+We use a linear mixed model for this so we can include other variables
+like fisherman and landing site.
+
+Grams per trap is log transformed.
+
+I don’t think this is the best way to do this…. circle back to a more
+proper model. Maybe just linear model for each type of trap? But then
+can’t include name of fisherman and landing site as random factors..
+
+``` r
+catch_model <- lmer(log(grams_per_trap) ~ catch_per_trap*trap_type + (1|enumerator) + (1|landing_site), na.action=na.omit, data=modified_trap_df)
+
+qqPlot(residuals(catch_model)) 
+```
+
+![](Analysis_files/figure-gfm/unnamed-chunk-10-1.png)<!-- -->
+
+    ## 304 577 
+    ## 301 571
+
+``` r
+hist(residuals(catch_model))
+```
+
+![](Analysis_files/figure-gfm/unnamed-chunk-10-2.png)<!-- -->
+
+``` r
+Anova(catch_model, ddf="lme4", type='III')
+```
+
+    ## Analysis of Deviance Table (Type III Wald chisquare tests)
+    ## 
+    ## Response: log(grams_per_trap)
+    ##                           Chisq Df Pr(>Chisq)    
+    ## (Intercept)              15.774  1  7.136e-05 ***
+    ## catch_per_trap           35.834  1  2.148e-09 ***
+    ## trap_type                63.977  1  1.259e-15 ***
+    ## catch_per_trap:trap_type 13.288  1  0.0002672 ***
+    ## ---
+    ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 
 Left off at statistics and results for total catch per trap vs weight in
 grams per trap… question: does higher catch \# result in higher weight
 in each modified and unmodified traps?
+
+## <a name="species"></a> **Calculate top species caught**
+
+Calculating which species were the most abundant across the entire
+survey.
+
+Left off at ordering this plot by the most abundant.. maybe do relative
+abundance next? for the whole survey?
+
+``` r
+species_list <- data %>% select(scientific_name, number_of_fish) %>% na.omit() %>%
+  dplyr::group_by(scientific_name) %>%
+  mutate(species_catch = sum(number_of_fish)) %>% select(-number_of_fish) %>% distinct()
+
+species_list %>% filter(species_catch > 1000) %>%
+  ggplot(., aes(x=scientific_name, y=species_catch)) + ylab("number of fish caught") + xlab("Genus species") +
+  geom_point() + theme_bw() + theme(axis.text.x = element_text(angle = 60, hjust=1)) #Set the text angle
+```
+
+![](Analysis_files/figure-gfm/unnamed-chunk-11-1.png)<!-- -->
+
+After this then subset for just top species and do the first goal with
+only those…
