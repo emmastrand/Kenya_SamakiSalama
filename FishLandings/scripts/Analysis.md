@@ -23,9 +23,9 @@ Results:
 - Modified traps had a significantly higher total catch per trap set.
 This pattern holds for all landing sites and individual fisherman (it
 does not appear that either of those variables influence this result).  
-- Unmodified traps had a significantly higher weight in grams per trap
-set. This pattern holds for all individual fisherman, but Mayungu
-landing site might drive this result more than the other sites.  
+- There is no significant difference in weight in grams per trap set.
+This pattern holds for all individual fisherman, but Mayungu landing
+site might drive this result more than the other sites.  
 - *insert statement about grams per trap vs catch per trap and trap
 type. finish stats below for this.*
 
@@ -41,12 +41,14 @@ ghobban* (5081), and *Siganus canaliculutus* (4135).
     traditional traps. This will have to be for the top 3-5 species
     separately. Go to Fishbase and find the length at first maturity for
     that particular species, then assign each fish a “mature” or
-    “immature” status in the data and calculate.  
+    “immature” status in the data and calculate.
+
 2.  Average length of catch versus length at first maturity (Lmat). Take
     the difference for each fish in the data against its length at first
     maturity and then calculate a weighted value for modified versus
     traditional traps where a value above 0 represents a fish above Lmat
     and a value below represents a fish below Lmat.  
+
 3.  Length frequency of top 3-5 species in modified versus traditional
     (different colors) with Lmat etc. indicators pulled from Fishbase.
 
@@ -55,7 +57,8 @@ ghobban* (5081), and *Siganus canaliculutus* (4135).
 -   [**Reading in datafiles**](#data)  
 -   [**Total catch (grams) per unit effort (trap
     set)**](#catch_effort)  
--   [**Calculate top species caught**](#species)
+-   [**Calculate top species caught**](#species)  
+-   [**Top species stats per trap and maturity**](#species_pertrap)
 
 ## <a name="data"></a> **Reading in datafiles**
 
@@ -299,13 +302,13 @@ var.test(UN$grams_per_trap, MOD$grams_per_trap)
     ##  F test to compare two variances
     ## 
     ## data:  UN$grams_per_trap and MOD$grams_per_trap
-    ## F = 0.54523, num df = 149, denom df = 976, p-value = 7.027e-06
+    ## F = 0.68826, num df = 149, denom df = 882, p-value = 0.00479
     ## alternative hypothesis: true ratio of variances is not equal to 1
     ## 95 percent confidence interval:
-    ##  0.4317249 0.7040670
+    ##  0.5439213 0.8900902
     ## sample estimates:
     ## ratio of variances 
-    ##          0.5452349
+    ##          0.6882569
 
 ``` r
 t.test(grams_per_trap~trap_type, data = modified_trap_df, var.equal = FALSE)
@@ -315,13 +318,13 @@ t.test(grams_per_trap~trap_type, data = modified_trap_df, var.equal = FALSE)
     ##  Welch Two Sample t-test
     ## 
     ## data:  grams_per_trap by trap_type
-    ## t = -2.6535, df = 249.19, p-value = 0.008478
+    ## t = -1.008, df = 236.13, p-value = 0.3145
     ## alternative hypothesis: true difference in means between group MODIFIED and group UNMODIFIED is not equal to 0
     ## 95 percent confidence interval:
-    ##  -0.27298168 -0.04038802
+    ##  -0.17341431  0.05602353
     ## sample estimates:
     ##   mean in group MODIFIED mean in group UNMODIFIED 
-    ##                0.8711472                1.0278321
+    ##                0.8711472                0.9298426
 
 #### Total catch per trap
 
@@ -333,13 +336,13 @@ var.test(UN$catch_per_trap, MOD$catch_per_trap)
     ##  F test to compare two variances
     ## 
     ## data:  UN$catch_per_trap and MOD$catch_per_trap
-    ## F = 0.56997, num df = 149, denom df = 976, p-value = 2.855e-05
+    ## F = 0.52472, num df = 149, denom df = 882, p-value = 2.203e-06
     ## alternative hypothesis: true ratio of variances is not equal to 1
     ## 95 percent confidence interval:
-    ##  0.4513141 0.7360136
+    ##  0.4146785 0.6785931
     ## sample estimates:
     ## ratio of variances 
-    ##          0.5699746
+    ##           0.524718
 
 ``` r
 t.test(catch_per_trap~trap_type, data = modified_trap_df, var.equal = FALSE)
@@ -349,13 +352,13 @@ t.test(catch_per_trap~trap_type, data = modified_trap_df, var.equal = FALSE)
     ##  Welch Two Sample t-test
     ## 
     ## data:  catch_per_trap by trap_type
-    ## t = 3.8155, df = 236.39, p-value = 0.0001735
+    ## t = 3.8431, df = 255.32, p-value = 0.0001534
     ## alternative hypothesis: true difference in means between group MODIFIED and group UNMODIFIED is not equal to 0
     ## 95 percent confidence interval:
-    ##  2.131122 6.681071
+    ##  2.209387 6.853403
     ## sample estimates:
     ##   mean in group MODIFIED mean in group UNMODIFIED 
-    ##                 15.20394                 10.79785
+    ##                 15.20394                 10.67255
 
 #### Total catch per trap vs weight in grams per trap.
 
@@ -364,45 +367,141 @@ like fisherman and landing site.
 
 Grams per trap is log transformed.
 
-I don’t think this is the best way to do this…. circle back to a more
-proper model. Maybe just linear model for each type of trap? But then
-can’t include name of fisherman and landing site as random factors..
+I’m not sure yet if this is the best way to do this…
 
 ``` r
-catch_model <- lmer(log(grams_per_trap) ~ catch_per_trap*trap_type + (1|enumerator) + (1|landing_site), na.action=na.omit, data=modified_trap_df)
+# unmodified
+un_catch_model <- lmer(log(grams_per_trap) ~ catch_per_trap + (1|enumerator) + (1|landing_site), na.action=na.omit, data=UN)
+```
 
-qqPlot(residuals(catch_model)) 
+    ## boundary (singular) fit: see help('isSingular')
+
+``` r
+qqPlot(residuals(un_catch_model)) 
 ```
 
 ![](Analysis_files/figure-gfm/unnamed-chunk-10-1.png)<!-- -->
 
-    ## 304 577 
-    ## 301 571
+    ## [1] 47 28
 
 ``` r
-hist(residuals(catch_model))
+hist(residuals(un_catch_model))
 ```
 
 ![](Analysis_files/figure-gfm/unnamed-chunk-10-2.png)<!-- -->
 
 ``` r
-Anova(catch_model, ddf="lme4", type='III')
+# modified
+mod_catch_model <- lmer(log(grams_per_trap) ~ catch_per_trap + (1|enumerator) + (1|landing_site), na.action=na.omit, data=MOD)
+```
+
+    ## boundary (singular) fit: see help('isSingular')
+
+``` r
+qqPlot(residuals(mod_catch_model)) 
+```
+
+![](Analysis_files/figure-gfm/unnamed-chunk-10-3.png)<!-- -->
+
+    ## [1] 300 569
+
+``` r
+hist(residuals(mod_catch_model))
+```
+
+![](Analysis_files/figure-gfm/unnamed-chunk-10-4.png)<!-- -->
+
+``` r
+summary(un_catch_model)
+```
+
+    ## Linear mixed model fit by REML ['lmerMod']
+    ## Formula: log(grams_per_trap) ~ catch_per_trap + (1 | enumerator) + (1 |  
+    ##     landing_site)
+    ##    Data: UN
+    ## 
+    ## REML criterion at convergence: 276.2
+    ## 
+    ## Scaled residuals: 
+    ##      Min       1Q   Median       3Q      Max 
+    ## -2.88549 -0.70461  0.00677  0.62022  2.51131 
+    ## 
+    ## Random effects:
+    ##  Groups       Name        Variance  Std.Dev. 
+    ##  landing_site (Intercept) 1.715e-01 4.141e-01
+    ##  enumerator   (Intercept) 4.652e-17 6.820e-09
+    ##  Residual                 3.301e-01 5.745e-01
+    ## Number of obs: 150, groups:  landing_site, 4; enumerator, 3
+    ## 
+    ## Fixed effects:
+    ##                 Estimate Std. Error t value
+    ## (Intercept)    -1.039056   0.237055  -4.383
+    ## catch_per_trap  0.023858   0.003893   6.128
+    ## 
+    ## Correlation of Fixed Effects:
+    ##             (Intr)
+    ## ctch_pr_trp -0.230
+    ## optimizer (nloptwrap) convergence code: 0 (OK)
+    ## boundary (singular) fit: see help('isSingular')
+
+``` r
+summary(mod_catch_model)
+```
+
+    ## Linear mixed model fit by REML ['lmerMod']
+    ## Formula: log(grams_per_trap) ~ catch_per_trap + (1 | enumerator) + (1 |  
+    ##     landing_site)
+    ##    Data: MOD
+    ## 
+    ## REML criterion at convergence: 1737.9
+    ## 
+    ## Scaled residuals: 
+    ##     Min      1Q  Median      3Q     Max 
+    ## -4.6143 -0.5831  0.1070  0.6265  2.6695 
+    ## 
+    ## Random effects:
+    ##  Groups       Name        Variance  Std.Dev. 
+    ##  enumerator   (Intercept) 1.254e-20 1.120e-10
+    ##  landing_site (Intercept) 2.503e-01 5.003e-01
+    ##  Residual                 4.085e-01 6.391e-01
+    ## Number of obs: 883, groups:  enumerator, 4; landing_site, 3
+    ## 
+    ## Fixed effects:
+    ##                 Estimate Std. Error t value
+    ## (Intercept)    -0.426486   0.302044  -1.412
+    ## catch_per_trap  0.008625   0.001263   6.830
+    ## 
+    ## Correlation of Fixed Effects:
+    ##             (Intr)
+    ## ctch_pr_trp -0.033
+    ## optimizer (nloptwrap) convergence code: 0 (OK)
+    ## boundary (singular) fit: see help('isSingular')
+
+``` r
+Anova(un_catch_model, ddf="lme4", type='III')
 ```
 
     ## Analysis of Deviance Table (Type III Wald chisquare tests)
     ## 
     ## Response: log(grams_per_trap)
-    ##                           Chisq Df Pr(>Chisq)    
-    ## (Intercept)              15.774  1  7.136e-05 ***
-    ## catch_per_trap           35.834  1  2.148e-09 ***
-    ## trap_type                63.977  1  1.259e-15 ***
-    ## catch_per_trap:trap_type 13.288  1  0.0002672 ***
+    ##                 Chisq Df Pr(>Chisq)    
+    ## (Intercept)    19.212  1  1.170e-05 ***
+    ## catch_per_trap 37.553  1  8.896e-10 ***
     ## ---
     ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 
-Left off at statistics and results for total catch per trap vs weight in
-grams per trap… question: does higher catch \# result in higher weight
-in each modified and unmodified traps?
+``` r
+Anova(mod_catch_model, ddf="lme4", type='III')
+```
+
+    ## Analysis of Deviance Table (Type III Wald chisquare tests)
+    ## 
+    ## Response: log(grams_per_trap)
+    ##                  Chisq Df Pr(>Chisq)    
+    ## (Intercept)     1.9937  1      0.158    
+    ## catch_per_trap 46.6555  1  8.463e-12 ***
+    ## ---
+    ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 
 ## <a name="species"></a> **Calculate top species caught**
 
@@ -425,35 +524,67 @@ species_list <- data %>% select(scientific_name, number_of_fish, trap_type) %>%
 
 # above 250 cut off includes top each count for each type of trap 
 species_list %>% filter(species_catch > 250) %>%
-  ggplot(., aes(x=scientific_name, y=species_catch, group = trap_type, color = trap_type)) + ylab("number of fish caught") + xlab("Genus species") +
+  ggplot(., aes(x=scientific_name, y=species_catch, group = trap_type, color = trap_type)) + 
+  ylab("number of fish caught") + xlab("Genus species") +
   geom_point() + theme_bw() + theme(axis.text.x = element_text(angle = 60, hjust=1)) #Set the text angle
 ```
 
 ![](Analysis_files/figure-gfm/unnamed-chunk-11-1.png)<!-- -->
 
 ``` r
-# print top 5 species from whole survey
-species_list %>% group_by(trap_type) %>%                                    
-  arrange(desc(species_catch))
+# print top 5 species from modified traps 
+species_list %>% subset(trap_type == "MODIFIED") %>%                                    
+  arrange(desc(species_catch)) %>% head(5)
 ```
 
-    ## # A tibble: 146 × 3
-    ## # Groups:   trap_type [2]
-    ##    scientific_name         trap_type  species_catch
-    ##    <chr>                   <chr>              <dbl>
-    ##  1 Siganus sutor           UNMODIFIED         29857
-    ##  2 Leptoscarus vaigiensis  UNMODIFIED          6644
-    ##  3 Siganus sutor           MODIFIED            4691
-    ##  4 Siganus canaliculutus   UNMODIFIED          3840
-    ##  5 Lethrinus nebulosus     UNMODIFIED          3662
-    ##  6 Scarus ghobban          UNMODIFIED          3333
-    ##  7 Acanthurus dussumieri   UNMODIFIED          3257
-    ##  8 Scarus rubroviolaceus   UNMODIFIED          2302
-    ##  9 Lethrinus nebulosus     MODIFIED            2293
-    ## 10 Plectorhinchus vittatus UNMODIFIED          1684
-    ## # … with 136 more rows
+    ## # A tibble: 5 × 3
+    ## # Groups:   scientific_name, trap_type [5]
+    ##   scientific_name        trap_type species_catch
+    ##   <chr>                  <chr>             <dbl>
+    ## 1 Siganus sutor          MODIFIED           4691
+    ## 2 Lethrinus nebulosus    MODIFIED           2293
+    ## 3 Scarus ghobban         MODIFIED           1219
+    ## 4 Naso annulatus         MODIFIED            552
+    ## 5 Leptoscarus vaigiensis MODIFIED            271
 
-Does this differ by type of trap?
+``` r
+# print top 5 species from modified traps 
+species_list %>% subset(trap_type == "UNMODIFIED") %>%                                    
+  arrange(desc(species_catch)) %>% head(5)
+```
 
-After this then subset for just top species and do the first goal with
-only those…
+    ## # A tibble: 5 × 3
+    ## # Groups:   scientific_name, trap_type [5]
+    ##   scientific_name        trap_type  species_catch
+    ##   <chr>                  <chr>              <dbl>
+    ## 1 Siganus sutor          UNMODIFIED         29857
+    ## 2 Leptoscarus vaigiensis UNMODIFIED          6644
+    ## 3 Siganus canaliculutus  UNMODIFIED          3840
+    ## 4 Lethrinus nebulosus    UNMODIFIED          3662
+    ## 5 Scarus ghobban         UNMODIFIED          3333
+
+Relative abundance plots? relative of total caught number?
+
+## <a name="species_pertrap"></a> **Top species stats per trap and maturity**
+
+Create a subsetted df from the top 5 total species (break this down into
+modified and unmodified later?).
+
+``` r
+species_df <- data %>% filter(!is.na(number_of_fish)) %>%
+  subset(trap_type == "MODIFIED" | trap_type == "UNMODIFIED") %>%
+  group_by(scientific_name) %>%
+  mutate(species_total_catch = sum(number_of_fish)) %>% ungroup() #must ungroup for following commands 
+
+species_keep <- species_df %>% select(scientific_name, species_total_catch) %>% 
+  distinct() %>% slice_max(species_total_catch, n = 5)
+
+# filter species df based on the species_keep list 
+species_df <- species_df %>% filter(scientific_name %in% species_keep$scientific_name)
+
+# double checking the above command worked - output should be only 5 
+unique(sort(species_df$scientific_name))
+```
+
+    ## [1] "Leptoscarus vaigiensis" "Lethrinus nebulosus"    "Scarus ghobban"        
+    ## [4] "Siganus canaliculutus"  "Siganus sutor"
