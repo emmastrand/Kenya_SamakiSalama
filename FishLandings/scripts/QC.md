@@ -1,22 +1,25 @@
 Quality Control of Fishing Landings dataset
 ================
-Emma Strand; <emma_strand@uri.edu>
+Author: Emma Strand; <emma_strand@uri.edu>
 
-## Questions for Austin
+## Questions for Austin and Clay
 
-1.  Is there a set list of options for categories like enumerator,
-    landing\_site, BMU, and trap\_type that I can compare the dataset
-    against? e.g. are “KIJANGWANI” and “KITANGANI” the same landing site
-    or 2 different ones? A validation list for the fishing operation
-    sheet? I have the validation list for the catch composition.  
-2.  Are phone numbers a certain \# of digits?  
-3.  Time in water (effort) doesn’t have any data so I removed it for
-    now. Is this supposed to?  
-4.  What are the expected ranges for total traps collected, weight and
-    value measures, no of fishers in crew, and number of fish caught?  
-5.  In the Catching information section under the Species / Scientific
+1.  Is there a correct list of fisher ID’s? Fisher ID and enumerators
+    are mixed up. e.g. CELESTINA NALI has several different fisher ID’s
+    connected to it.  
+2.  Trap type list? I have more than modified and unmodified traps.  
+3.  EDWARD YAA and NGALA I have data from but they were not on Clay’s
+    enumerator list he sent. Correspond to other names?  
+4.  In the Catching information section under the Species / Scientific
     name section, take a look at \#1 and \#2 and the suggestion fixes on
-    those. What do you think?
+    those. What do you think?  
+5.  Is &gt;15 realistic for total traps collected?  
+6.  Is &gt;40 kg realistic for total kg weight?  
+7.  Is &gt;2 kg realistic for take home weight?  
+8.  Is &gt;10,000 realistic for total value KES?  
+9.  Is &gt;400 realistic for take home value KES?  
+10. Is &gt;100 realistic for \# of fish per species caught on each boat
+    trip (number\_of\_fish column)?
 
 ## Contents
 
@@ -67,6 +70,7 @@ library(readxl)
 library(lubridate)
 library(Hmisc)
 library(writexl)
+library(naniar)
 ```
 
 ## <a name="df"></a> **Create dataframe**
@@ -102,6 +106,9 @@ nrow(catch_composition) #14761 fish observations (keep this # in mind for sanity
 ``` r
 ## when running future iterations of raw data file, replace the file name below 
 validation_lists <- read_excel("data/Fishlandings-data_21052022-May_update-27052022.xlsx", sheet = "validation_lists")
+
+# read in enumerator names file 
+enumerator_list <- read_excel("data/enumerator_list.xlsx")
 ```
 
 Errors found in fisher\_id column are mostly capitalization errors.
@@ -139,41 +146,41 @@ names. I replaced this information with all upper case to collapse this
 information. For example, “kadzo baya” and “Kadzo baya” are the same
 fisherman but were reading as different categories.
 
+Kadzo Baya and Kadzo Kazungu refer to the same person.
+
 ``` r
 # change all lower case to upper case
 df$enumerator <- toupper(df$enumerator)
+enumerator_list$enumerator <- toupper(enumerator_list$enumerator)
 
-unique(sort(df$enumerator)) # prints all categories that show up in that column 
-```
-
-    ##  [1] "ALI"               "BASHIR SAID"       "BIDALA RASHID"    
-    ##  [4] "BRUNO MUYE"        "CELESTINA NALI"    "CELESTINAR N ALI" 
-    ##  [7] "CLAPERTON"         "CLAPERTON KAZUNGU" "EDWARD YAA"       
-    ## [10] "FRANKLINE KAZUNGU" "GARAMA YERI"       "GILBERT NZAI"     
-    ## [13] "KADZO BAYA"        "KADZO KAZUNGU"     "KARIMA NYINGE"    
-    ## [16] "KITSAO KARISA"     "MACKSON KAZUNGU"   "NGALA"            
-    ## [19] "OMAR ALI"
-
-``` r
-## at this point, assess errors in that list for spelling mistakes to replace below 
-```
-
-``` r
 # replace incorrect spellings 
-df$enumerator <- gsub("CELESTINAR N ALI", "CELESTINA NALI", df$enumerator)
-df$enumerator <- gsub("CLAPERTON", "CLAPERTON KAZUNGU", df$enumerator)
-df$enumerator <- gsub("CLAPERTON KAZUNGU KAZUNGU", "CLAPERTON KAZUNGU", df$enumerator)
+df$enumerator <- gsub("CELESTINAR N ALI", "CELESTINE N. ALI", df$enumerator)
+df$enumerator <- gsub("CELESTINA NALI", "CELESTINE N. ALI", df$enumerator)
+df$enumerator <- gsub("^CLAPERTON$", "CLAPERTON KAZUNGU", df$enumerator)
+df$enumerator <- gsub("MACKSON KAZUNGU", "MAXSON KAZUNGU", df$enumerator)
+df$enumerator <- gsub("BIDALA RASHID", "BIDALLA RASHID", df$enumerator)
+df$enumerator <- gsub("GARAMA YERI", "GARAMA K. YERI", df$enumerator)
+df$enumerator <- gsub("BRUNO MUYE", "BRUNO MOYE", df$enumerator)
+df$enumerator <- gsub("^ALI$", "CELESTINE N. ALI", df$enumerator) #^ and $ indicate start and end of phrase
+df$enumerator <- gsub("KADZO KAZUNGU", "KADZO BAYA", df$enumerator)
 
+# compare df list to the enumerator list 
+# result is those that appear in the df but not validated enumerator list
+setdiff(df$enumerator, enumerator_list$enumerator)
+```
+
+    ## [1] "EDWARD YAA" "NGALA"      NA
+
+``` r
 ## Step #2 in protocol at the top of this script 
 unique(sort(df$enumerator)) # at this point, double check that this list are all individual fishermen 
 ```
 
-    ##  [1] "ALI"               "BASHIR SAID"       "BIDALA RASHID"    
-    ##  [4] "BRUNO MUYE"        "CELESTINA NALI"    "CLAPERTON KAZUNGU"
-    ##  [7] "EDWARD YAA"        "FRANKLINE KAZUNGU" "GARAMA YERI"      
-    ## [10] "GILBERT NZAI"      "KADZO BAYA"        "KADZO KAZUNGU"    
-    ## [13] "KARIMA NYINGE"     "KITSAO KARISA"     "MACKSON KAZUNGU"  
-    ## [16] "NGALA"             "OMAR ALI"
+    ##  [1] "BASHIR SAID"       "BIDALLA RASHID"    "BRUNO MOYE"       
+    ##  [4] "CELESTINE N. ALI"  "CLAPERTON KAZUNGU" "EDWARD YAA"       
+    ##  [7] "FRANKLINE KAZUNGU" "GARAMA K. YERI"    "GILBERT NZAI"     
+    ## [10] "KADZO BAYA"        "KARIMA NYINGE"     "KITSAO KARISA"    
+    ## [13] "MAXSON KAZUNGU"    "NGALA"             "OMAR ALI"
 
 ### <a name="Landing_site"></a> **Landing\_site and BMU**
 
@@ -181,23 +188,46 @@ unique(sort(df$enumerator)) # at this point, double check that this list are all
 
 ``` r
 df$landing_site <- toupper(df$landing_site)
+enumerator_list$landing_site <- toupper(enumerator_list$landing_site)
+
+df$landing_site <- gsub("KIRKLAND", "KARKLAND", df$landing_site)
+
+# compare df list to the enumerator list 
+# result is those that appear in the df but not validated enumerator list
+setdiff(df$landing_site, enumerator_list$landing_site)
+```
+
+    ## [1] NA
+
+``` r
 unique(sort(df$landing_site))
 ```
 
-    ##  [1] "BURENI"          "CHAUREMBO"       "KANAMAI"         "KIJANGWANI"     
-    ##  [5] "KIRKLAND"        "KITANGANI"       "KIVUKONI"        "KIVULINI"       
+    ##  [1] "BURENI"          "CHAUREMBO"       "KANAMAI"         "KARKLAND"       
+    ##  [5] "KIJANGWANI"      "KITANGANI"       "KIVUKONI"        "KIVULINI"       
     ##  [9] "KURUWITU"        "MAWE YA KATI"    "MAYUNGU"         "MWANAMIA"       
     ## [13] "MWENDO WA PANYA" "NGOLOKO"         "SUN N SAND"      "UYOMBO"         
     ## [17] "VUMA"
 
 ``` r
 ## Step #3 in protocol to double check this output list is all the correct site names 
+## (if the only output from setdiff() is NA then this list is correct)
 ```
 
 ### BMU
 
 ``` r
 df$BMU <- toupper(df$BMU)
+enumerator_list$BMU <- toupper(enumerator_list$BMU)
+
+# compare df list to the enumerator list 
+# result is those that appear in the df but not validated enumerator list
+setdiff(df$BMU, enumerator_list$BMU)
+```
+
+    ## [1] NA
+
+``` r
 unique(sort(df$BMU))
 ```
 
@@ -205,19 +235,18 @@ unique(sort(df$BMU))
 
 ``` r
 ## Step #4 in protocol to double check this output list is all the correct BMU names 
+## (if the only output from setdiff() is NA then this list is correct)
 ```
 
 ### <a name="Fisher_info"></a> **Fisher information**
 
-### fisher\_phone
-
-``` r
-## circle back to checking if these are supposed to be a certain # of digits?
-```
+We don’t have a current need to correct fisher phone number right now.
 
 ### household\_id
 
 The only issue I can detect here is some lower case vs upper case.
+
+It would be nice to have a list of expected household and fisher ID’s.
 
 ``` r
 df$household_id <- toupper(df$household_id)
@@ -340,7 +369,10 @@ range(total_traps_collected)
 
 ``` r
 ## Protocol with new df: double check the below range is expected 
+hist(df$total_traps_collected)
 ```
+
+![](QC_files/figure-gfm/unnamed-chunk-10-1.png)<!-- -->
 
 ### Date and time set; date and time collected
 
@@ -398,9 +430,34 @@ range(take_home_value_KES)
 
     ## [1]   0 900
 
+``` r
+hist(df$total_weight_kg)
+```
+
+![](QC_files/figure-gfm/unnamed-chunk-12-1.png)<!-- -->
+
+``` r
+hist(df$take_home_weight_kg)
+```
+
+![](QC_files/figure-gfm/unnamed-chunk-12-2.png)<!-- -->
+
+``` r
+hist(df$total_value_KES)
+```
+
+![](QC_files/figure-gfm/unnamed-chunk-12-3.png)<!-- -->
+
+``` r
+hist(df$take_home_value_KES)
+```
+
+![](QC_files/figure-gfm/unnamed-chunk-12-4.png)<!-- -->
+
 ### No. of fishers in crew
 
-Are 14, 16, and 18 real?
+Crews above 5 people are unrealistic. I’m changing that data to ‘NA’ for
+now.
 
 ``` r
 fishermen_no <- df %>% select(`No. of fishers in crew`) %>% na.omit()
@@ -416,6 +473,28 @@ unique(sort(fishermen_no$`No. of fishers in crew`))
 ```
 
     ## [1]  1.0  2.0  2.2  3.0  4.0 14.0 16.0 18.0
+
+``` r
+# 
+# df %>% filter(`No. of fishers in crew` > 5)
+# 
+# df <- df %>% 
+#  mutate(crew_size = case_when(
+#     `No. of fishers in crew` > 5 ~ "NA"))
+
+df$crew_size_corrected <- df$`No. of fishers in crew`
+
+# replacing values higher than 5 with NA
+df <- df %>%
+ replace_with_na_at(
+    .vars = 'crew_size_corrected',
+    condition = ~(.x > 6))
+  
+# double checking that the above worked
+unique(sort(df$crew_size_corrected))
+```
+
+    ## [1] 1.0 2.0 2.2 3.0 4.0
 
 ### Kiswahili\_name
 
@@ -732,13 +811,13 @@ category. e.g. “16-25” to “16-20”. “21-30” to “21-25”.
 df %>% filter(length_cm == "16-20   ,46-50" | length_cm == "26-30,21- 25")
 ```
 
-    ## # A tibble: 3 × 28
+    ## # A tibble: 3 × 29
     ##   Operation_date      enumerator landing_site BMU     fisher_id     fisher_phone
     ##   <dttm>              <chr>      <chr>        <chr>   <chr>         <chr>       
     ## 1 2021-06-27 00:00:00 KADZO BAYA MAYUNGU      MAYUNGU SS/UYO/SB/07… 0755223621  
     ## 2 2021-06-27 00:00:00 KADZO BAYA MAYUNGU      MAYUNGU SS/UYO/SB/07… 0755223621  
     ## 3 2021-06-14 00:00:00 <NA>       <NA>         <NA>    SS/UYO/SB/09… <NA>        
-    ## # … with 22 more variables: household_id <chr>, trap_type <chr>,
+    ## # … with 23 more variables: household_id <chr>, trap_type <chr>,
     ## #   total_traps_collected <dbl>, date_set_dd_mm_yyyy <dttm>,
     ## #   `time_set_24hh:mm` <chr>, date_collected_dd_mm_yyyy <dttm>,
     ## #   `time_collected_24hh:mm` <chr>, total_weight_kg <dbl>,
@@ -752,8 +831,8 @@ df %>% filter(length_cm == "16-20   ,46-50" | length_cm == "26-30,21- 25")
 df %>% filter(length_cm == "NA")
 ```
 
-    ## # A tibble: 0 × 28
-    ## # … with 28 variables: Operation_date <dttm>, enumerator <chr>,
+    ## # A tibble: 0 × 29
+    ## # … with 29 variables: Operation_date <dttm>, enumerator <chr>,
     ## #   landing_site <chr>, BMU <chr>, fisher_id <chr>, fisher_phone <chr>,
     ## #   household_id <chr>, trap_type <chr>, total_traps_collected <dbl>,
     ## #   date_set_dd_mm_yyyy <dttm>, time_set_24hh:mm <chr>,
@@ -858,6 +937,14 @@ unique(sort(df$number_of_fish))
     ## [39]  40  42  43  44  46  47  48  50  51  53  57  58  59  60  68  70 120 140 216
     ## [58] 310 351 480
 
+``` r
+df %>% ggplot(., aes(y=number_of_fish)) + geom_boxplot() + theme_bw()
+```
+
+    ## Warning: Removed 206 rows containing non-finite values (stat_boxplot).
+
+![](QC_files/figure-gfm/unnamed-chunk-20-1.png)<!-- -->
+
 ### Destination of fish
 
 ``` r
@@ -895,16 +982,16 @@ unique(df$catch_composition_notes)
 head(df)
 ```
 
-    ## # A tibble: 6 × 29
-    ##   Operation_date      enumerator     landing_site BMU     fisher_id fisher_phone
-    ##   <dttm>              <chr>          <chr>        <chr>   <chr>     <chr>       
-    ## 1 2021-12-02 00:00:00 CELESTINA NALI MAYUNGU      MAYUNGU SS/MAY/S… <NA>        
-    ## 2 2021-12-02 00:00:00 CELESTINA NALI MAYUNGU      MAYUNGU SS/MAY/S… <NA>        
-    ## 3 2021-12-02 00:00:00 CELESTINA NALI MAYUNGU      MAYUNGU SS/MAY/S… <NA>        
-    ## 4 2021-12-02 00:00:00 CELESTINA NALI MAYUNGU      MAYUNGU SS/MAY/S… <NA>        
-    ## 5 2021-12-02 00:00:00 CELESTINA NALI MAYUNGU      MAYUNGU SS/MAY/S… <NA>        
-    ## 6 2021-12-02 00:00:00 CELESTINA NALI MAYUNGU      MAYUNGU SS/MAY/S… <NA>        
-    ## # … with 23 more variables: household_id <chr>, trap_type <chr>,
+    ## # A tibble: 6 × 30
+    ##   Operation_date      enumerator       landing_site BMU   fisher_id fisher_phone
+    ##   <dttm>              <chr>            <chr>        <chr> <chr>     <chr>       
+    ## 1 2021-12-02 00:00:00 CELESTINE N. ALI MAYUNGU      MAYU… SS/MAY/S… <NA>        
+    ## 2 2021-12-02 00:00:00 CELESTINE N. ALI MAYUNGU      MAYU… SS/MAY/S… <NA>        
+    ## 3 2021-12-02 00:00:00 CELESTINE N. ALI MAYUNGU      MAYU… SS/MAY/S… <NA>        
+    ## 4 2021-12-02 00:00:00 CELESTINE N. ALI MAYUNGU      MAYU… SS/MAY/S… <NA>        
+    ## 5 2021-12-02 00:00:00 CELESTINE N. ALI MAYUNGU      MAYU… SS/MAY/S… <NA>        
+    ## 6 2021-12-02 00:00:00 CELESTINE N. ALI MAYUNGU      MAYU… SS/MAY/S… <NA>        
+    ## # … with 24 more variables: household_id <chr>, trap_type <chr>,
     ## #   total_traps_collected <dbl>, date_set_dd_mm_yyyy <dttm>,
     ## #   `time_set_24hh:mm` <chr>, date_collected_dd_mm_yyyy <dttm>,
     ## #   `time_collected_24hh:mm` <chr>, total_weight_kg <dbl>,

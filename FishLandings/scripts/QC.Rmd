@@ -17,13 +17,19 @@ editor_options:
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-## Questions for Austin 
+## Questions for Austin and Clay
 
-1. Is there a set list of options for categories like enumerator, landing_site, BMU, and trap_type that I can compare the dataset against? e.g. are “KIJANGWANI” and “KITANGANI” the same landing site or 2 different ones? A validation list for the fishing operation sheet? I have the validation list for the catch composition.  
-2. What are the expected ranges for total traps collected, weight and value measures, no of fishers in crew, and number of fish caught?
-3. In the Catching information section under the Species / Scientific name section, take a look at #1 and #2 and the suggestion fixes on those. What do you think?  
+1. Is there a correct list of fisher ID's? Fisher ID and enumerators are mixed up. e.g. CELESTINA NALI has several different fisher ID's connected to it.      
+2. Trap type list? I have more than modified and unmodified traps.    
+3. EDWARD YAA and NGALA I have data from but they were not on Clay's enumerator list he sent. Correspond to other names?  
+4. In the Catching information section under the Species / Scientific name section, take a look at #1 and #2 and the suggestion fixes on those. What do you think?   
+5. Is >15 realistic for total traps collected?  
+6. Is >40 kg realistic for total kg weight?  
+7. Is >2 kg realistic for take home weight?  
+8. Is >10,000 realistic for total value KES?  
+9. Is >400 realistic for take home value KES?  
+10. Is >100 realistic for # of fish per species caught on each boat trip (number_of_fish column)? 
 
-Fisher ID and enumerators are mixed up. e.g. CELESTINA NALI has several different fisher ID's connected to it... Originally I merged the two survey file by fisher ID. But this column might have errors that I can't correct for in this script. 
 
 ## Contents 
 
@@ -87,6 +93,9 @@ nrow(catch_composition) #14761 fish observations (keep this # in mind for sanity
 
 ## when running future iterations of raw data file, replace the file name below 
 validation_lists <- read_excel("data/Fishlandings-data_21052022-May_update-27052022.xlsx", sheet = "validation_lists")
+
+# read in enumerator names file 
+enumerator_list <- read_excel("data/enumerator_list.xlsx")
 ```
 
 Errors found in fisher_id column are mostly capitalization errors. 
@@ -117,19 +126,27 @@ In the above chunk, these dates are automatically read in as *dttm* format (date
 
 A lot of errors occur with different lower and upper case iterations of names. I replaced this information with all upper case to collapse this information. For example, "kadzo baya" and "Kadzo baya" are the same fisherman but were reading as different categories. 
 
+Kadzo Baya and Kadzo Kazungu refer to the same person. 
+
 ```{r}
 # change all lower case to upper case
 df$enumerator <- toupper(df$enumerator)
+enumerator_list$enumerator <- toupper(enumerator_list$enumerator)
 
-unique(sort(df$enumerator)) # prints all categories that show up in that column 
-## at this point, assess errors in that list for spelling mistakes to replace below 
-```
-
-```{r}
 # replace incorrect spellings 
-df$enumerator <- gsub("CELESTINAR N ALI", "CELESTINA NALI", df$enumerator)
-df$enumerator <- gsub("CLAPERTON", "CLAPERTON KAZUNGU", df$enumerator)
-df$enumerator <- gsub("CLAPERTON KAZUNGU KAZUNGU", "CLAPERTON KAZUNGU", df$enumerator)
+df$enumerator <- gsub("CELESTINAR N ALI", "CELESTINE N. ALI", df$enumerator)
+df$enumerator <- gsub("CELESTINA NALI", "CELESTINE N. ALI", df$enumerator)
+df$enumerator <- gsub("^CLAPERTON$", "CLAPERTON KAZUNGU", df$enumerator)
+df$enumerator <- gsub("MACKSON KAZUNGU", "MAXSON KAZUNGU", df$enumerator)
+df$enumerator <- gsub("BIDALA RASHID", "BIDALLA RASHID", df$enumerator)
+df$enumerator <- gsub("GARAMA YERI", "GARAMA K. YERI", df$enumerator)
+df$enumerator <- gsub("BRUNO MUYE", "BRUNO MOYE", df$enumerator)
+df$enumerator <- gsub("^ALI$", "CELESTINE N. ALI", df$enumerator) #^ and $ indicate start and end of phrase
+df$enumerator <- gsub("KADZO KAZUNGU", "KADZO BAYA", df$enumerator)
+
+# compare df list to the enumerator list 
+# result is those that appear in the df but not validated enumerator list
+setdiff(df$enumerator, enumerator_list$enumerator)
 
 ## Step #2 in protocol at the top of this script 
 unique(sort(df$enumerator)) # at this point, double check that this list are all individual fishermen 
@@ -141,17 +158,32 @@ unique(sort(df$enumerator)) # at this point, double check that this list are all
 
 ```{r}
 df$landing_site <- toupper(df$landing_site)
+enumerator_list$landing_site <- toupper(enumerator_list$landing_site)
+
+df$landing_site <- gsub("KIRKLAND", "KARKLAND", df$landing_site)
+
+# compare df list to the enumerator list 
+# result is those that appear in the df but not validated enumerator list
+setdiff(df$landing_site, enumerator_list$landing_site)
 unique(sort(df$landing_site))
 
 ## Step #3 in protocol to double check this output list is all the correct site names 
+## (if the only output from setdiff() is NA then this list is correct)
 ```
 
 ### BMU 
 
 ```{r}
 df$BMU <- toupper(df$BMU)
+enumerator_list$BMU <- toupper(enumerator_list$BMU)
+
+# compare df list to the enumerator list 
+# result is those that appear in the df but not validated enumerator list
+setdiff(df$BMU, enumerator_list$BMU)
+
 unique(sort(df$BMU))
 ## Step #4 in protocol to double check this output list is all the correct BMU names 
+## (if the only output from setdiff() is NA then this list is correct)
 ```
 
 ### <a name="Fisher_info"></a> **Fisher information**
@@ -161,6 +193,8 @@ We don't have a current need to correct fisher phone number right now.
 ### household_id
 
 The only issue I can detect here is some lower case vs upper case. 
+
+It would be nice to have a list of expected household and fisher ID's. 
 
 ```{r}
 df$household_id <- toupper(df$household_id)
@@ -187,6 +221,7 @@ total_traps_collected <- df %>% select(total_traps_collected) %>% na.omit()
 range(total_traps_collected)
 
 ## Protocol with new df: double check the below range is expected 
+hist(df$total_traps_collected)
 ```
 
 ### Date and time set; date and time collected
@@ -224,6 +259,11 @@ range(total_weight_kg)
 range(take_home_weight_kg)
 range(total_value_KES)
 range(take_home_value_KES)
+
+hist(df$total_weight_kg)
+hist(df$take_home_weight_kg)
+hist(df$total_value_KES)
+hist(df$take_home_value_KES)
 ```
 
 ### No. of fishers in crew
@@ -515,6 +555,8 @@ Doube check this range is what is expected.
 
 ```{r}
 unique(sort(df$number_of_fish))
+
+df %>% ggplot(., aes(y=number_of_fish)) + geom_boxplot() + theme_bw()
 ```
 
 ### Destination of fish
