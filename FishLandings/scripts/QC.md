@@ -4,22 +4,7 @@ Author: Emma Strand; <emma_strand@uri.edu>
 
 ## Questions for Austin and Clay
 
-1.  Is there a correct list of fisher ID’s? Fisher ID and enumerators
-    are mixed up. e.g. CELESTINA NALI has several different fisher ID’s
-    connected to it.  
-2.  Trap type list? I have more than modified and unmodified traps.  
-3.  EDWARD YAA and NGALA I have data from but they were not on Clay’s
-    enumerator list he sent. Correspond to other names?  
-4.  In the Catching information section under the Species / Scientific
-    name section, take a look at \#1 and \#2 and the suggestion fixes on
-    those. What do you think?  
-5.  Is &gt;15 realistic for total traps collected?  
-6.  Is &gt;40 kg realistic for total kg weight?  
-7.  Is &gt;2 kg realistic for take home weight?  
-8.  Is &gt;10,000 realistic for total value KES?  
-9.  Is &gt;400 realistic for take home value KES?  
-10. Is &gt;100 realistic for \# of fish per species caught on each boat
-    trip (number\_of\_fish column)?
+None at the moment.
 
 ## Contents
 
@@ -169,7 +154,7 @@ df$enumerator <- gsub("KADZO KAZUNGU", "KADZO BAYA", df$enumerator)
 setdiff(df$enumerator, enumerator_list$enumerator)
 ```
 
-    ## [1] "EDWARD YAA" "NGALA"      NA
+    ## [1] NA
 
 ``` r
 ## Step #2 in protocol at the top of this script 

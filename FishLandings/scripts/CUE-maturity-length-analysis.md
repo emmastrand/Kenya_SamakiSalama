@@ -1,20 +1,22 @@
-Analysis of Fishing Landings dataset
+CUE, maturity, and length analysis of Fishing Landings dataset
 ================
 Author: Emma Strand; <emma_strand@uri.edu>
 
-## Potential dataset issues
+## Questions for Austin and Clay
 
-**Notes**:  
-- Modified traps were only recorded in February.. is this a problem? The
-month of June for unmodified traps might be influencing some of these
-conclusions.. can we make that claim across all months?  
-- Circle back to triple check the number of fish column in the QC
-script.  
-- Make sure trap type names have been changed/edited as needed in QC
-script.  
-- Will need a sanity check on reality of total catch values
+1.) Modified traps were only recorded in February.. is this a problem?
+The month of June for unmodified traps might be influencing some of
+these conclusions.. can we make that claim across all months?
 
-## Goal
+**To-Do**:  
+- Model for grams per trap vs catch per trap and trape type.  
+- ANOVA for top species per trap type.  
+- Create datafile from fishbase info.  
+- \#3-5 on below aims.  
+- Relative abundance plots in other script.  
+- Summary points, results, and next steps suggestions finalize
+
+## Aims and Results
 
 **1. Total catch per unit effort between modified and traditional traps.
 It would be great to see this as grams captured per trap set.**
@@ -30,27 +32,41 @@ site might drive this result more than the other sites.
 type. finish stats below for this.*
 
 **2. Species catch per unit effort between modified and traditional
-traps. Take the top 3-5 species and run \#1 for them separately.**
-
+traps. Take the top 3-5 species and run \#1 for them separately.** s
 Results:  
-- Top species caught across all surveys: *Siganus sutor* (38174),
-*Leptoscarus vaigiensis* (11739), *Lethrinus nebulosus* (6830), *Scarus
-ghobban* (5081), and *Siganus canaliculutus* (4135).
+- Top species caught across all surveys (not in order): *Leptoscarus
+vaigiensis*, *Lethrinus nebulosus*, *Scarus ghobban*, *Siganus
+canaliculutus*, and *Siganus sutor*.  
+- Top species caught in modified traps: 1. *Siganus sutor*, 2.
+*Lethrinus nebulosus*, 3. *Scarus ghobban*, 4. *Naso annulatus*, and 5.
+*Leptoscarus vaigiensis*.  
+- Top species caught in unmodified traps: 1. *Siganus sutor*, 2.
+*Leptoscarus vaigiensis*, 3. *Siganus canaliculutus*, 4. *Lethrinus
+nebulosus*, and 5. *Scarus ghobban*.
 
-1.  Total mature fish catch per unit effort between modified and
-    traditional traps. This will have to be for the top 3-5 species
-    separately. Go to Fishbase and find the length at first maturity for
-    that particular species, then assign each fish a “mature” or
-    “immature” status in the data and calculate.
+*Come back to running ANOVA on if type of trap affects the catch for
+each species.*
 
-2.  Average length of catch versus length at first maturity (Lmat). Take
-    the difference for each fish in the data against its length at first
-    maturity and then calculate a weighted value for modified versus
-    traditional traps where a value above 0 represents a fish above Lmat
-    and a value below represents a fish below Lmat.  
+**3. Total mature fish catch per unit effort between modified and
+traditional traps. This will have to be for the top 3-5 species
+separately. Go to Fishbase and find the length at first maturity for
+that particular species, then assign each fish a “mature” or “immature”
+status in the data and calculate.**
 
-3.  Length frequency of top 3-5 species in modified versus traditional
-    (different colors) with Lmat etc. indicators pulled from Fishbase.
+Results:
+
+**4. Average length of catch versus length at first maturity (Lmat).
+Take the difference for each fish in the data against its length at
+first maturity and then calculate a weighted value for modified versus
+traditional traps where a value above 0 represents a fish above Lmat and
+a value below represents a fish below Lmat.**
+
+Results:
+
+**5. Length frequency of top 3-5 species in modified versus traditional
+(different colors) with Lmat etc. indicators pulled from Fishbase.**
+
+Results:
 
 ## Contents
 
@@ -58,7 +74,10 @@ ghobban* (5081), and *Siganus canaliculutus* (4135).
 -   [**Total catch (grams) per unit effort (trap
     set)**](#catch_effort)  
 -   [**Calculate top species caught**](#species)  
--   [**Top species stats per trap and maturity**](#species_pertrap)
+-   [**Top species stats per trap**](#species_pertrap)  
+-   [**Creating database from Fishbase**](#fishbase)  
+-   [**Catch per unit effort for top species by maturity**](#maturity)  
+-   [**Catch and length data of mature fish**](#length)
 
 ## <a name="data"></a> **Reading in datafiles**
 
@@ -131,7 +150,7 @@ modified_trap_df %>%
 
     ## Warning: Removed 33 rows containing missing values (geom_point).
 
-![](Analysis_files/figure-gfm/unnamed-chunk-4-1.png)<!-- -->
+![](CUE-maturity-length-analysis_files/figure-gfm/unnamed-chunk-4-1.png)<!-- -->
 
 ``` r
 # by fisherman 
@@ -148,7 +167,7 @@ modified_trap_df %>%
     ## Warning: Removed 33 rows containing non-finite values (stat_boxplot).
     ## Removed 33 rows containing missing values (geom_point).
 
-![](Analysis_files/figure-gfm/unnamed-chunk-4-2.png)<!-- -->
+![](CUE-maturity-length-analysis_files/figure-gfm/unnamed-chunk-4-2.png)<!-- -->
 
 ``` r
 # by landing site
@@ -165,7 +184,7 @@ modified_trap_df %>%
     ## Warning: Removed 33 rows containing non-finite values (stat_boxplot).
     ## Removed 33 rows containing missing values (geom_point).
 
-![](Analysis_files/figure-gfm/unnamed-chunk-4-3.png)<!-- -->
+![](CUE-maturity-length-analysis_files/figure-gfm/unnamed-chunk-4-3.png)<!-- -->
 
 ``` r
 # by month
@@ -182,7 +201,7 @@ modified_trap_df %>%
     ## Warning: Removed 33 rows containing non-finite values (stat_boxplot).
     ## Removed 33 rows containing missing values (geom_point).
 
-![](Analysis_files/figure-gfm/unnamed-chunk-4-4.png)<!-- -->
+![](CUE-maturity-length-analysis_files/figure-gfm/unnamed-chunk-4-4.png)<!-- -->
 
 Grams per trap
 
@@ -201,7 +220,7 @@ modified_trap_df %>%
 
     ## Warning: Removed 32 rows containing missing values (geom_point).
 
-![](Analysis_files/figure-gfm/unnamed-chunk-5-1.png)<!-- -->
+![](CUE-maturity-length-analysis_files/figure-gfm/unnamed-chunk-5-1.png)<!-- -->
 
 ``` r
 # visually seeing if this differs by fisherman 
@@ -218,7 +237,7 @@ modified_trap_df %>%
     ## Warning: Removed 32 rows containing non-finite values (stat_boxplot).
     ## Removed 32 rows containing missing values (geom_point).
 
-![](Analysis_files/figure-gfm/unnamed-chunk-5-2.png)<!-- -->
+![](CUE-maturity-length-analysis_files/figure-gfm/unnamed-chunk-5-2.png)<!-- -->
 
 ``` r
 # visually seeing if this differs by landing site 
@@ -235,7 +254,7 @@ modified_trap_df %>%
     ## Warning: Removed 32 rows containing non-finite values (stat_boxplot).
     ## Removed 32 rows containing missing values (geom_point).
 
-![](Analysis_files/figure-gfm/unnamed-chunk-5-3.png)<!-- -->
+![](CUE-maturity-length-analysis_files/figure-gfm/unnamed-chunk-5-3.png)<!-- -->
 
 ``` r
 # by month
@@ -252,7 +271,7 @@ modified_trap_df %>%
     ## Warning: Removed 32 rows containing non-finite values (stat_boxplot).
     ## Removed 32 rows containing missing values (geom_point).
 
-![](Analysis_files/figure-gfm/unnamed-chunk-5-4.png)<!-- -->
+![](CUE-maturity-length-analysis_files/figure-gfm/unnamed-chunk-5-4.png)<!-- -->
 
 The relationship between grams per trap and total catch per trap.
 
@@ -272,7 +291,7 @@ modified_trap_df %>%
 
     ## Warning: Removed 38 rows containing missing values (geom_point).
 
-![](Analysis_files/figure-gfm/unnamed-chunk-6-1.png)<!-- -->
+![](CUE-maturity-length-analysis_files/figure-gfm/unnamed-chunk-6-1.png)<!-- -->
 
 ### Statistics on the above.
 
@@ -380,7 +399,7 @@ un_catch_model <- lmer(log(grams_per_trap) ~ catch_per_trap + (1|enumerator) + (
 qqPlot(residuals(un_catch_model)) 
 ```
 
-![](Analysis_files/figure-gfm/unnamed-chunk-10-1.png)<!-- -->
+![](CUE-maturity-length-analysis_files/figure-gfm/unnamed-chunk-10-1.png)<!-- -->
 
     ## [1] 47 28
 
@@ -388,7 +407,7 @@ qqPlot(residuals(un_catch_model))
 hist(residuals(un_catch_model))
 ```
 
-![](Analysis_files/figure-gfm/unnamed-chunk-10-2.png)<!-- -->
+![](CUE-maturity-length-analysis_files/figure-gfm/unnamed-chunk-10-2.png)<!-- -->
 
 ``` r
 # modified
@@ -401,7 +420,7 @@ mod_catch_model <- lmer(log(grams_per_trap) ~ catch_per_trap + (1|enumerator) + 
 qqPlot(residuals(mod_catch_model)) 
 ```
 
-![](Analysis_files/figure-gfm/unnamed-chunk-10-3.png)<!-- -->
+![](CUE-maturity-length-analysis_files/figure-gfm/unnamed-chunk-10-3.png)<!-- -->
 
     ## [1] 300 569
 
@@ -409,7 +428,7 @@ qqPlot(residuals(mod_catch_model))
 hist(residuals(mod_catch_model))
 ```
 
-![](Analysis_files/figure-gfm/unnamed-chunk-10-4.png)<!-- -->
+![](CUE-maturity-length-analysis_files/figure-gfm/unnamed-chunk-10-4.png)<!-- -->
 
 ``` r
 summary(un_catch_model)
@@ -529,7 +548,7 @@ species_list %>% filter(species_catch > 250) %>%
   geom_point() + theme_bw() + theme(axis.text.x = element_text(angle = 60, hjust=1)) #Set the text angle
 ```
 
-![](Analysis_files/figure-gfm/unnamed-chunk-11-1.png)<!-- -->
+![](CUE-maturity-length-analysis_files/figure-gfm/unnamed-chunk-11-1.png)<!-- -->
 
 ``` r
 # print top 5 species from modified traps 
@@ -548,7 +567,7 @@ species_list %>% subset(trap_type == "MODIFIED") %>%
     ## 5 Leptoscarus vaigiensis MODIFIED            271
 
 ``` r
-# print top 5 species from modified traps 
+# print top 5 species from unmodified traps 
 species_list %>% subset(trap_type == "UNMODIFIED") %>%                                    
   arrange(desc(species_catch)) %>% head(5)
 ```
@@ -565,7 +584,7 @@ species_list %>% subset(trap_type == "UNMODIFIED") %>%
 
 Relative abundance plots? relative of total caught number?
 
-## <a name="species_pertrap"></a> **Top species stats per trap and maturity**
+## <a name="species_pertrap"></a> **Top species stats per trap**
 
 Create a subsetted df from the top 5 total species (break this down into
 modified and unmodified later?).
@@ -599,4 +618,29 @@ species_df <- species_df %>% unite(survey_id, Operation_date, fisher_id, sep = "
   mutate(topspecies_catch = sum(number_of_fish),
          catch_per_trap = topspecies_catch/total_traps_collected) %>% #divide total catch per survey id by total traps 
   dplyr::ungroup(survey_id) #ungroup by this column
+
+# basic grams per trap plot with no other variables 
+species_df %>% 
+  ggplot(aes(x=scientific_name, y=catch_per_trap, color=trap_type)) + 
+  geom_boxplot(aes(color=trap_type), outlier.size = 0, lwd=0.5) +
+  theme_bw() + ggtitle("For top 5 most abundant species") +
+  ylab("Catch per trap (species catch / total catch)") + xlab("Genus species") +
+  theme(axis.text.x = element_text(angle = 60, hjust=1)) #Set the text angle
 ```
+
+    ## Warning: Removed 7 rows containing non-finite values (stat_boxplot).
+
+![](CUE-maturity-length-analysis_files/figure-gfm/unnamed-chunk-13-1.png)<!-- -->
+
+``` r
+# ANOVA on the top 5 species 
+```
+
+## <a name="fishbase"></a> **Creating database from Fishbase**
+
+Search on fishbase maturity level and length stats to add to the
+spreadsheet ‘maturity.xlsx’ on the github folder ‘data’.
+
+## <a name="maturity"></a> **Catch per unit effort for top species by maturity**
+
+## <a name="length"></a> **Catch and length data of mature fish**

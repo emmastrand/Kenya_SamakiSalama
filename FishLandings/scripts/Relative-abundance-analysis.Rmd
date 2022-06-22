@@ -1,0 +1,53 @@
+---
+title: "Relative abundance analysis of Fishing Landings dataset"
+author: "Author: Emma Strand; emma_strand@uri.edu"
+output:
+  github_document: default
+  pdf_document:
+    keep_tex: yes
+  html_document:
+    toc: yes
+    toc_depth: 6
+    toc_float: yes
+editor_options: 
+  chunk_output_type: inline
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Aims and Results 
+
+**1. Quantify and visualize relative abundance for each modified and unmodified trap using phyloseq.** 
+
+**2. Alpha and beta diversity for fish species between modified and unmodified traps. Does using modified traps affect the diversity of fish caught?**  
+
+## Contents 
+
+- [**Reading in datafiles**](#data)  
+
+## <a name="data"></a> **Reading in datafiles**
+
+```{r, message=FALSE, warning=FALSE}
+library(plyr)
+library(dplyr)
+library(tidyverse)
+library(ggplot2)
+library(readxl)
+library(lubridate)
+library(Hmisc)
+library(writexl)
+library(naniar)
+library(Rmisc)
+library(stats)
+library(lme4)
+library(car)
+```
+
+Read in the data frame that is the output of the QC script and create matrix for phyloseq input. 
+
+```{r}
+
+```
+
