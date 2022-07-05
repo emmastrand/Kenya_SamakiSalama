@@ -22,12 +22,17 @@ knitr::opts_chunk$set(echo = TRUE)
 1.) Modified traps were only recorded in February.. is this a problem? The month of June for unmodified traps might be influencing some of these conclusions.. can we make that claim across all months?  
 
 **To-Do**:  
-- Model for grams per trap vs catch per trap and trape type.    
+
+Run for May 4th dataset.. 
+Split months by year. 
+
+- Why does January not show up for trap figure?  
+- Model for grams per trap vs catch per trap and trap type.    
 - ANOVA for top species per trap type.  
 - Create datafile from fishbase info.  
 - #3-5 on below aims.  
 - Relative abundance plots in other script.  
-- Summary points, results, and next steps suggestions finalize
+- Summary points, results, and next steps suggestions finalize.  
 
 ## Aims and Results  
 
