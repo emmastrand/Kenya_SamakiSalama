@@ -342,9 +342,6 @@ species_df %>%
   theme_bw() + ggtitle("For top 5 most abundant species") +
   ylab("Catch per trap (species catch / total catch)") + xlab("Genus species") +
   theme(axis.text.x = element_text(angle = 60, hjust=1)) #Set the text angle
-
-# ANOVA on the top 5 species 
-
 ```
 
 
@@ -353,6 +350,18 @@ species_df %>%
 Search on fishbase maturity level and length stats to add to the spreadsheet 'maturity.xlsx' on the github folder 'data'. 
 
 ```{r}
+
+```
+
+
+
+
+OR trying to download https://github.com/tokami/TropFishR.
+
+```{r}
+#install.packages("TropFishR")
+library(TropFishR)
+
 
 ```
 
