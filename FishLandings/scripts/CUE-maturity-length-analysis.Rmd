@@ -284,16 +284,24 @@ This is split for modified and unmodified so far.. but can be changed to combine
 
 ```{r}
 species_list <- data %>% select(scientific_name, number_of_fish, trap_type) %>% 
-  na.omit() %>% 
+  filter(!is.na(trap_type)) %>% 
+  filter(!is.na(number_of_fish)) %>% 
   subset(trap_type == "MODIFIED" | trap_type == "UNMODIFIED") %>% #subset for only modified and unmodified traps 
   dplyr::group_by(scientific_name, trap_type) %>%
-  mutate(species_catch = sum(number_of_fish)) %>% select(-number_of_fish) %>% distinct()
+  mutate(species_catch = sum(number_of_fish)) %>% 
+  select(-number_of_fish) %>% distinct() %>%
+  ungroup()
 
 # above 250 cut off includes top each count for each type of trap 
 species_list %>% filter(species_catch > 250) %>%
   ggplot(., aes(x=scientific_name, y=species_catch, group = trap_type, color = trap_type)) + 
   ylab("number of fish caught") + xlab("Genus species") +
   geom_point() + theme_bw() + theme(axis.text.x = element_text(angle = 60, hjust=1)) #Set the text angle
+
+species_list %>% filter(species_catch > 250) %>% 
+  select(scientific_name) %>% 
+  distinct() %>%
+  write_csv("output/top_species.csv")
 
 # print top 5 species from modified traps 
 species_list %>% subset(trap_type == "MODIFIED") %>%                                    
