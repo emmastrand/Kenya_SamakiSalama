@@ -17,4 +17,4 @@ I used the file `Fishlandings-data_clay June_updated-IW.xlsx` as input for the q
 
 The output from the QC.md script is the file `Fishlandings-cleaned-clay-June_updated-IW.xlsx`.
 
-###
+### Total catch and grams per unit effort between modified and unmodified traps
