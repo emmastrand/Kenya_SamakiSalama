@@ -17,13 +17,13 @@ I used the file `Fishlandings-data_clay June_updated-IW.xlsx` as input for the q
 
 The output from the QC.md script is the file `Fishlandings-cleaned-clay-June_updated-IW.xlsx`.
 
-## Total catch and grams per unit effort between modified and unmodified traps
+## Total catch and grams per unit effort between modified and unmodified traps (CUE...Rmd)
 
 ### Total catch per trap
 
-![](https://github.com/emmastrand/Kenya_SamakiSalama/raw/main/FishLandings/scripts/CUE-maturity-length-analysis_files/figure-gfm/unnamed-chunk-4-1.png)
+**Total catch per trap for modified traps was significantly higher (p < 0.0001)**
 
-Total catch per trap was significantly different (p < 0.0001) between modified and unmodified traps:
+![](https://github.com/emmastrand/Kenya_SamakiSalama/raw/main/FishLandings/scripts/CUE-maturity-length-analysis_files/figure-gfm/unnamed-chunk-4-1.png)
 
 ```
 t.test(catch_per_trap~trap_type, data = modified_trap_df, var.equal = FALSE)
@@ -41,6 +41,8 @@ t.test(catch_per_trap~trap_type, data = modified_trap_df, var.equal = FALSE)
 ##                 60.88043                 29.46989
 ```
 
-But if you break this down by year and month - 2021 numbers seem too low? Look at scales. 
+But if you break this down by year and month - 2021 numbers seem too low? Look at scales. Subsetting to 2022 isn't likely to change the stat above but we might want to do that for the paper.
 
-![](https://github.com/emmastrand/Kenya_SamakiSalama/raw/main/FishLandings/scripts/CUE-maturity-length-analysis_files/figure-gfm/unnamed-chunk-4-4.png)
+![](https://github.com/emmastrand/Kenya_SamakiSalama/raw/main/FishLandings/scripts/CUE-maturity-length-analysis_files/figure-gfm/unnamed-chunk-4-4.png).
+
+### Grams per trap
