@@ -121,7 +121,7 @@ Catch per trap
 
 ``` r
 # basic total catch per trap with no other variables 
-modified_trap_df %>% 
+modified_trap_df %>% filter(catch_per_trap < 1500) %>%
   ggplot(aes(x=trap_type, y=catch_per_trap, color=trap_type)) +
   geom_boxplot(aes(color=trap_type), outlier.size = 0, lwd=0.5) +
     geom_point(aes(fill=trap_type), pch = 21, size=1) +
@@ -129,10 +129,6 @@ modified_trap_df %>%
   ylab("Total catch per trap") + xlab("Type of trap") +
   theme(axis.text.x = element_text(vjust = 1.1)) #Set the text angle
 ```
-
-    ## Warning: Removed 210 rows containing non-finite values (stat_boxplot).
-
-    ## Warning: Removed 210 rows containing missing values (geom_point).
 
 ![](CUE-maturity-length-analysis_files/figure-gfm/unnamed-chunk-4-1.png)<!-- -->
 
@@ -149,7 +145,8 @@ modified_trap_df %>%
 ```
 
     ## Warning: Removed 210 rows containing non-finite values (stat_boxplot).
-    ## Removed 210 rows containing missing values (geom_point).
+
+    ## Warning: Removed 210 rows containing missing values (geom_point).
 
 ![](CUE-maturity-length-analysis_files/figure-gfm/unnamed-chunk-4-2.png)<!-- -->
 

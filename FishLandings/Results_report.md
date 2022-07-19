@@ -21,7 +21,7 @@ The output from the QC.md script is the file `Fishlandings-cleaned-clay-June_upd
 
 ### Total catch per trap
 
-**Total catch per trap for modified traps was significantly higher (p < 0.0001)**
+**Total catch per trap for modified traps was significantly higher (p < 0.0001). This result does not seem to be influenced by any one particular fisherman or landing site (see CUE.Rmd for figures).**
 
 ![](https://github.com/emmastrand/Kenya_SamakiSalama/raw/main/FishLandings/scripts/CUE-maturity-length-analysis_files/figure-gfm/unnamed-chunk-4-1.png)
 
@@ -46,3 +46,27 @@ But if you break this down by year and month - 2021 numbers seem too low? Look a
 ![](https://github.com/emmastrand/Kenya_SamakiSalama/raw/main/FishLandings/scripts/CUE-maturity-length-analysis_files/figure-gfm/unnamed-chunk-4-4.png).
 
 ### Grams per trap
+
+**Gramps per trap set was not significantly different (p=0.3201) between modified and unmodified traps. This result also does not appear to be influended by one particular fisherman or landing site (see CUE.Rmd for figures).** 
+
+![](https://github.com/emmastrand/Kenya_SamakiSalama/raw/main/FishLandings/scripts/CUE-maturity-length-analysis_files/figure-gfm/unnamed-chunk-5-1.png)
+
+```
+t.test(grams_per_trap~trap_type, data = modified_trap_df, var.equal = FALSE)
+
+##
+##  Welch Two Sample t-test
+##
+## data:  grams_per_trap by trap_type
+## t = -0.99452, df = 1939.3, p-value = 0.3201
+## alternative hypothesis: true difference in means between group MODIFIED and group UNMODIFIED is not equal to 0
+## 95 percent confidence interval:
+##  -0.06561682  0.02145999
+## sample estimates:
+##   mean in group MODIFIED mean in group UNMODIFIED
+##                0.8929056                0.9149840
+```
+
+Same issue as total catch per trap set - see above 2021 note.
+
+![](https://github.com/emmastrand/Kenya_SamakiSalama/raw/main/FishLandings/scripts/CUE-maturity-length-analysis_files/figure-gfm/unnamed-chunk-5-4.png)

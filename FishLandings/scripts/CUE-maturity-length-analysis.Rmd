@@ -126,7 +126,7 @@ Catch per trap
 
 ```{r}
 # basic total catch per trap with no other variables 
-modified_trap_df %>% 
+modified_trap_df %>% filter(catch_per_trap < 1500) %>%
   ggplot(aes(x=trap_type, y=catch_per_trap, color=trap_type)) +
   geom_boxplot(aes(color=trap_type), outlier.size = 0, lwd=0.5) +
     geom_point(aes(fill=trap_type), pch = 21, size=1) +
