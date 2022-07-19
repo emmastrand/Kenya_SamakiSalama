@@ -227,8 +227,8 @@ You can test equal variances with a Fisher's F-test. If p < 0.05 then we include
 We are using an unpaired two sample t-test for this dataset. 
 
 ```{r}
-UN <- modified_trap_df %>% subset(trap_type == "MODIFIED") %>% na.omit()
-MOD <- modified_trap_df %>% subset(trap_type == "UNMODIFIED") %>% na.omit()
+UN <- modified_trap_df %>% subset(trap_type == "MODIFIED") %>% filter(!is.na(grams_per_trap)) %>% filter(!is.na(catch_per_trap))
+MOD <- modified_trap_df %>% subset(trap_type == "UNMODIFIED") %>% filter(!is.na(grams_per_trap)) %>% filter(!is.na(catch_per_trap))
 ```
 
 #### Grams per trap 
@@ -313,14 +313,16 @@ Relative abundance plots? relative of total caught number?
 
 ## <a name="species_pertrap"></a> **Top species stats per trap**
 
-Create a subsetted df from the top 5 total species (break this down into modified and unmodified later?).
+Create a subsetted df from the top 10 total species (break this down into modified and unmodified later?).
 
 ```{r}
+# calculate species total catch to then figure out which ones were most popular regardless of trap type
 species_df <- data %>% filter(!is.na(number_of_fish)) %>%
   subset(trap_type == "MODIFIED" | trap_type == "UNMODIFIED") %>%
   group_by(scientific_name) %>%
   mutate(species_total_catch = sum(number_of_fish)) %>% ungroup() #must ungroup for following commands 
 
+# use the above metric to subset to top 10 of those 
 species_keep <- species_df %>% select(scientific_name, species_total_catch) %>% 
   distinct() %>% slice_max(species_total_catch, n = 10)
 
@@ -334,20 +336,48 @@ unique(sort(species_df$scientific_name))
 With just the top 10 species, just plotting catch per trap. I don't think I can do weight of just these species by trap because the weight is for the whole catch. 
 
 ```{r}
+### species_df is already subsetted to the top 10 species 
+# within each survey id, for each species calculate topspecies_catch as the number fish in that species in that survey
+# then calculate the catch per trap as the number of fish of that species over the total number of traps collected
 species_df <- species_df %>% unite(survey_id, Operation_date, fisher_id, sep = " ", remove = FALSE) %>%
-  dplyr::group_by(survey_id) %>% # group by survey id
+  dplyr::group_by(survey_id, scientific_name) %>% # group by survey id
   mutate(topspecies_catch = sum(number_of_fish),
          catch_per_trap = topspecies_catch/total_traps_collected) %>% #divide total catch per survey id by total traps 
-  dplyr::ungroup(survey_id) #ungroup by this column
+  dplyr::ungroup(survey_id, scientific_name) #ungroup by this column
 
 # basic grams per trap plot with no other variables 
-species_df %>% 
-  ggplot(aes(x=scientific_name, y=catch_per_trap, color=trap_type)) + 
+species_df %>% mutate(trap_type = case_when(
+    trap_type == "MODIFIED" ~ "MOD",
+    trap_type == "UNMODIFIED" ~ "UNMOD")) %>%
+  ggplot(aes(x=trap_type, y=catch_per_trap, color=trap_type)) + 
   geom_boxplot(aes(color=trap_type), outlier.size = 0, lwd=0.5) +
+  facet_wrap(~scientific_name, scales = "free_y") +
   theme_classic() + ggtitle("For top 10 most abundant species") +
-  ylab("Catch per trap (species catch / total catch)") + xlab("Genus species") +
-  theme(axis.text.x = element_text(angle = 60, hjust=1)) #Set the text angle
+  ylab("Catch per trap (species catch # / total catch)") + xlab("Genus species") +
+  theme(axis.text.x = element_text()) #Set the text angle
 ```
+
+### Statistics for the top ten species
+
+Left off at trying to solve the following error when running aov: 
+
+Error in as.POSIXlt.character(x, tz, ...) : character string is not in a standard unambiguous format
+
+Error in lm.fit(x, y, offset = offset, singular.ok = singular.ok, ...) : NA/NaN/Inf in 'y'
+
+```{r}
+Topspp_MOD <- species_df %>% subset(trap_type == "MODIFIED")
+
+Topspp_UNMOD <- species_df %>% subset(trap_type == "UNMODIFIED")  
+
+var.test(Topspp_MOD$catch_per_trap, MOD$catch_per_trap) # output is significant so put false below
+
+t.test(catch_per_trap~trap_type, data = species_df, var.equal = FALSE)
+
+aov(catch_per_trap ~ trap_type + scientific_name, data = species_df)
+```
+
+
 
 
 ## <a name="fishbase"></a> **Creating database from Fishbase**
