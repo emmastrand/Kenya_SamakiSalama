@@ -19,14 +19,11 @@ knitr::opts_chunk$set(echo = TRUE)
 
 ## Questions for Austin and Clay 
 
-1.) Modified traps were only recorded in February.. is this a problem? The month of June for unmodified traps might be influencing some of these conclusions.. can we make that claim across all months?  
-
 **To-Do**:  
 
-Run for May 4th dataset.. 
-Split months by year. 
 
-- Why does January not show up for trap figure?  
+
+
 - Model for grams per trap vs catch per trap and trap type.    
 - ANOVA for top species per trap type.  
 - Create datafile from fishbase info.  
@@ -34,23 +31,25 @@ Split months by year.
 - Relative abundance plots in other script.  
 - Summary points, results, and next steps suggestions finalize.  
 
+## Summary of dataset 
+
+Modified traps data:  
+2022: January, February, March, April, May  
+
+Unmodified traps data:
+2021: January, June, August, September
+2022: January, February, March, April, May, June
+
 ## Aims and Results  
 
 **1. Total catch per unit effort between modified and traditional traps. It would be great to see this as grams captured per trap set.**   
 
-Results:    
-- Modified traps had a significantly higher total catch per trap set. This pattern holds for all landing sites and individual fisherman (it does not appear that either of those variables influence this result).      
-- There is no significant difference in weight in grams per trap set. This pattern holds for all individual fisherman, but Mayungu landing site might drive this result more than the other sites.      
-- *insert statement about grams per trap vs catch per trap and trap type. finish stats below for this.* 
+Results:  
 
 **2. Species catch per unit effort between modified and traditional traps. Take the top 3-5 species and run #1 for them separately.**
-s
-Results:  
-- Top species caught across all surveys (not in order): *Leptoscarus vaigiensis*, *Lethrinus nebulosus*, *Scarus ghobban*, *Siganus canaliculutus*, and *Siganus sutor*.   
-- Top species caught in modified traps: 1. *Siganus sutor*, 2. *Lethrinus nebulosus*, 3. *Scarus ghobban*, 4. *Naso annulatus*, and 5. *Leptoscarus vaigiensis*.      
-- Top species caught in unmodified traps: 1. *Siganus sutor*, 2. *Leptoscarus vaigiensis*, 3. *Siganus canaliculutus*, 4. *Lethrinus nebulosus*, and 5. *Scarus ghobban*.       
 
-*Come back to running ANOVA on if type of trap affects the catch for each species.* 
+Results:  
+     
 
 **3. Total mature fish catch per unit effort between modified and traditional traps. This will have to be for the top 3-5 species separately. Go to Fishbase and find the length at first maturity for that particular species, then assign each fish a "mature" or "immature" status in the data and calculate.**     
 
@@ -96,11 +95,9 @@ Read in the data frame that is the output of the QC script.
 
 ```{r, message=FALSE, warning=FALSE}
 # read in excel file
-data <- read_excel("data/Fishlandings-cleaned-21052022-May.xlsx") #read in excel file 
+data <- read_excel("data/Fishlandings-cleaned-clay-June_updated-IW.xlsx") #read in excel file 
 
-# creating a month column based on operation date column 
-data$month <- data$Operation_date #duplicating the operation date column to then modify in next steps 
-data$month <- format(data$month, "%m") #extracting only the month in the new column
+data <- data %>% separate(Operation_date, c("year", "month", "day"), remove = FALSE) # creating new columns with month year and date
 data$month <- as.numeric(data$month) #changing this column to numeric instead of a character (needed for next fxn)
 data$month <- month.abb[data$month] #changing numeric months to month names 
 ```
@@ -119,7 +116,7 @@ modified_trap_df <- data %>% unite(survey_id, Operation_date, fisher_id, sep = "
          catch_per_trap = total_catch/total_traps_collected) %>% #divide total catch per survey id by total traps 
   dplyr::ungroup(survey_id) %>% #ungroup by this column  
   subset(trap_type == "MODIFIED" | trap_type == "UNMODIFIED") %>% #subset for only modified and unmodified traps 
-  select(survey_id, enumerator, trap_type, `No. of fishers in crew`, landing_site, total_catch, month, grams_per_trap, catch_per_trap) %>%
+  select(survey_id, enumerator, trap_type, `No. of fishers in crew`, landing_site, total_catch, month, year, grams_per_trap, catch_per_trap) %>%
   distinct() 
 ```
 
@@ -144,7 +141,7 @@ modified_trap_df %>%
   geom_boxplot(aes(color=trap_type), outlier.size = 0, lwd=0.5) +
     geom_point(aes(fill=trap_type), pch = 21, size=1) +
   theme_bw() + 
-  ylab("Grams of fish per trap") + xlab("Type of trap") +
+  ylab("Total catch per trap") + xlab("Type of trap") +
   theme(axis.text.x = element_text(vjust = 1.1)) #Set the text angle
 
 # by landing site
@@ -154,18 +151,18 @@ modified_trap_df %>%
   geom_boxplot(aes(color=trap_type), outlier.size = 0, lwd=0.5) +
     geom_point(aes(fill=trap_type), pch = 21, size=1) +
   theme_bw() + 
-  ylab("Grams of fish per trap") + xlab("Type of trap") +
+  ylab("Total catch per trap") + xlab("Type of trap") +
   theme(axis.text.x = element_text(vjust = 1.1)) #Set the text angle
 
-# by month
-modified_trap_df %>% 
-  ggplot(aes(x=trap_type, y=catch_per_trap, color=trap_type)) + 
-  facet_wrap(~month) +
+# by month and year 
+modified_trap_df %>% unite(ym, year, month, sep = " ", remove = FALSE) %>% filter(catch_per_trap < 1500) %>%
+  ggplot(aes(x=month, y=catch_per_trap, color=trap_type)) + 
+  facet_wrap(~year, scales = "free_y") +
   geom_boxplot(aes(color=trap_type), outlier.size = 0, lwd=0.5) +
-    geom_point(aes(fill=trap_type), pch = 21, size=1) +
-  theme_bw() + 
-  ylab("Grams of fish per trap") + xlab("Type of trap") +
-  theme(axis.text.x = element_text(vjust = 1.1)) #Set the text angle
+  #geom_point(aes(x=ym, y=catch_per_trap, fill=trap_type), pch = 21, size=1) +
+  theme_classic() + 
+  ylab("Total catch per trap") + xlab("Time of year") +
+  theme(axis.text.x = element_text(vjust = 1.1, hjust=1.1, angle=60)) #Set the text angle
 ```
 
 Grams per trap 
@@ -200,21 +197,21 @@ modified_trap_df %>%
   ylab("Grams of fish per trap") + xlab("Type of trap") +
   theme(axis.text.x = element_text(vjust = 1.1)) #Set the text angle
 
-# by month
-modified_trap_df %>% 
-  ggplot(aes(x=trap_type, y=grams_per_trap, color=trap_type)) + 
-  facet_wrap(~month) +
+# by month and year 
+modified_trap_df %>% unite(ym, year, month, sep = " ", remove = FALSE) %>% #filter(catch_per_trap < 1500) %>%
+  ggplot(aes(x=month, y=grams_per_trap, color=trap_type)) + 
+  facet_wrap(~year, scales = "free_y") +
   geom_boxplot(aes(color=trap_type), outlier.size = 0, lwd=0.5) +
-    geom_point(aes(fill=trap_type), pch = 21, size=1) +
-  theme_bw() + 
-  ylab("Grams of fish per trap") + xlab("Type of trap") +
-  theme(axis.text.x = element_text(vjust = 1.1)) #Set the text angle
+ # geom_point(aes(x=month, group=trap_type, y=grams_per_trap, fill=trap_type), pch = 21, size=1) +
+  theme_classic() + 
+  ylab("Grams of fish per trap") + xlab("Time of year") +
+  theme(axis.text.x = element_text(vjust = 1.1, hjust=1.1, angle=60)) #Set the text angle
 ```
 
 The relationship between grams per trap and total catch per trap. 
 
 ```{r}
-modified_trap_df %>% 
+modified_trap_df %>% filter(catch_per_trap < 1500) %>%
   ggplot(aes(x=catch_per_trap, y=grams_per_trap, color=trap_type)) +
   theme_bw() + xlab("total catch per trap") + ylab("grams per trap") +
   geom_smooth(aes(fill=trap_type), method="loess", se=TRUE, fullrange=TRUE, level=0.95, color="black") +
@@ -298,10 +295,10 @@ species_list %>% filter(species_catch > 250) %>%
   ylab("number of fish caught") + xlab("Genus species") +
   geom_point() + theme_bw() + theme(axis.text.x = element_text(angle = 60, hjust=1)) #Set the text angle
 
-species_list %>% filter(species_catch > 250) %>% 
-  select(scientific_name) %>% 
-  distinct() %>%
-  write_csv("output/top_species.csv")
+# species_list %>% filter(species_catch > 250) %>% 
+#   select(scientific_name) %>% 
+#   distinct() %>%
+#   write_csv("output/top_species.csv")
 
 # print top 5 species from modified traps 
 species_list %>% subset(trap_type == "MODIFIED") %>%                                    
@@ -325,7 +322,7 @@ species_df <- data %>% filter(!is.na(number_of_fish)) %>%
   mutate(species_total_catch = sum(number_of_fish)) %>% ungroup() #must ungroup for following commands 
 
 species_keep <- species_df %>% select(scientific_name, species_total_catch) %>% 
-  distinct() %>% slice_max(species_total_catch, n = 5)
+  distinct() %>% slice_max(species_total_catch, n = 10)
 
 # filter species df based on the species_keep list 
 species_df <- species_df %>% filter(scientific_name %in% species_keep$scientific_name)
@@ -334,7 +331,7 @@ species_df <- species_df %>% filter(scientific_name %in% species_keep$scientific
 unique(sort(species_df$scientific_name))
 ```
 
-With just the top 5 species, do catch per trap. I don't think I can do weight of just these species by trap because the weight is for the whole catch. 
+With just the top 10 species, just plotting catch per trap. I don't think I can do weight of just these species by trap because the weight is for the whole catch. 
 
 ```{r}
 species_df <- species_df %>% unite(survey_id, Operation_date, fisher_id, sep = " ", remove = FALSE) %>%
@@ -347,7 +344,7 @@ species_df <- species_df %>% unite(survey_id, Operation_date, fisher_id, sep = "
 species_df %>% 
   ggplot(aes(x=scientific_name, y=catch_per_trap, color=trap_type)) + 
   geom_boxplot(aes(color=trap_type), outlier.size = 0, lwd=0.5) +
-  theme_bw() + ggtitle("For top 5 most abundant species") +
+  theme_classic() + ggtitle("For top 10 most abundant species") +
   ylab("Catch per trap (species catch / total catch)") + xlab("Genus species") +
   theme(axis.text.x = element_text(angle = 60, hjust=1)) #Set the text angle
 ```
@@ -363,15 +360,6 @@ Search on fishbase maturity level and length stats to add to the spreadsheet 'ma
 
 
 
-
-OR trying to download https://github.com/tokami/TropFishR.
-
-```{r}
-#install.packages("TropFishR")
-library(TropFishR)
-
-
-```
 
 ## <a name="maturity"></a> **Catch per unit effort for top species by maturity**
 
