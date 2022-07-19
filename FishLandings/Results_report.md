@@ -70,3 +70,9 @@ t.test(grams_per_trap~trap_type, data = modified_trap_df, var.equal = FALSE)
 Same issue as total catch per trap set - see above 2021 note.
 
 ![](https://github.com/emmastrand/Kenya_SamakiSalama/raw/main/FishLandings/scripts/CUE-maturity-length-analysis_files/figure-gfm/unnamed-chunk-5-4.png)
+
+### The relationship between total catch and grams per trap
+
+*No stats yet but my thinking is - Modified traps have a higher number of fish caught per trap, but not significantly higher weight per trap. The two traps behave differently - in modified traps, if the total catch per trap is higher, then the grams per trap is higher but that isn't true for modified traps. Higher numbers doesn't necessarily mean higher weight for umodified traps.* 
+
+![](https://github.com/emmastrand/Kenya_SamakiSalama/raw/main/FishLandings/scripts/CUE-maturity-length-analysis_files/figure-gfm/unnamed-chunk-6-1.png)
