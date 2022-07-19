@@ -17,4 +17,30 @@ I used the file `Fishlandings-data_clay June_updated-IW.xlsx` as input for the q
 
 The output from the QC.md script is the file `Fishlandings-cleaned-clay-June_updated-IW.xlsx`.
 
-### Total catch and grams per unit effort between modified and unmodified traps
+## Total catch and grams per unit effort between modified and unmodified traps
+
+### Total catch per trap
+
+![](https://github.com/emmastrand/Kenya_SamakiSalama/raw/main/FishLandings/scripts/CUE-maturity-length-analysis_files/figure-gfm/unnamed-chunk-4-1.png)
+
+Total catch per trap was significantly different (p < 0.0001) between modified and unmodified traps:
+
+```
+t.test(catch_per_trap~trap_type, data = modified_trap_df, var.equal = FALSE)
+
+##
+##  Welch Two Sample t-test
+##
+## data:  catch_per_trap by trap_type
+## t = 10.041, df = 1903.5, p-value < 2.2e-16
+## alternative hypothesis: true difference in means between group MODIFIED and group UNMODIFIED is not equal to 0
+## 95 percent confidence interval:
+##  25.27546 37.54562
+## sample estimates:
+##   mean in group MODIFIED mean in group UNMODIFIED
+##                 60.88043                 29.46989
+```
+
+But if you break this down by year and month - 2021 numbers seem too low? Look at scales. 
+
+![](https://github.com/emmastrand/Kenya_SamakiSalama/raw/main/FishLandings/scripts/CUE-maturity-length-analysis_files/figure-gfm/unnamed-chunk-4-4.png)
