@@ -79,6 +79,6 @@ Same issue as total catch per trap set - see above 2021 note.
 
 ## Top species caught in modified and unmodified traps
 
-
-
 ![](https://github.com/emmastrand/Kenya_SamakiSalama/raw/main/FishLandings/scripts/CUE-maturity-length-analysis_files/figure-gfm/unnamed-chunk-13-1.png)
+
+Insert statistics from this -- running into an error in R code currently.

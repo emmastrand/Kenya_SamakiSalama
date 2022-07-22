@@ -42,16 +42,9 @@ Unmodified traps data:
 
 ## Aims and Results  
 
-**1. Total catch per unit effort between modified and traditional traps. It would be great to see this as grams captured per trap set.**   
+   
 
-Results:  
-
-**2. Species catch per unit effort between modified and traditional traps. Take the top 3-5 species and run #1 for them separately.**
-
-Results:  
-     
-
-**3. Total mature fish catch per unit effort between modified and traditional traps. This will have to be for the top 3-5 species separately. Go to Fishbase and find the length at first maturity for that particular species, then assign each fish a "mature" or "immature" status in the data and calculate.**     
+**3. **     
 
 Results: 
 
@@ -103,6 +96,8 @@ data$month <- month.abb[data$month] #changing numeric months to month names
 ```
 
 ## <a name="catch_effort"></a> **Total catch (grams) per unit effort (trap set)**
+
+**Total catch per unit effort between modified and traditional traps. It would be great to see this as grams captured per trap set.**
 
 Grouping by fisher_id but this might be effective to group by enumerator once I have correct list of names. There are 3 boat trips recorded with the exact same fish data that are under 3 different fisher ID names but all the same enumerator.. come back to this in QC.
 
@@ -273,6 +268,8 @@ Anova(mod_catch_model, ddf="lme4", type='III')
 
 ## <a name="species"></a> **Calculate top species caught**
 
+**Species catch per unit effort between modified and traditional traps. Take the top 3-5 species and run #1 for them separately.**
+
 Calculating which species were the most abundant across the entire survey.  
 
 This might have to be number of fish caught per trap? So that the difference in # of traps for modified and unmodified is accounted for?
@@ -377,24 +374,14 @@ t.test(catch_per_trap~trap_type, data = species_df, var.equal = FALSE)
 aov(catch_per_trap ~ trap_type + scientific_name, data = species_df)
 ```
 
-
-
-
-## <a name="fishbase"></a> **Creating database from Fishbase**
-
-Search on fishbase maturity level and length stats to add to the spreadsheet 'maturity.xlsx' on the github folder 'data'. 
-
-```{r}
-
-```
-
-
-
-
 ## <a name="maturity"></a> **Catch per unit effort for top species by maturity**
 
-```{r}
+**Total mature fish catch per unit effort between modified and traditional traps. This will have to be for the top 3-5 species separately. Go to Fishbase and find the length at first maturity for that particular species, then assign each fish a "mature" or "immature" status in the data and calculate.**
 
+Data pulled from Fishbase and put in the datasheet `fishbase.xlsx`. 
+
+```{r}
+fishbase <- read_excel("data/fishbase.xlsx", sheet = "data") #read in excel file 
 ```
 
 
