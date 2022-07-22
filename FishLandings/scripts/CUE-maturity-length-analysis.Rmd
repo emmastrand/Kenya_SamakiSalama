@@ -382,6 +382,8 @@ Data pulled from Fishbase and put in the datasheet `fishbase.xlsx`.
 
 ```{r}
 fishbase <- read_excel("data/fishbase.xlsx", sheet = "data") #read in excel file 
+fishbase 
+
 ```
 
 
