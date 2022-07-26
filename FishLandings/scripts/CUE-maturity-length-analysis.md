@@ -4,14 +4,13 @@ Author: Emma Strand; <emma_strand@uri.edu>
 
 ## Questions for Austin and Clay
 
-**To-Do**:
-
--   Model for grams per trap vs catch per trap and trap type.  
--   ANOVA for top species per trap type.  
--   Create datafile from fishbase info.  
--   \#3-5 on below aims.  
--   Relative abundance plots in other script.  
--   Summary points, results, and next steps suggestions finalize.
+**To-Do**:  
+- Model for grams per trap vs catch per trap and trap type.  
+- ANOVA for top species per trap type.  
+- Create datafile from fishbase info.  
+- \#3-5 on below aims.  
+- Relative abundance plots in other script.  
+- Summary points, results, and next steps suggestions finalize.
 
 ## Summary of dataset
 
@@ -20,39 +19,6 @@ Modified traps data:
 
 Unmodified traps data: 2021: January, June, August, September 2022:
 January, February, March, April, May, June
-
-## Aims and Results
-
-**1. Total catch per unit effort between modified and traditional traps.
-It would be great to see this as grams captured per trap set.**
-
-Results:
-
-**2. Species catch per unit effort between modified and traditional
-traps. Take the top 3-5 species and run \#1 for them separately.**
-
-Results:
-
-**3. Total mature fish catch per unit effort between modified and
-traditional traps. This will have to be for the top 3-5 species
-separately. Go to Fishbase and find the length at first maturity for
-that particular species, then assign each fish a “mature” or “immature”
-status in the data and calculate.**
-
-Results:
-
-**4. Average length of catch versus length at first maturity (Lmat).
-Take the difference for each fish in the data against its length at
-first maturity and then calculate a weighted value for modified versus
-traditional traps where a value above 0 represents a fish above Lmat and
-a value below represents a fish below Lmat.**
-
-Results:
-
-**5. Length frequency of top 3-5 species in modified versus traditional
-(different colors) with Lmat etc. indicators pulled from Fishbase.**
-
-Results:
 
 ## Contents
 
@@ -95,6 +61,9 @@ data$month <- month.abb[data$month] #changing numeric months to month names
 ```
 
 ## <a name="catch_effort"></a> **Total catch (grams) per unit effort (trap set)**
+
+**Total catch per unit effort between modified and traditional traps. It
+would be great to see this as grams captured per trap set.**
 
 Grouping by fisher\_id but this might be effective to group by
 enumerator once I have correct list of names. There are 3 boat trips
@@ -284,8 +253,8 @@ include var.equal = TRUE in below ttest.
 We are using an unpaired two sample t-test for this dataset.
 
 ``` r
-UN <- modified_trap_df %>% subset(trap_type == "MODIFIED") %>% na.omit()
-MOD <- modified_trap_df %>% subset(trap_type == "UNMODIFIED") %>% na.omit()
+UN <- modified_trap_df %>% subset(trap_type == "MODIFIED") %>% filter(!is.na(grams_per_trap)) %>% filter(!is.na(catch_per_trap))
+MOD <- modified_trap_df %>% subset(trap_type == "UNMODIFIED") %>% filter(!is.na(grams_per_trap)) %>% filter(!is.na(catch_per_trap))
 ```
 
 #### Grams per trap
@@ -298,13 +267,13 @@ var.test(UN$grams_per_trap, MOD$grams_per_trap)
     ##  F test to compare two variances
     ## 
     ## data:  UN$grams_per_trap and MOD$grams_per_trap
-    ## F = 0.7715, num df = 734, denom df = 1235, p-value = 0.0001038
+    ## F = 0.75266, num df = 755, denom df = 1290, p-value = 1.576e-05
     ## alternative hypothesis: true ratio of variances is not equal to 1
     ## 95 percent confidence interval:
-    ##  0.6786744 0.8789030
+    ##  0.6635431 0.8555765
     ## sample estimates:
     ## ratio of variances 
-    ##          0.7714954
+    ##          0.7526603
 
 ``` r
 t.test(grams_per_trap~trap_type, data = modified_trap_df, var.equal = FALSE)
@@ -332,13 +301,13 @@ var.test(UN$catch_per_trap, MOD$catch_per_trap)
     ##  F test to compare two variances
     ## 
     ## data:  UN$catch_per_trap and MOD$catch_per_trap
-    ## F = 0.61091, num df = 734, denom df = 1235, p-value = 3.239e-13
+    ## F = 0.58716, num df = 755, denom df = 1290, p-value = 1.442e-15
     ## alternative hypothesis: true ratio of variances is not equal to 1
     ## 95 percent confidence interval:
-    ##  0.5374086 0.6959596
+    ##  0.5176356 0.6674425
     ## sample estimates:
     ## ratio of variances 
-    ##          0.6109089
+    ##          0.5871567
 
 ``` r
 t.test(catch_per_trap~trap_type, data = modified_trap_df, var.equal = FALSE)
@@ -378,7 +347,7 @@ qqPlot(residuals(un_catch_model))
 
 ![](CUE-maturity-length-analysis_files/figure-gfm/unnamed-chunk-10-1.png)<!-- -->
 
-    ## [1] 727 229
+    ## [1] 748 234
 
 ``` r
 hist(residuals(un_catch_model))
@@ -399,7 +368,7 @@ qqPlot(residuals(mod_catch_model))
 
 ![](CUE-maturity-length-analysis_files/figure-gfm/unnamed-chunk-10-3.png)<!-- -->
 
-    ## [1]  375 1208
+    ## [1]  396 1263
 
 ``` r
 hist(residuals(mod_catch_model))
@@ -416,27 +385,27 @@ summary(un_catch_model)
     ##     landing_site)
     ##    Data: UN
     ## 
-    ## REML criterion at convergence: 1064.7
+    ## REML criterion at convergence: 1102.1
     ## 
     ## Scaled residuals: 
     ##     Min      1Q  Median      3Q     Max 
-    ## -3.9839 -0.5272  0.0595  0.6613  3.3416 
+    ## -3.9314 -0.5140  0.0612  0.6536  3.3642 
     ## 
     ## Random effects:
     ##  Groups       Name        Variance Std.Dev.
-    ##  landing_site (Intercept) 0.008948 0.0946  
-    ##  enumerator   (Intercept) 0.000000 0.0000  
-    ##  Residual                 0.241503 0.4914  
-    ## Number of obs: 735, groups:  landing_site, 4; enumerator, 3
+    ##  landing_site (Intercept) 0.0143   0.1196  
+    ##  enumerator   (Intercept) 0.0000   0.0000  
+    ##  Residual                 0.2436   0.4935  
+    ## Number of obs: 756, groups:  landing_site, 4; enumerator, 3
     ## 
     ## Fixed effects:
     ##                  Estimate Std. Error t value
-    ## (Intercept)    -0.3011122  0.0575074  -5.236
-    ## catch_per_trap  0.0021516  0.0002961   7.267
+    ## (Intercept)    -0.2839420  0.0681428  -4.167
+    ## catch_per_trap  0.0021206  0.0002958   7.169
     ## 
     ## Correlation of Fixed Effects:
     ##             (Intr)
-    ## ctch_pr_trp -0.325
+    ## ctch_pr_trp -0.276
     ## optimizer (nloptwrap) convergence code: 0 (OK)
     ## boundary (singular) fit: see help('isSingular')
 
@@ -449,27 +418,27 @@ summary(mod_catch_model)
     ##     landing_site)
     ##    Data: MOD
     ## 
-    ## REML criterion at convergence: 2180.9
+    ## REML criterion at convergence: 2285.6
     ## 
     ## Scaled residuals: 
     ##     Min      1Q  Median      3Q     Max 
-    ## -4.2740 -0.6235  0.1728  0.6483  2.8310 
+    ## -4.2306 -0.6223  0.1676  0.6442  2.9521 
     ## 
     ## Random effects:
-    ##  Groups       Name        Variance Std.Dev.
-    ##  landing_site (Intercept) 0.0000   0.0000  
-    ##  enumerator   (Intercept) 0.0000   0.0000  
-    ##  Residual                 0.3365   0.5801  
-    ## Number of obs: 1236, groups:  landing_site, 4; enumerator, 3
+    ##  Groups       Name        Variance  Std.Dev. 
+    ##  landing_site (Intercept) 1.655e-16 1.286e-08
+    ##  enumerator   (Intercept) 3.057e-18 1.748e-09
+    ##  Residual                 3.387e-01 5.820e-01
+    ## Number of obs: 1291, groups:  landing_site, 4; enumerator, 3
     ## 
     ## Fixed effects:
     ##                  Estimate Std. Error t value
-    ## (Intercept)    -0.2800079  0.0175304 -15.973
-    ## catch_per_trap  0.0009313  0.0002101   4.432
+    ## (Intercept)    -0.2785068  0.0172781 -16.119
+    ## catch_per_trap  0.0009228  0.0002039   4.525
     ## 
     ## Correlation of Fixed Effects:
     ##             (Intr)
-    ## ctch_pr_trp -0.338
+    ## ctch_pr_trp -0.348
     ## optimizer (nloptwrap) convergence code: 0 (OK)
     ## boundary (singular) fit: see help('isSingular')
 
@@ -481,8 +450,8 @@ Anova(un_catch_model, ddf="lme4", type='III')
     ## 
     ## Response: log(grams_per_trap)
     ##                 Chisq Df Pr(>Chisq)    
-    ## (Intercept)    27.416  1  1.640e-07 ***
-    ## catch_per_trap 52.802  1  3.689e-13 ***
+    ## (Intercept)    17.363  1  3.088e-05 ***
+    ## catch_per_trap 51.398  1  7.543e-13 ***
     ## ---
     ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 
@@ -494,12 +463,15 @@ Anova(mod_catch_model, ddf="lme4", type='III')
     ## 
     ## Response: log(grams_per_trap)
     ##                  Chisq Df Pr(>Chisq)    
-    ## (Intercept)    255.127  1  < 2.2e-16 ***
-    ## catch_per_trap  19.639  1  9.355e-06 ***
+    ## (Intercept)    259.825  1  < 2.2e-16 ***
+    ## catch_per_trap  20.476  1  6.037e-06 ***
     ## ---
     ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 
 ## <a name="species"></a> **Calculate top species caught**
+
+**Species catch per unit effort between modified and traditional traps.
+Take the top 3-5 species and run \#1 for them separately.**
 
 Calculating which species were the most abundant across the entire
 survey.
@@ -569,15 +541,17 @@ Relative abundance plots? relative of total caught number?
 
 ## <a name="species_pertrap"></a> **Top species stats per trap**
 
-Create a subsetted df from the top 5 total species (break this down into
-modified and unmodified later?).
+Create a subsetted df from the top 10 total species (break this down
+into modified and unmodified later?).
 
 ``` r
+# calculate species total catch to then figure out which ones were most popular regardless of trap type
 species_df <- data %>% filter(!is.na(number_of_fish)) %>%
   subset(trap_type == "MODIFIED" | trap_type == "UNMODIFIED") %>%
   group_by(scientific_name) %>%
   mutate(species_total_catch = sum(number_of_fish)) %>% ungroup() #must ungroup for following commands 
 
+# use the above metric to subset to top 10 of those 
 species_keep <- species_df %>% select(scientific_name, species_total_catch) %>% 
   distinct() %>% slice_max(species_total_catch, n = 10)
 
@@ -598,30 +572,217 @@ think I can do weight of just these species by trap because the weight
 is for the whole catch.
 
 ``` r
+### species_df is already subsetted to the top 10 species 
+# within each survey id, for each species calculate topspecies_catch as the number fish in that species in that survey
+# then calculate the catch per trap as the number of fish of that species over the total number of traps collected
 species_df <- species_df %>% unite(survey_id, Operation_date, fisher_id, sep = " ", remove = FALSE) %>%
-  dplyr::group_by(survey_id) %>% # group by survey id
+  dplyr::group_by(survey_id, scientific_name) %>% # group by survey id
   mutate(topspecies_catch = sum(number_of_fish),
          catch_per_trap = topspecies_catch/total_traps_collected) %>% #divide total catch per survey id by total traps 
-  dplyr::ungroup(survey_id) #ungroup by this column
+  dplyr::ungroup(survey_id, scientific_name) #ungroup by this column
 
 # basic grams per trap plot with no other variables 
-species_df %>% 
-  ggplot(aes(x=scientific_name, y=catch_per_trap, color=trap_type)) + 
+species_df %>% mutate(trap_type = case_when(
+    trap_type == "MODIFIED" ~ "MOD",
+    trap_type == "UNMODIFIED" ~ "UNMOD")) %>%
+  ggplot(aes(x=trap_type, y=catch_per_trap, color=trap_type)) + 
   geom_boxplot(aes(color=trap_type), outlier.size = 0, lwd=0.5) +
+  facet_wrap(~scientific_name, scales = "free_y") +
   theme_classic() + ggtitle("For top 10 most abundant species") +
-  ylab("Catch per trap (species catch / total catch)") + xlab("Genus species") +
-  theme(axis.text.x = element_text(angle = 60, hjust=1)) #Set the text angle
+  ylab("Catch per trap (species catch # / total catch)") + xlab("Genus species") +
+  theme(axis.text.x = element_text()) #Set the text angle
 ```
 
     ## Warning: Removed 1809 rows containing non-finite values (stat_boxplot).
 
 ![](CUE-maturity-length-analysis_files/figure-gfm/unnamed-chunk-13-1.png)<!-- -->
 
-## <a name="fishbase"></a> **Creating database from Fishbase**
+### Statistics for the top ten species
 
-Search on fishbase maturity level and length stats to add to the
-spreadsheet ‘maturity.xlsx’ on the github folder ‘data’.
+Left off at trying to solve the following error when running aov:
+
+Error in as.POSIXlt.character(x, tz, …) : character string is not in a
+standard unambiguous format
+
+Error in lm.fit(x, y, offset = offset, singular.ok = singular.ok, …) :
+NA/NaN/Inf in ‘y’
+
+``` r
+Topspp_MOD <- species_df %>% subset(trap_type == "MODIFIED")
+
+Topspp_UNMOD <- species_df %>% subset(trap_type == "UNMODIFIED")  
+
+var.test(Topspp_MOD$catch_per_trap, MOD$catch_per_trap) # output is significant so put false below
+```
+
+    ## 
+    ##  F test to compare two variances
+    ## 
+    ## data:  Topspp_MOD$catch_per_trap and MOD$catch_per_trap
+    ## F = 0.38673, num df = 14582, denom df = 1290, p-value < 2.2e-16
+    ## alternative hypothesis: true ratio of variances is not equal to 1
+    ## 95 percent confidence interval:
+    ##  0.3563133 0.4185927
+    ## sample estimates:
+    ## ratio of variances 
+    ##          0.3867316
+
+``` r
+#t.test(catch_per_trap~trap_type, data = species_df, var.equal = FALSE)
+
+#aov(catch_per_trap ~ trap_type + scientific_name, data = species_df)
+```
 
 ## <a name="maturity"></a> **Catch per unit effort for top species by maturity**
 
+**Total mature fish catch per unit effort between modified and
+traditional traps. This will have to be for the top 3-5 species
+separately. Go to Fishbase and find the length at first maturity for
+that particular species, then assign each fish a “mature” or “immature”
+status in the data and calculate.**
+
+Data pulled from Fishbase and put in the datasheet `fishbase.xlsx`.
+
+### Creating maturity dataframe based on data pulled from fishbase
+
+``` r
+fishbase <- read_excel("data/fishbase.xlsx", sheet = "data") %>% #read in excel file 
+  select(scientific_name, Lm, Lm_se_min, Lm_se_max)
+
+maturity <- full_join(data, fishbase, by = "scientific_name") %>% # joining maturity reproduction info with main dataframe
+  unite(survey_id, Operation_date, fisher_id, sep = " ", remove = FALSE) %>% #creating a survey id based on date and fisherman
+  filter(!is.na(Lm)) %>% # taking out observations that don't have an Lm value so only the top species 
+  mutate(Lm_range = case_when( ### making a new column as Lm corrected to then compare to Length_corrected 
+    Lm >= 0 & Lm <= 10.5 ~ "0-10",
+    Lm >= 10.5 & Lm <= 15.4 ~ "11-15",
+    Lm >= 15.5 & Lm <= 20.4 ~ "16-20",
+    Lm >= 20.5 & Lm <= 25.4 ~ "21-25",
+    Lm >= 25.5 & Lm <= 30.4 ~ "26-30",
+    Lm >= 30.5 & Lm <= 35.4 ~ "31-35",
+    Lm >= 35.5 & Lm <= 40.4 ~ "36-40",
+    Lm >= 40.5 & Lm <= 45.4 ~ "41-45",
+    Lm >= 45.5 & Lm <= 50.4 ~ "46-50",
+    Lm >= 50.5 & Lm <= 75 ~ ">50",
+    Lm > 75 ~ ">75")) %>%
+  mutate(Lm_comparison = case_when( ### I can't compare character columns so making a new column to use in comparison
+    Lm_range == "0-10" ~ 1,
+    Lm_range == "11-15" ~ 11,
+    Lm_range == "16-20" ~ 16,
+    Lm_range == "21-25" ~ 21,
+    Lm_range == "26-30" ~ 26,
+    Lm_range == "31-35" ~ 31,
+    Lm_range == "36-40" ~ 36,
+    Lm_range == "41-45" ~ 41,
+    Lm_range == "46-50" ~ 46,
+    Lm_range == ">50" ~ 50,
+    Lm_range == ">75" ~ 75)) %>%
+  mutate(Length_comparison = case_when( ### I can't compare character columns so making a new column to use in comparison
+    length_corrected == "0-10" ~ 1,
+    length_corrected == "11-15" ~ 11,
+    length_corrected == "16-20" ~ 16,
+    length_corrected == "21-25" ~ 21,
+    length_corrected == "26-30" ~ 26,
+    length_corrected == "31-35" ~ 31,
+    length_corrected == "36-40" ~ 36,
+    length_corrected == "41-45" ~ 41,
+    length_corrected == "46-50" ~ 46,
+    length_corrected == ">50" ~ 50,
+    length_corrected == ">75" ~ 75))
+  
+### there is probably a more efficient way to do the above this works for now 
+
+maturity$Length_comparison <- as.numeric(maturity$Length_comparison)
+maturity$Lm_comparison <- as.numeric(maturity$Lm_comparison)
+
+maturity <- maturity %>% 
+  mutate(maturity = if_else(length_corrected >= Lm_comparison, "mature", "immature")) %>%
+  subset(trap_type == "MODIFIED" | trap_type == "UNMODIFIED") %>% #subsetting to only the modified and unmodified traps 
+  mutate(nofish_pertrap = number_of_fish/total_traps_collected) #per species per survey id
+```
+
+Immaure and mature fish catch comparison
+
+``` r
+maturity %>% select(number_of_fish, trap_type, maturity, scientific_name, total_traps_collected, nofish_pertrap) %>% 
+  na.omit() %>% 
+  ggplot(., aes(x=scientific_name, y=nofish_pertrap, color=maturity)) +
+  geom_boxplot() + theme_classic() + 
+  theme(axis.text.x = element_text(angle=60, hjust=1)) +
+  xlab("Trap Type") +
+  ylab("Number of fish per trap set")
+```
+
+    ## Warning: Removed 24 rows containing non-finite values (stat_boxplot).
+
+![](CUE-maturity-length-analysis_files/figure-gfm/unnamed-chunk-16-1.png)<!-- -->
+
+``` r
+maturity %>% select(number_of_fish, trap_type, maturity, scientific_name, total_traps_collected, nofish_pertrap) %>% 
+  na.omit() %>%  
+  ggplot(., aes(x=maturity, y=nofish_pertrap, color=trap_type)) +
+  geom_boxplot() + theme_classic() + 
+  #facet_wrap(~trap_type, scales = "free_y") +
+  #theme(axis.text.x = element_text(angle=60, hjust=1)) +
+  xlab("Maturity") +
+  ylab("Number of fish per trap set")
+```
+
+    ## Warning: Removed 24 rows containing non-finite values (stat_boxplot).
+
+![](CUE-maturity-length-analysis_files/figure-gfm/unnamed-chunk-16-2.png)<!-- -->
+
+Statistics on the above…
+
+Circle back to the padj values coming out to “0.000000e+00”.
+
+Double check `trap_type+maturity` vs `trap_type*maturity`.
+
+``` r
+nofish_maturity_aov <- aov(number_of_fish ~ trap_type*maturity, data = maturity)
+summary(nofish_maturity_aov)
+```
+
+    ##                       Df  Sum Sq Mean Sq F value Pr(>F)    
+    ## trap_type              1   42177   42177 507.423 <2e-16 ***
+    ## maturity               1   23763   23763 285.893 <2e-16 ***
+    ## trap_type:maturity     1      13      13   0.161  0.688    
+    ## Residuals          44696 3715128      83                   
+    ## ---
+    ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+    ## 123 observations deleted due to missingness
+
+``` r
+nofish_maturity_tukey <- TukeyHSD(nofish_maturity_aov)
+nofish_maturity_tukey$`trap_type:maturity`
+```
+
+    ##                                             diff        lwr        upr
+    ## UNMODIFIED:immature-MODIFIED:immature -2.1759466 -2.5328086 -1.8190846
+    ## MODIFIED:mature-MODIFIED:immature     -1.5164503 -1.9065444 -1.1263562
+    ## UNMODIFIED:mature-MODIFIED:immature   -3.6180805 -3.9683059 -3.2678552
+    ## MODIFIED:mature-UNMODIFIED:immature    0.6594963  0.3382695  0.9807231
+    ## UNMODIFIED:mature-UNMODIFIED:immature -1.4421339 -1.7135581 -1.1707098
+    ## UNMODIFIED:mature-MODIFIED:mature     -2.1016302 -2.4154678 -1.7877927
+    ##                                              p adj
+    ## UNMODIFIED:immature-MODIFIED:immature 0.000000e+00
+    ## MODIFIED:mature-MODIFIED:immature     3.230749e-14
+    ## UNMODIFIED:mature-MODIFIED:immature   0.000000e+00
+    ## MODIFIED:mature-UNMODIFIED:immature   7.965799e-07
+    ## UNMODIFIED:mature-UNMODIFIED:immature 0.000000e+00
+    ## UNMODIFIED:mature-MODIFIED:mature     0.000000e+00
+
 ## <a name="length"></a> **Catch and length data of mature fish**
+
+**Average length of catch versus length at first maturity (Lmat). Take
+the difference for each fish in the data against its length at first
+maturity and then calculate a weighted value for modified versus
+traditional traps where a value above 0 represents a fish above Lmat and
+a value below represents a fish below Lmat.**
+
+We only have bins for the length values.. so this might have to be by
+5s. i.e. catch = 11-15; Lm 21-25. Can take median values and do that
+calculation?
+
+## **5. Length frequency of top 3-5 species in modified versus traditional (different colors) with Lmat etc. indicators pulled from Fishbase.**
+
+Found a good website when googled FishR that has good plots for this.

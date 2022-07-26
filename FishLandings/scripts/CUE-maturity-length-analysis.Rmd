@@ -20,10 +20,6 @@ knitr::opts_chunk$set(echo = TRUE)
 ## Questions for Austin and Clay 
 
 **To-Do**:  
-
-
-
-
 - Model for grams per trap vs catch per trap and trap type.    
 - ANOVA for top species per trap type.  
 - Create datafile from fishbase info.  
@@ -39,22 +35,6 @@ Modified traps data:
 Unmodified traps data:
 2021: January, June, August, September
 2022: January, February, March, April, May, June
-
-## Aims and Results  
-
-   
-
-**3. **     
-
-Results: 
-
-**4. Average length of catch versus length at first maturity (Lmat). Take the difference for each fish in the data against its length at first maturity and then calculate a weighted value for modified versus traditional traps where a value above 0 represents a fish above Lmat and a value below represents a fish below Lmat.**   
-
-Results: 
-
-**5. Length frequency of top 3-5 species in modified versus traditional (different colors) with Lmat etc. indicators pulled from Fishbase.**
-
-Results: 
 
 ## Contents 
 
@@ -369,9 +349,9 @@ Topspp_UNMOD <- species_df %>% subset(trap_type == "UNMODIFIED")
 
 var.test(Topspp_MOD$catch_per_trap, MOD$catch_per_trap) # output is significant so put false below
 
-t.test(catch_per_trap~trap_type, data = species_df, var.equal = FALSE)
+#t.test(catch_per_trap~trap_type, data = species_df, var.equal = FALSE)
 
-aov(catch_per_trap ~ trap_type + scientific_name, data = species_df)
+#aov(catch_per_trap ~ trap_type + scientific_name, data = species_df)
 ```
 
 ## <a name="maturity"></a> **Catch per unit effort for top species by maturity**
@@ -380,17 +360,114 @@ aov(catch_per_trap ~ trap_type + scientific_name, data = species_df)
 
 Data pulled from Fishbase and put in the datasheet `fishbase.xlsx`. 
 
-```{r}
-fishbase <- read_excel("data/fishbase.xlsx", sheet = "data") #read in excel file 
-fishbase 
+### Creating maturity dataframe based on data pulled from fishbase
 
+```{r}
+fishbase <- read_excel("data/fishbase.xlsx", sheet = "data") %>% #read in excel file 
+  select(scientific_name, Lm, Lm_se_min, Lm_se_max)
+
+maturity <- full_join(data, fishbase, by = "scientific_name") %>% # joining maturity reproduction info with main dataframe
+  unite(survey_id, Operation_date, fisher_id, sep = " ", remove = FALSE) %>% #creating a survey id based on date and fisherman
+  filter(!is.na(Lm)) %>% # taking out observations that don't have an Lm value so only the top species 
+  mutate(Lm_range = case_when( ### making a new column as Lm corrected to then compare to Length_corrected 
+    Lm >= 0 & Lm <= 10.5 ~ "0-10",
+    Lm >= 10.5 & Lm <= 15.4 ~ "11-15",
+    Lm >= 15.5 & Lm <= 20.4 ~ "16-20",
+    Lm >= 20.5 & Lm <= 25.4 ~ "21-25",
+    Lm >= 25.5 & Lm <= 30.4 ~ "26-30",
+    Lm >= 30.5 & Lm <= 35.4 ~ "31-35",
+    Lm >= 35.5 & Lm <= 40.4 ~ "36-40",
+    Lm >= 40.5 & Lm <= 45.4 ~ "41-45",
+    Lm >= 45.5 & Lm <= 50.4 ~ "46-50",
+    Lm >= 50.5 & Lm <= 75 ~ ">50",
+    Lm > 75 ~ ">75")) %>%
+  mutate(Lm_comparison = case_when( ### I can't compare character columns so making a new column to use in comparison
+    Lm_range == "0-10" ~ 1,
+    Lm_range == "11-15" ~ 11,
+    Lm_range == "16-20" ~ 16,
+    Lm_range == "21-25" ~ 21,
+    Lm_range == "26-30" ~ 26,
+    Lm_range == "31-35" ~ 31,
+    Lm_range == "36-40" ~ 36,
+    Lm_range == "41-45" ~ 41,
+    Lm_range == "46-50" ~ 46,
+    Lm_range == ">50" ~ 50,
+    Lm_range == ">75" ~ 75)) %>%
+  mutate(Length_comparison = case_when( ### I can't compare character columns so making a new column to use in comparison
+    length_corrected == "0-10" ~ 1,
+    length_corrected == "11-15" ~ 11,
+    length_corrected == "16-20" ~ 16,
+    length_corrected == "21-25" ~ 21,
+    length_corrected == "26-30" ~ 26,
+    length_corrected == "31-35" ~ 31,
+    length_corrected == "36-40" ~ 36,
+    length_corrected == "41-45" ~ 41,
+    length_corrected == "46-50" ~ 46,
+    length_corrected == ">50" ~ 50,
+    length_corrected == ">75" ~ 75))
+  
+### there is probably a more efficient way to do the above this works for now 
+
+maturity$Length_comparison <- as.numeric(maturity$Length_comparison)
+maturity$Lm_comparison <- as.numeric(maturity$Lm_comparison)
+
+maturity <- maturity %>% 
+  mutate(maturity = if_else(length_corrected >= Lm_comparison, "mature", "immature")) %>%
+  subset(trap_type == "MODIFIED" | trap_type == "UNMODIFIED") %>% #subsetting to only the modified and unmodified traps 
+  mutate(nofish_pertrap = number_of_fish/total_traps_collected) #per species per survey id
 ```
+
+Immaure and mature fish catch comparison
+
+```{r}
+maturity %>% select(number_of_fish, trap_type, maturity, scientific_name, total_traps_collected, nofish_pertrap) %>% 
+  na.omit() %>% 
+  ggplot(., aes(x=scientific_name, y=nofish_pertrap, color=maturity)) +
+  geom_boxplot() + theme_classic() + 
+  theme(axis.text.x = element_text(angle=60, hjust=1)) +
+  xlab("Trap Type") +
+  ylab("Number of fish per trap set")
+
+maturity %>% select(number_of_fish, trap_type, maturity, scientific_name, total_traps_collected, nofish_pertrap) %>% 
+  na.omit() %>%  
+  ggplot(., aes(x=maturity, y=nofish_pertrap, color=trap_type)) +
+  geom_boxplot() + theme_classic() + 
+  #facet_wrap(~trap_type, scales = "free_y") +
+  #theme(axis.text.x = element_text(angle=60, hjust=1)) +
+  xlab("Maturity") +
+  ylab("Number of fish per trap set")
+```
+
+Statistics on the above... 
+
+Circle back to the padj values coming out to "0.000000e+00". 
+
+Double check `trap_type+maturity` vs `trap_type*maturity`.  
+
+```{r}
+nofish_maturity_aov <- aov(number_of_fish ~ trap_type*maturity, data = maturity)
+summary(nofish_maturity_aov)
+
+nofish_maturity_tukey <- TukeyHSD(nofish_maturity_aov)
+nofish_maturity_tukey$`trap_type:maturity`
+```
+
 
 
 ## <a name="length"></a> **Catch and length data of mature fish**
 
+**Average length of catch versus length at first maturity (Lmat). Take the difference for each fish in the data against its length at first maturity and then calculate a weighted value for modified versus traditional traps where a value above 0 represents a fish above Lmat and a value below represents a fish below Lmat.**
+
+We only have bins for the length values.. so this might have to be by 5s. 
+i.e. catch = 11-15; Lm 21-25. Can take median values and do that calculation? 
+
 ```{r}
 
 ```
+
+
+## **5. Length frequency of top 3-5 species in modified versus traditional (different colors) with Lmat etc. indicators pulled from Fishbase.**
+
+Found a good website when googled FishR that has good plots for this. 
 
 
