@@ -774,10 +774,58 @@ We only have bins for the length values.. so this might have to be by
 5s. i.e. catch = 11-15; Lm 21-25. Can take median values and do that
 calculation?
 
+I’m not sure this is the best way to do this…
+
+Transform count value to that number of observations:
+<https://stackoverflow.com/questions/70759069/transform-count-column-into-number-of-rows>.
+
+``` r
+maturity_dist <- maturity %>% 
+  select(survey_id, number_of_fish, scientific_name, trap_type, length_corrected, Lm, Lm_range, Lm_comparison, Length_comparison, maturity) %>%
+  mutate(number_of_fish = if_else(is.na(number_of_fish), 1, number_of_fish)) %>% # replacing NAs with the value of 1
+  tidyr::uncount(., number_of_fish, .remove = TRUE) %>% # expanding number of fish to number of observations
+  #### notes on below fxn --- maybe not the best way to do this? 0-10 is a bigger bin than 11-15 so median value isn't as representative?
+  mutate(median_length = case_when(
+    length_corrected == "0-10" ~ 5,
+    length_corrected == "11-15" ~ 13,
+    length_corrected == "16-20" ~ 18,
+    length_corrected == "21-25" ~ 23,
+    length_corrected == "26-30" ~ 28,
+    length_corrected == "31-35" ~ 33,
+    length_corrected == "36-40" ~ 38,
+    length_corrected == "41-45" ~ 43,
+    length_corrected == "46-50" ~ 48,
+    length_corrected == ">50" ~ 50,
+    length_corrected == ">75" ~ 75)) %>%
+  mutate(length_dist = median_length-Lm) %>%
+  group_by(scientific_name, trap_type) %>%
+  mutate(avg_length_dist = mean(length_dist)) %>% #### a positive value here = mature; a negative value = immature 
+  ungroup()
+
+
+maturity_dist %>% group_by(scientific_name) %>%
+  filter(., n_distinct(avg_length_dist) >= 2) %>% # filters out the observations aren't in both categories (takes out species that only have 1 unique mean dist value so only 1 trap type)
+  ungroup() %>%
+  ggplot(., aes(x=scientific_name, y=avg_length_dist, color = trap_type)) +
+  geom_line(aes(group = scientific_name), color="grey14") +
+  geom_point() + theme_bw() + 
+  geom_hline(yintercept = 0, lty = "dotted") +
+  theme(axis.text.x = element_text(angle=60, hjust=1)) +
+  labs(y="Mean distance from Lm", x="Genus species", color="Trap Type")
+```
+
+    ## Warning: Removed 375 row(s) containing missing values (geom_path).
+
+    ## Warning: Removed 198675 rows containing missing values (geom_point).
+
+![](CUE-maturity-length-analysis_files/figure-gfm/unnamed-chunk-18-1.png)<!-- -->
+
 ## <a name="freq_plots"></a> **Length Frequency plots of top species**
 
 **Length frequency of top 3-5 species in modified versus traditional
 (different colors) with Lmat etc. indicators pulled from Fishbase.**
+
+Check this calculation for each fish not just each survey id???
 
 <http://derekogle.com/fishR/2017-07-28-JoyPlot>
 
@@ -805,9 +853,11 @@ maturity2022_topspp <- maturity %>% subset(year=="2022") %>%
            scientific_name == "Scarus ghobban" | scientific_name == "Leptoscarus vaigiensis" |
            scientific_name == "Siganus canaliculatus")
   
-maturity2022_topspp %>%
+maturity2022_topspp %>% 
+  mutate(number_of_fish = if_else(is.na(number_of_fish), 1, number_of_fish)) %>% # replacing NAs with the value of 1
+  tidyr::uncount(., number_of_fish, .remove = TRUE) %>% # expanding number of fish to number of observations
   ggplot(., aes(x=length_corrected, fill=trap_type, color=trap_type)) + 
-  geom_bar(alpha=0.5) +
+  geom_bar(alpha=0.3) +
   geom_vline(data = maturity2022_topspp, mapping = aes(xintercept = Lm_range), lty = "dotted") +
   theme_bw() + xlab("Length (cm)") + ylab("Frequency") +
   theme(axis.text.x.bottom = element_text(colour = 'black', angle = 60, hjust = 1),
@@ -823,4 +873,4 @@ maturity2022_topspp %>%
   ggtitle("Siganus canaliculatus Lm range = 0-10, can edit on in other program")
 ```
 
-![](CUE-maturity-length-analysis_files/figure-gfm/unnamed-chunk-18-1.png)<!-- -->
+![](CUE-maturity-length-analysis_files/figure-gfm/unnamed-chunk-19-1.png)<!-- -->
