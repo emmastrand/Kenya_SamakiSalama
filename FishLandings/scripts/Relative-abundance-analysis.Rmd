@@ -56,15 +56,18 @@ df<- read_excel("data/Fishlandings-cleaned-21052022-May.xlsx") %>% #read in exce
   unite(survey_id, Operation_date, fisher_id, sep = "-", remove = FALSE) # creating a new variable called survey id
 
 data_matrix <- df %>% # modified original 
-  select(survey_id, scientific_name, number_of_fish) %>% group_by(survey_id, scientific_name) %>% # selecting only desired columns for matrix
+  select(trap_type, scientific_name, number_of_fish) %>% # selecting only desired columns for matrix
+  subset(trap_type == "UNMODIFIED" | trap_type == "MODIFIED") %>%
+  filter(!is.na(number_of_fish)) %>%
+  group_by(scientific_name, trap_type) %>% 
   mutate(number_corrected = sum(number_of_fish)) %>% ungroup() %>% # calculating total number of that fish per survey id
   select(-number_of_fish) %>% distinct() %>% # removing original count column and taking out repetitive rows 
   spread(scientific_name, number_corrected) %>% # creating matrix from fish name and number columns
-  column_to_rownames(var="survey_id") # moving survey id column to row names 
+  column_to_rownames(var="trap_type") # moving survey id column to row names 
 
 data_matrix[is.na(data_matrix)] <- 0 #changing NAs to zeros 
 
-meta <- df %>% select(survey_id, trap_type, landing_site) %>% distinct()
+#meta <- df %>% select(survey_id, trap_type, landing_site) %>% distinct()
 ```
 # Relative abundance 
 
@@ -79,28 +82,28 @@ rel <- as.data.frame(rel) # turning this back into a dataframe
 ## Combining back with metadata 
 
 ```{r}
-rel_meta <- tibble::rownames_to_column(rel, "survey_id")
-rel_meta <- merge(meta, rel_meta, by = "survey_id")
-rel_meta <- rel_meta %>% filter(!is.na(trap_type)) %>%
-  gather(key=scientific_name, value = relabund, 4:154) %>%
-  subset(trap_type == "MODIFIED" | trap_type == "UNMODIFIED") %>%
+rel_meta <- tibble::rownames_to_column(rel, "trap_type")
+#rel_meta <- merge(meta, rel_meta, by = "trap_type")
+rel_meta <- rel_meta %>% #filter(!is.na(trap_type)) %>%
+  gather(key=scientific_name, value = relabund, 2:122) %>%
+  #subset(trap_type == "MODIFIED" | trap_type == "UNMODIFIED") %>%
   filter(!is.na(relabund)) %>%
-  filter(relabund > 0.4)
+  filter(relabund > 0.1)
 ```
 
 ## Plotting 
 
 ```{r}
 rel_meta %>%
-  ggplot(., aes(x = landing_site, y = reorder(scientific_name,relabund))) + 
+  ggplot(., aes(x = trap_type, y = reorder(scientific_name, relabund))) + 
   geom_tile(aes(fill = relabund), color = "grey") +
-  ggtitle("Relative abundance per survey ID") +
+  ggtitle("Relative abundance") +
   scale_fill_distiller(palette = "Blues", direction=100, labels = scales::label_percent(scale=100)) + 
   theme_classic() +
-  theme(axis.text.x.bottom = element_text(angle = 90),
-        axis.text.y = element_text(colour = 'black', size = 8, face = 'italic')) + 
-  facet_grid(~trap_type, scales = "free",) +
-  labs(x="Landing Site", fill="Relative Abundance", y="Scientific name") 
+  theme(#axis.text.x.bottom = element_text(angle = 60, hjust=1),
+        axis.text.y = element_text(colour = 'black', size = 9, face = 'italic')) + 
+  #facet_grid(~trap_type, scales = "free",) +
+  labs(x="Trap Type", fill="Relative Abundance", y="Scientific name") 
 ```
 
 ## PCA on relative abundance 

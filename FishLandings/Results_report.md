@@ -4,7 +4,8 @@ Results written by Emma Strand based on FishLandings survey data from Kenya_Sama
 
 Scripts used:  
 - Quality Control: [QC.md](https://github.com/emmastrand/Kenya_SamakiSalama/blob/main/FishLandings/scripts/QC.md)    
-- Catch per unit effort and length/maturity analysis: [CUE-maturity-length-analysis.md](https://github.com/emmastrand/Kenya_SamakiSalama/blob/main/FishLandings/scripts/CUE-maturity-length-analysis.md)  
+- Catch per unit effort and length/maturity analysis: [CUE-maturity-length-analysis.md](https://github.com/emmastrand/Kenya_SamakiSalama/blob/main/FishLandings/scripts/CUE-maturity-length-analysis.md)      
+- Relative abundance: [Relative-abundance-analysis.md]()  
 
 ### Summary on quality control (QC.md)
 
@@ -105,6 +106,8 @@ Goal: Length frequency of top 3-5 species in modified versus traditional (differ
 
 [Link to this portion of the script](https://github.com/emmastrand/Kenya_SamakiSalama/blob/main/FishLandings/scripts/CUE-maturity-length-analysis.md#-length-frequency-plots-of-top-species)
 
+Dotted line = Lm range (i.e. Lm = 11.5; Lm range = 11-15). Our length data is in bins so I could only plot this as a bin too.
+
 ![](https://github.com/emmastrand/Kenya_SamakiSalama/raw/main/FishLandings/scripts/CUE-maturity-length-analysis_files/figure-gfm/unnamed-chunk-18-1.png)
 
 ## Catch and length data of mature fish
@@ -112,3 +115,11 @@ Goal: Length frequency of top 3-5 species in modified versus traditional (differ
 Goal: Average length of catch versus length at first maturity (Lmat). Take the difference for each fish in the data against its length at first maturity and then calculate a weighted value for modified versus traditional traps where a value above 0 represents a fish above Lmat and a value below represents a fish below Lmat.
 
 We only have bins for the length values.. so this might have to be by 5s. i.e. catch = 11-15; Lm 21-25. Can take median values and do that calculation?
+
+## Relative abundance plots
+
+In progress.. The output isn't what I expect (should be more than 3 on the y axis?) so trying to troubleshoot this.
+
+[Code]()
+
+![]()
