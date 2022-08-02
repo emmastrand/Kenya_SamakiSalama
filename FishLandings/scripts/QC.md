@@ -1071,9 +1071,9 @@ df$length_cm <- gsub("111-15", "11-15", df$length_cm)
 df$length_cm <- gsub("11-16", "11-15", df$length_cm)
 
 # taking out double values 
-df$length_cm <- gsub("21-25 26-30", "NA", df$length_cm)
-df$length_cm <- gsub("21-25 26-31", "NA", df$length_cm)
-df$length_cm <- gsub("21-25, 26-30", "NA", df$length_cm)
+df$length_cm <- gsub("21-25 26-30", NA, df$length_cm)
+df$length_cm <- gsub("21-25 26-31", NA, df$length_cm)
+df$length_cm <- gsub("21-25, 26-30", NA, df$length_cm)
 
 # converting <10 to a range of 0-10 
 df <- df %>% 
@@ -1087,19 +1087,25 @@ df <- df %>%
          length_cm = if_else(length_cm == "<17", "16-20", length_cm))
 
 # converting numerical values to ranges 
-df <- df %>% 
- mutate(length_corrected = case_when(
-    length_cm >= 0 & length_cm <= 10.5 ~ "0-10",
-    length_cm >= 10.5 & length_cm <= 15.4 ~ "11-15",
-    length_cm >= 15.5 & length_cm <= 20.4 ~ "16-20",
-    length_cm >= 20.5 & length_cm <= 25.4 ~ "21-25",
-    length_cm >= 25.5 & length_cm <= 30.4 ~ "26-30",
-    length_cm >= 30.5 & length_cm <= 35.4 ~ "31-35",
-    length_cm >= 35.5 & length_cm <= 40.4 ~ "36-40",
-    length_cm >= 40.5 & length_cm <= 45.4 ~ "41-45",
-    length_cm >= 45.5 & length_cm <= 50.4 ~ "46-50",
-    length_cm >= 50.5 & length_cm <= 75 ~ ">50",
-    length_cm > 75 ~ ">75"))
+df$length_calc <- ifelse(grepl("-",df$length_cm), NA, df$length_cm) # if there is a "-" in the observation, then replace with NA and if not, put that value
+df$length_calc <- as.numeric(df$length_calc) # converting this to numeric so I can use the next mutate function to change these values to bins
+
+df <- df %>%
+ mutate(length_calc = case_when(
+    length_calc >= 0 & length_calc <= 10.5 ~ "0-10",
+    length_calc >= 10.5 & length_calc <= 15.4 ~ "11-15",
+    length_calc >= 15.5 & length_calc <= 20.4 ~ "16-20",
+    length_calc >= 20.5 & length_calc <= 25.4 ~ "21-25",
+    length_calc >= 25.5 & length_calc <= 30.4 ~ "26-30",
+    length_calc >= 30.5 & length_calc <= 35.4 ~ "31-35",
+    length_calc >= 35.5 & length_calc <= 40.4 ~ "36-40",
+    length_calc >= 40.5 & length_calc <= 45.4 ~ "41-45",
+    length_calc >= 45.5 & length_calc <= 50.4 ~ "46-50",
+    length_calc >= 50.5 & length_calc <= 75 ~ ">50",
+    length_calc > 75 ~ ">75")) 
+
+df <- df %>%
+  mutate(length_corrected = if_else(is.na(length_calc), length_cm, length_calc))
 
 # double checking that worked for the corrected column 
 unique(sort(df$length_cm))
@@ -1120,7 +1126,7 @@ unique(sort(df$length_cm))
     ## [109] "78.8"  "79"    "79.1"  "79.2"  "79.4"  "79.5"  "79.8"  "80"    "80.2" 
     ## [118] "80.3"  "81"    "82"    "82.1"  "82.2"  "82.3"  "82.4"  "83"    "84"   
     ## [127] "85"    "86"    "87"    "88"    "89"    "90"    "91"    "92"    "93"   
-    ## [136] "94"    "95"    "96"    "97"    "98"    "99"    "NA"
+    ## [136] "94"    "95"    "96"    "97"    "98"    "99"
 
 ``` r
 unique(sort(df$length_corrected))
@@ -1232,7 +1238,7 @@ unique(df$catch_composition_notes)
 head(df)
 ```
 
-    ## # A tibble: 6 × 30
+    ## # A tibble: 6 × 31
     ##   Operation_date      enumerator       landing_site BMU   fisher_id fisher_phone
     ##   <dttm>              <chr>            <chr>        <chr> <chr>     <chr>       
     ## 1 2022-02-13 00:00:00 CELESTINE N. ALI CHAUREMBO    TAKA… SS/TAK/C… 0           
@@ -1241,7 +1247,7 @@ head(df)
     ## 4 2022-02-13 00:00:00 CELESTINE N. ALI CHAUREMBO    TAKA… SS/TAK/C… 0           
     ## 5 2022-02-13 00:00:00 CELESTINE N. ALI CHAUREMBO    TAKA… SS/TAK/C… 0           
     ## 6 2022-02-13 00:00:00 CELESTINE N. ALI CHAUREMBO    TAKA… SS/TAK/C… 0           
-    ## # … with 24 more variables: household_id <chr>, trap_type <chr>,
+    ## # … with 25 more variables: household_id <chr>, trap_type <chr>,
     ## #   total_traps_collected <dbl>, date_set_dd_mm_yyyy <dttm>,
     ## #   `time_set_24hh:mm` <chr>, date_collected_dd_mm_yyyy <dttm>,
     ## #   `time_collected_24hh:mm` <chr>, total_weight_kg <dbl>,
