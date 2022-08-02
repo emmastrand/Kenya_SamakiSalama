@@ -802,7 +802,6 @@ maturity_dist <- maturity %>%
   mutate(avg_length_dist = mean(length_dist)) %>% #### a positive value here = mature; a negative value = immature 
   ungroup()
 
-
 maturity_dist %>% group_by(scientific_name) %>%
   filter(., n_distinct(avg_length_dist) >= 2) %>% # filters out the observations aren't in both categories (takes out species that only have 1 unique mean dist value so only 1 trap type)
   ungroup() %>%
@@ -846,7 +845,6 @@ maturity <- maturity %>% filter(!is.na(length_corrected)) %>%
   group_by(length_corrected, scientific_name, trap_type) %>%
   mutate(count.per.bin = sum(number_of_fish)) %>%
   ungroup()
-
 
 maturity2022_topspp <- maturity %>% subset(year=="2022") %>% 
   subset(scientific_name == "Siganus sutor" | scientific_name == "Lethrinus nebulosus" |
