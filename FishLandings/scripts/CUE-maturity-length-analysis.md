@@ -712,7 +712,7 @@ maturity %>% select(number_of_fish, trap_type, maturity, scientific_name, total_
   na.omit() %>%  
   ggplot(., aes(x=maturity, y=nofish_pertrap, color=trap_type)) +
   geom_boxplot() + theme_classic() + 
-  #facet_wrap(~trap_type, scales = "free_y") +
+  facet_wrap(~trap_type, scales = "free_y") +
   #theme(axis.text.x = element_text(angle=60, hjust=1)) +
   xlab("Maturity") +
   ylab("Number of fish per trap set")
