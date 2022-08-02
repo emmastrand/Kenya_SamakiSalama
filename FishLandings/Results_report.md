@@ -120,6 +120,6 @@ We only have bins for the length values.. so this might have to be by 5s. i.e. c
 
 In progress.. The output isn't what I expect (should be more than 3 on the y axis?) so trying to troubleshoot this.
 
-[Code]()
+[Code](https://github.com/emmastrand/Kenya_SamakiSalama/blob/main/FishLandings/scripts/Relative-abundance-analysis.md#relative-abundance-analysis-of-fishing-landings-dataset)
 
-![]()
+![](https://github.com/emmastrand/Kenya_SamakiSalama/raw/main/FishLandings/scripts/Relative-abundance-analysis_files/figure-gfm/unnamed-chunk-5-1.png)
