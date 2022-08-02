@@ -114,7 +114,9 @@ Dotted line = Lm range (i.e. Lm = 11.5; Lm range = 11-15). Our length data is in
 
 Goal: Average length of catch versus length at first maturity (Lmat). Take the difference for each fish in the data against its length at first maturity and then calculate a weighted value for modified versus traditional traps where a value above 0 represents a fish above Lmat and a value below represents a fish below Lmat.
 
-We only have bins for the length values.. so this might have to be by 5s. i.e. catch = 11-15; Lm 21-25. Can take median values and do that calculation?
+See notes on the code here: https://github.com/emmastrand/Kenya_SamakiSalama/blob/main/FishLandings/scripts/CUE-maturity-length-analysis.md#-catch-and-length-data-of-mature-fish. I'm not sure if this is the best way to calculate this?
+
+![](https://github.com/emmastrand/Kenya_SamakiSalama/raw/main/FishLandings/scripts/CUE-maturity-length-analysis_files/figure-gfm/unnamed-chunk-18-1.png)
 
 ## Relative abundance plots
 
