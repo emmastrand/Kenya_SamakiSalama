@@ -19,6 +19,8 @@ The output from the QC.md script is the file `Fishlandings-cleaned-clay-June_upd
 
 ## Total catch and grams per unit effort between modified and unmodified traps (CUE...Rmd)
 
+Goal: Total catch per unit effort between modified and traditional traps. It would be great to see this as grams captured per trap set.
+
 ### Total catch per trap
 
 *Total catch per trap for modified traps was significantly higher (p < 0.0001). This result does not seem to be influenced by any one particular fisherman or landing site (see CUE.Rmd for figures).*
@@ -79,6 +81,34 @@ Same issue as total catch per trap set - see above 2021 note.
 
 ## Top species caught in modified and unmodified traps
 
+Goal: Species catch per unit effort between modified and traditional traps. Take the top 3-5 species and run #1 for them separately.
+
+[Link to calculating top species caught code](https://github.com/emmastrand/Kenya_SamakiSalama/blob/main/FishLandings/scripts/CUE-maturity-length-analysis.md#-calculate-top-species-caught)
+
+[Link to comparing top spp between traps code](https://github.com/emmastrand/Kenya_SamakiSalama/blob/main/FishLandings/scripts/CUE-maturity-length-analysis.md#-top-species-stats-per-trap)
+
 ![](https://github.com/emmastrand/Kenya_SamakiSalama/raw/main/FishLandings/scripts/CUE-maturity-length-analysis_files/figure-gfm/unnamed-chunk-13-1.png)
 
-Insert statistics from this -- running into an error in R code currently.
+## Catch per unit effort for top species by maturity
+
+Goal: Total mature fish catch per unit effort between modified and traditional traps. This will have to be for the top 3-5 species separately. Go to Fishbase and find the length at first maturity for that particular species, then assign each fish a “mature” or “immature” status in the data and calculate.
+
+[Link to this portion of the script](https://github.com/emmastrand/Kenya_SamakiSalama/blob/main/FishLandings/scripts/CUE-maturity-length-analysis.md#-catch-per-unit-effort-for-top-species-by-maturity)
+
+![](https://github.com/emmastrand/Kenya_SamakiSalama/raw/main/FishLandings/scripts/CUE-maturity-length-analysis_files/figure-gfm/unnamed-chunk-16-2.png)
+
+Insert statistics from this -- running into an error in R code currently, will update this ASAP.
+
+## Length frequency plots of top species
+
+Goal: Length frequency of top 3-5 species in modified versus traditional (different colors) with Lmat etc. indicators pulled from Fishbase.
+
+[Link to this portion of the script](https://github.com/emmastrand/Kenya_SamakiSalama/blob/main/FishLandings/scripts/CUE-maturity-length-analysis.md#-length-frequency-plots-of-top-species)
+
+![](https://github.com/emmastrand/Kenya_SamakiSalama/raw/main/FishLandings/scripts/CUE-maturity-length-analysis_files/figure-gfm/unnamed-chunk-18-1.png)
+
+## Catch and length data of mature fish
+
+Goal: Average length of catch versus length at first maturity (Lmat). Take the difference for each fish in the data against its length at first maturity and then calculate a weighted value for modified versus traditional traps where a value above 0 represents a fish above Lmat and a value below represents a fish below Lmat.
+
+We only have bins for the length values.. so this might have to be by 5s. i.e. catch = 11-15; Lm 21-25. Can take median values and do that calculation?
