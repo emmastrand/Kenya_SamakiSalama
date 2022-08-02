@@ -108,7 +108,7 @@ Goal: Length frequency of top 3-5 species in modified versus traditional (differ
 
 Dotted line = Lm range (i.e. Lm = 11.5; Lm range = 11-15). Our length data is in bins so I could only plot this as a bin too.
 
-![](https://github.com/emmastrand/Kenya_SamakiSalama/raw/main/FishLandings/scripts/CUE-maturity-length-analysis_files/figure-gfm/unnamed-chunk-18-1.png)
+![](https://github.com/emmastrand/Kenya_SamakiSalama/raw/main/FishLandings/scripts/CUE-maturity-length-analysis_files/figure-gfm/unnamed-chunk-19-1.png)
 
 ## Catch and length data of mature fish
 
