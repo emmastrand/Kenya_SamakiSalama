@@ -19,14 +19,6 @@ knitr::opts_chunk$set(echo = TRUE)
 
 ## Questions for Austin and Clay 
 
-**To-Do**:  
-- Model for grams per trap vs catch per trap and trap type.    
-- ANOVA for top species per trap type.  
-- Create datafile from fishbase info.  
-- #3-5 on below aims.  
-- Relative abundance plots in other script.  
-- Summary points, results, and next steps suggestions finalize.  
-
 ## Summary of dataset 
 
 Modified traps data:  
@@ -44,7 +36,8 @@ Unmodified traps data:
 - [**Top species stats per trap**](#species_pertrap)  
 - [**Creating database from Fishbase**](#fishbase)  
 - [**Catch per unit effort for top species by maturity**](#maturity)  
-- [**Catch and length data of mature fish**](#length)  
+- [**Catch and length data of mature fish**](#length)   
+- [**Length Frequency plots of top species**](#freq_plots)   
 
 ## <a name="data"></a> **Reading in datafiles**
 
@@ -286,8 +279,6 @@ species_list %>% subset(trap_type == "UNMODIFIED") %>%
   arrange(desc(species_catch)) %>% head(5)
 ```
 
-Relative abundance plots? relative of total caught number? 
-
 ## <a name="species_pertrap"></a> **Top species stats per trap**
 
 Create a subsetted df from the top 10 total species (break this down into modified and unmodified later?).
@@ -301,7 +292,7 @@ species_df <- data %>% filter(!is.na(number_of_fish)) %>%
 
 # use the above metric to subset to top 10 of those 
 species_keep <- species_df %>% select(scientific_name, species_total_catch) %>% 
-  distinct() %>% slice_max(species_total_catch, n = 10)
+  distinct() %>% slice_max(species_total_catch, n = 10) 
 
 # filter species df based on the species_keep list 
 species_df <- species_df %>% filter(scientific_name %in% species_keep$scientific_name)
@@ -425,7 +416,7 @@ maturity %>% select(number_of_fish, trap_type, maturity, scientific_name, total_
   ggplot(., aes(x=scientific_name, y=nofish_pertrap, color=maturity)) +
   geom_boxplot() + theme_classic() + 
   theme(axis.text.x = element_text(angle=60, hjust=1)) +
-  xlab("Trap Type") +
+  xlab("Species") +
   ylab("Number of fish per trap set")
 
 maturity %>% select(number_of_fish, trap_type, maturity, scientific_name, total_traps_collected, nofish_pertrap) %>% 
@@ -461,13 +452,61 @@ nofish_maturity_tukey$`trap_type:maturity`
 We only have bins for the length values.. so this might have to be by 5s. 
 i.e. catch = 11-15; Lm 21-25. Can take median values and do that calculation? 
 
-```{r}
 
+## <a name="freq_plots"></a> **Length Frequency plots of top species**
+
+**Length frequency of top 3-5 species in modified versus traditional (different colors) with Lmat etc. indicators pulled from Fishbase.**
+
+http://derekogle.com/fishR/2017-07-28-JoyPlot
+
+From the `species_keep` df:
+
+Siganus sutor	= 299920  			
+Lethrinus nebulosus	= 27161	  		
+Scarus ghobban	= 23025			  
+Leptoscarus vaigiensis	= 14070		  	
+Siganus canaliculatus	= 9509	  
+
+```{r}
+# the column we want to plot: maturity$length_corrected
+maturity$length_corrected <- factor(maturity$length_corrected, levels=c("0-10", "11-15","16-20","21-25","26-30","31-35","36-40",
+                                                                        "41-45", "46-50", ">75"))
+
+maturity <- maturity %>% filter(!is.na(length_corrected)) %>%
+  group_by(length_corrected, scientific_name, trap_type) %>%
+  mutate(count.per.bin = sum(number_of_fish)) %>%
+  ungroup()
+
+
+maturity2022_topspp <- maturity %>% subset(year=="2022") %>% 
+  subset(scientific_name == "Siganus sutor" | scientific_name == "Lethrinus nebulosus" |
+           scientific_name == "Scarus ghobban" | scientific_name == "Leptoscarus vaigiensis" |
+           scientific_name == "Siganus canaliculatus")
+  
+maturity2022_topspp %>%
+  ggplot(., aes(x=length_corrected, fill=trap_type, color=trap_type)) + 
+  geom_bar(alpha=0.5) +
+  geom_vline(data = maturity2022_topspp, mapping = aes(xintercept = Lm_range), lty = "dotted") +
+  theme_bw() + xlab("Length (cm)") + ylab("Frequency") +
+  theme(axis.text.x.bottom = element_text(colour = 'black', angle = 60, hjust = 1),
+        axis.text.y = element_text(colour = 'black', size = 8, face = 'italic')) + 
+  theme(panel.border = element_blank(),
+   panel.grid.major = element_blank(),
+   panel.grid.minor = element_blank(),
+   strip.text.x = element_text(size = 9, color = "black", face = "bold.italic"),
+   axis.line = element_line(colour = "black")) +
+  theme(axis.title.y = element_text(size = 12, face = "bold", margin = margin(t = 0, r = 10, b = 0, l = 0))) +
+  theme(axis.title.x = element_text(size = 12, face = "bold", margin = margin(t = 10, r = 0, b = 0, l = 0))) +
+  facet_wrap(~scientific_name, scales = "free_y") +
+  ggtitle("Siganus canaliculatus Lm range = 0-10, can edit on in other program")
 ```
 
 
-## **5. Length frequency of top 3-5 species in modified versus traditional (different colors) with Lmat etc. indicators pulled from Fishbase.**
 
-Found a good website when googled FishR that has good plots for this. 
+
+
+
+
+
 
 

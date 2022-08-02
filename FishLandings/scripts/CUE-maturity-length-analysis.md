@@ -4,14 +4,6 @@ Author: Emma Strand; <emma_strand@uri.edu>
 
 ## Questions for Austin and Clay
 
-**To-Do**:  
-- Model for grams per trap vs catch per trap and trap type.  
-- ANOVA for top species per trap type.  
-- Create datafile from fishbase info.  
-- \#3-5 on below aims.  
-- Relative abundance plots in other script.  
-- Summary points, results, and next steps suggestions finalize.
-
 ## Summary of dataset
 
 Modified traps data:  
@@ -29,7 +21,8 @@ January, February, March, April, May, June
 -   [**Top species stats per trap**](#species_pertrap)  
 -   [**Creating database from Fishbase**](#fishbase)  
 -   [**Catch per unit effort for top species by maturity**](#maturity)  
--   [**Catch and length data of mature fish**](#length)
+-   [**Catch and length data of mature fish**](#length)  
+-   [**Length Frequency plots of top species**](#freq_plots)
 
 ## <a name="data"></a> **Reading in datafiles**
 
@@ -537,8 +530,6 @@ species_list %>% subset(trap_type == "UNMODIFIED") %>%
     ## 4 Leptoscarus vaigiensis UNMODIFIED         11393
     ## 5 Parupeneus indicus     UNMODIFIED          6328
 
-Relative abundance plots? relative of total caught number?
-
 ## <a name="species_pertrap"></a> **Top species stats per trap**
 
 Create a subsetted df from the top 10 total species (break this down
@@ -553,7 +544,7 @@ species_df <- data %>% filter(!is.na(number_of_fish)) %>%
 
 # use the above metric to subset to top 10 of those 
 species_keep <- species_df %>% select(scientific_name, species_total_catch) %>% 
-  distinct() %>% slice_max(species_total_catch, n = 10)
+  distinct() %>% slice_max(species_total_catch, n = 10) 
 
 # filter species df based on the species_keep list 
 species_df <- species_df %>% filter(scientific_name %in% species_keep$scientific_name)
@@ -708,7 +699,7 @@ maturity %>% select(number_of_fish, trap_type, maturity, scientific_name, total_
   ggplot(., aes(x=scientific_name, y=nofish_pertrap, color=maturity)) +
   geom_boxplot() + theme_classic() + 
   theme(axis.text.x = element_text(angle=60, hjust=1)) +
-  xlab("Trap Type") +
+  xlab("Species") +
   ylab("Number of fish per trap set")
 ```
 
@@ -743,13 +734,13 @@ summary(nofish_maturity_aov)
 ```
 
     ##                       Df  Sum Sq Mean Sq F value Pr(>F)    
-    ## trap_type              1   42177   42177 507.423 <2e-16 ***
-    ## maturity               1   23763   23763 285.893 <2e-16 ***
-    ## trap_type:maturity     1      13      13   0.161  0.688    
-    ## Residuals          44696 3715128      83                   
+    ## trap_type              1   41359   41359 496.606 <2e-16 ***
+    ## maturity               1   24723   24723 296.861 <2e-16 ***
+    ## trap_type:maturity     1       2       2   0.022  0.883    
+    ## Residuals          44568 3711755      83                   
     ## ---
     ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
-    ## 123 observations deleted due to missingness
+    ## 251 observations deleted due to missingness
 
 ``` r
 nofish_maturity_tukey <- TukeyHSD(nofish_maturity_aov)
@@ -757,17 +748,17 @@ nofish_maturity_tukey$`trap_type:maturity`
 ```
 
     ##                                             diff        lwr        upr
-    ## UNMODIFIED:immature-MODIFIED:immature -2.1759466 -2.5328086 -1.8190846
-    ## MODIFIED:mature-MODIFIED:immature     -1.5164503 -1.9065444 -1.1263562
-    ## UNMODIFIED:mature-MODIFIED:immature   -3.6180805 -3.9683059 -3.2678552
-    ## MODIFIED:mature-UNMODIFIED:immature    0.6594963  0.3382695  0.9807231
-    ## UNMODIFIED:mature-UNMODIFIED:immature -1.4421339 -1.7135581 -1.1707098
-    ## UNMODIFIED:mature-MODIFIED:mature     -2.1016302 -2.4154678 -1.7877927
+    ## UNMODIFIED:immature-MODIFIED:immature -2.1288036 -2.4865221 -1.7710851
+    ## MODIFIED:mature-MODIFIED:immature     -1.5164503 -1.9069269 -1.1259738
+    ## UNMODIFIED:mature-MODIFIED:immature   -3.6180805 -3.9686493 -3.2675118
+    ## MODIFIED:mature-UNMODIFIED:immature    0.6123533  0.2902488  0.9344577
+    ## UNMODIFIED:mature-UNMODIFIED:immature -1.4892770 -1.7616330 -1.2169210
+    ## UNMODIFIED:mature-MODIFIED:mature     -2.1016302 -2.4157754 -1.7874850
     ##                                              p adj
     ## UNMODIFIED:immature-MODIFIED:immature 0.000000e+00
-    ## MODIFIED:mature-MODIFIED:immature     3.230749e-14
+    ## MODIFIED:mature-MODIFIED:immature     3.297362e-14
     ## UNMODIFIED:mature-MODIFIED:immature   0.000000e+00
-    ## MODIFIED:mature-UNMODIFIED:immature   7.965799e-07
+    ## MODIFIED:mature-UNMODIFIED:immature   6.193922e-06
     ## UNMODIFIED:mature-UNMODIFIED:immature 0.000000e+00
     ## UNMODIFIED:mature-MODIFIED:mature     0.000000e+00
 
@@ -783,6 +774,53 @@ We only have bins for the length values.. so this might have to be by
 5s. i.e. catch = 11-15; Lm 21-25. Can take median values and do that
 calculation?
 
-## **5. Length frequency of top 3-5 species in modified versus traditional (different colors) with Lmat etc. indicators pulled from Fishbase.**
+## <a name="freq_plots"></a> **Length Frequency plots of top species**
 
-Found a good website when googled FishR that has good plots for this.
+**Length frequency of top 3-5 species in modified versus traditional
+(different colors) with Lmat etc. indicators pulled from Fishbase.**
+
+<http://derekogle.com/fishR/2017-07-28-JoyPlot>
+
+From the `species_keep` df:
+
+Siganus sutor = 299920  
+Lethrinus nebulosus = 27161  
+Scarus ghobban = 23025  
+Leptoscarus vaigiensis = 14070  
+Siganus canaliculatus = 9509
+
+``` r
+# the column we want to plot: maturity$length_corrected
+maturity$length_corrected <- factor(maturity$length_corrected, levels=c("0-10", "11-15","16-20","21-25","26-30","31-35","36-40",
+                                                                        "41-45", "46-50", ">75"))
+
+maturity <- maturity %>% filter(!is.na(length_corrected)) %>%
+  group_by(length_corrected, scientific_name, trap_type) %>%
+  mutate(count.per.bin = sum(number_of_fish)) %>%
+  ungroup()
+
+
+maturity2022_topspp <- maturity %>% subset(year=="2022") %>% 
+  subset(scientific_name == "Siganus sutor" | scientific_name == "Lethrinus nebulosus" |
+           scientific_name == "Scarus ghobban" | scientific_name == "Leptoscarus vaigiensis" |
+           scientific_name == "Siganus canaliculatus")
+  
+maturity2022_topspp %>%
+  ggplot(., aes(x=length_corrected, fill=trap_type, color=trap_type)) + 
+  geom_bar(alpha=0.5) +
+  geom_vline(data = maturity2022_topspp, mapping = aes(xintercept = Lm_range), lty = "dotted") +
+  theme_bw() + xlab("Length (cm)") + ylab("Frequency") +
+  theme(axis.text.x.bottom = element_text(colour = 'black', angle = 60, hjust = 1),
+        axis.text.y = element_text(colour = 'black', size = 8, face = 'italic')) + 
+  theme(panel.border = element_blank(),
+   panel.grid.major = element_blank(),
+   panel.grid.minor = element_blank(),
+   strip.text.x = element_text(size = 9, color = "black", face = "bold.italic"),
+   axis.line = element_line(colour = "black")) +
+  theme(axis.title.y = element_text(size = 12, face = "bold", margin = margin(t = 0, r = 10, b = 0, l = 0))) +
+  theme(axis.title.x = element_text(size = 12, face = "bold", margin = margin(t = 10, r = 0, b = 0, l = 0))) +
+  facet_wrap(~scientific_name, scales = "free_y") +
+  ggtitle("Siganus canaliculatus Lm range = 0-10, can edit on in other program")
+```
+
+![](CUE-maturity-length-analysis_files/figure-gfm/unnamed-chunk-18-1.png)<!-- -->

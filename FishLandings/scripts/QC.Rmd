@@ -684,9 +684,9 @@ df$length_cm <- gsub("111-15", "11-15", df$length_cm)
 df$length_cm <- gsub("11-16", "11-15", df$length_cm)
 
 # taking out double values 
-df$length_cm <- gsub("21-25 26-30", "NA", df$length_cm)
-df$length_cm <- gsub("21-25 26-31", "NA", df$length_cm)
-df$length_cm <- gsub("21-25, 26-30", "NA", df$length_cm)
+df$length_cm <- gsub("21-25 26-30", NA, df$length_cm)
+df$length_cm <- gsub("21-25 26-31", NA, df$length_cm)
+df$length_cm <- gsub("21-25, 26-30", NA, df$length_cm)
 
 # converting <10 to a range of 0-10 
 df <- df %>% 
@@ -700,19 +700,25 @@ df <- df %>%
          length_cm = if_else(length_cm == "<17", "16-20", length_cm))
 
 # converting numerical values to ranges 
-df <- df %>% 
- mutate(length_corrected = case_when(
-    length_cm >= 0 & length_cm <= 10.5 ~ "0-10",
-    length_cm >= 10.5 & length_cm <= 15.4 ~ "11-15",
-    length_cm >= 15.5 & length_cm <= 20.4 ~ "16-20",
-    length_cm >= 20.5 & length_cm <= 25.4 ~ "21-25",
-    length_cm >= 25.5 & length_cm <= 30.4 ~ "26-30",
-    length_cm >= 30.5 & length_cm <= 35.4 ~ "31-35",
-    length_cm >= 35.5 & length_cm <= 40.4 ~ "36-40",
-    length_cm >= 40.5 & length_cm <= 45.4 ~ "41-45",
-    length_cm >= 45.5 & length_cm <= 50.4 ~ "46-50",
-    length_cm >= 50.5 & length_cm <= 75 ~ ">50",
-    length_cm > 75 ~ ">75"))
+df$length_calc <- ifelse(grepl("-",df$length_cm), NA, df$length_cm) # if there is a "-" in the observation, then replace with NA and if not, put that value
+df$length_calc <- as.numeric(df$length_calc) # converting this to numeric so I can use the next mutate function to change these values to bins
+
+df <- df %>%
+ mutate(length_calc = case_when(
+    length_calc >= 0 & length_calc <= 10.5 ~ "0-10",
+    length_calc >= 10.5 & length_calc <= 15.4 ~ "11-15",
+    length_calc >= 15.5 & length_calc <= 20.4 ~ "16-20",
+    length_calc >= 20.5 & length_calc <= 25.4 ~ "21-25",
+    length_calc >= 25.5 & length_calc <= 30.4 ~ "26-30",
+    length_calc >= 30.5 & length_calc <= 35.4 ~ "31-35",
+    length_calc >= 35.5 & length_calc <= 40.4 ~ "36-40",
+    length_calc >= 40.5 & length_calc <= 45.4 ~ "41-45",
+    length_calc >= 45.5 & length_calc <= 50.4 ~ "46-50",
+    length_calc >= 50.5 & length_calc <= 75 ~ ">50",
+    length_calc > 75 ~ ">75")) 
+
+df <- df %>%
+  mutate(length_corrected = if_else(is.na(length_calc), length_cm, length_calc))
 
 # double checking that worked for the corrected column 
 unique(sort(df$length_cm))
