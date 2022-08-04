@@ -61,11 +61,16 @@ Read in the data frame that is the output of the QC script.
 
 ```{r, message=FALSE, warning=FALSE}
 # read in excel file
-data <- read_excel("data/Fishlandings-cleaned-clay-June_updated-IW.xlsx") #read in excel file 
+data <- read_excel("data/cleaned-Fishlandings-data- CC-JM-Clay-IW combined 7-28-2022.xlsx") #read in excel file 
 
 data <- data %>% separate(Operation_date, c("year", "month", "day"), remove = FALSE) # creating new columns with month year and date
 data$month <- as.numeric(data$month) #changing this column to numeric instead of a character (needed for next fxn)
 data$month <- month.abb[data$month] #changing numeric months to month names 
+
+data$month <- factor(data$month, levels=c("Jan", "Feb","Mar","Apr","May","Jun",
+                                          "Jul", "Aug", "Sep", "Oct", "Dec", "NA"))
+
+data$total_traps_collected[data$total_traps_collected == 0] <- NA
 ```
 
 ## <a name="catch_effort"></a> **Total catch (grams) per unit effort (trap set)**
@@ -84,7 +89,7 @@ modified_trap_df <- data %>% unite(survey_id, Operation_date, fisher_id, sep = "
          catch_per_trap = total_catch/total_traps_collected) %>% #divide total catch per survey id by total traps 
   dplyr::ungroup(survey_id) %>% #ungroup by this column  
   subset(trap_type == "MODIFIED" | trap_type == "UNMODIFIED") %>% #subset for only modified and unmodified traps 
-  select(survey_id, enumerator, trap_type, `No. of fishers in crew`, landing_site, total_catch, month, year, grams_per_trap, catch_per_trap) %>%
+  select(survey_id, enumerator, trap_type, total_traps_collected, `No. of fishers in crew`, landing_site, total_catch, month, year, grams_per_trap, catch_per_trap) %>%
   distinct() 
 ```
 
@@ -168,7 +173,7 @@ modified_trap_df %>%
 # by month and year 
 modified_trap_df %>% unite(ym, year, month, sep = " ", remove = FALSE) %>% #filter(catch_per_trap < 1500) %>%
   ggplot(aes(x=month, y=grams_per_trap, color=trap_type)) + 
-  facet_wrap(~year, scales = "free_y") +
+  facet_wrap(~year) +
   geom_boxplot(aes(color=trap_type), outlier.size = 0, lwd=0.5) +
  # geom_point(aes(x=month, group=trap_type, y=grams_per_trap, fill=trap_type), pch = 21, size=1) +
   theme_classic() + 
@@ -179,7 +184,7 @@ modified_trap_df %>% unite(ym, year, month, sep = " ", remove = FALSE) %>% #filt
 The relationship between grams per trap and total catch per trap. 
 
 ```{r}
-modified_trap_df %>% filter(catch_per_trap < 1500) %>%
+modified_trap_df %>%# filter(catch_per_trap < 1500) %>%
   ggplot(aes(x=catch_per_trap, y=grams_per_trap, color=trap_type)) +
   theme_bw() + xlab("total catch per trap") + ylab("grams per trap") +
   geom_smooth(aes(fill=trap_type), method="loess", se=TRUE, fullrange=TRUE, level=0.95, color="black") +
@@ -483,9 +488,9 @@ maturity_dist %>% group_by(scientific_name) %>%
   filter(., n_distinct(avg_length_dist) >= 2) %>% # filters out the observations aren't in both categories (takes out species that only have 1 unique mean dist value so only 1 trap type)
   ungroup() %>%
   ggplot(., aes(x=scientific_name, y=avg_length_dist, color = trap_type)) +
+  geom_hline(yintercept = 0, lty = "dotted") +
   geom_line(aes(group = scientific_name), color="grey14") +
   geom_point() + theme_bw() + 
-  geom_hline(yintercept = 0, lty = "dotted") +
   theme(axis.text.x = element_text(angle=60, hjust=1)) +
   labs(y="Mean distance from Lm", x="Genus species", color="Trap Type")
 ```
@@ -499,16 +504,15 @@ maturity_dist %>% group_by(scientific_name) %>%
 
 Check this calculation for each fish not just each survey id???
 
-
 http://derekogle.com/fishR/2017-07-28-JoyPlot
 
 From the `species_keep` df:
 
-Siganus sutor	= 299920  			
-Lethrinus nebulosus	= 27161	  		
-Scarus ghobban	= 23025			  
-Leptoscarus vaigiensis	= 14070		  	
-Siganus canaliculatus	= 9509	  
+Siganus sutor	= 380648  			 
+Lethrinus nebulosus	= 47702	    		
+Scarus ghobban	= 32410			  
+Leptoscarus vaigiensis	= 19606  		  	
+Siganus canaliculatus	= 18030	  
 
 ```{r}
 # the column we want to plot: maturity$length_corrected

@@ -46,11 +46,16 @@ Read in the data frame that is the output of the QC script.
 
 ``` r
 # read in excel file
-data <- read_excel("data/Fishlandings-cleaned-clay-June_updated-IW.xlsx") #read in excel file 
+data <- read_excel("data/cleaned-Fishlandings-data- CC-JM-Clay-IW combined 7-28-2022.xlsx") #read in excel file 
 
 data <- data %>% separate(Operation_date, c("year", "month", "day"), remove = FALSE) # creating new columns with month year and date
 data$month <- as.numeric(data$month) #changing this column to numeric instead of a character (needed for next fxn)
 data$month <- month.abb[data$month] #changing numeric months to month names 
+
+data$month <- factor(data$month, levels=c("Jan", "Feb","Mar","Apr","May","Jun",
+                                          "Jul", "Aug", "Sep", "Oct", "Dec", "NA"))
+
+data$total_traps_collected[data$total_traps_collected == 0] <- NA
 ```
 
 ## <a name="catch_effort"></a> **Total catch (grams) per unit effort (trap set)**
@@ -73,7 +78,7 @@ modified_trap_df <- data %>% unite(survey_id, Operation_date, fisher_id, sep = "
          catch_per_trap = total_catch/total_traps_collected) %>% #divide total catch per survey id by total traps 
   dplyr::ungroup(survey_id) %>% #ungroup by this column  
   subset(trap_type == "MODIFIED" | trap_type == "UNMODIFIED") %>% #subset for only modified and unmodified traps 
-  select(survey_id, enumerator, trap_type, `No. of fishers in crew`, landing_site, total_catch, month, year, grams_per_trap, catch_per_trap) %>%
+  select(survey_id, enumerator, trap_type, total_traps_collected, `No. of fishers in crew`, landing_site, total_catch, month, year, grams_per_trap, catch_per_trap) %>%
   distinct() 
 ```
 
@@ -106,9 +111,9 @@ modified_trap_df %>%
   theme(axis.text.x = element_text(vjust = 1.1)) #Set the text angle
 ```
 
-    ## Warning: Removed 210 rows containing non-finite values (stat_boxplot).
+    ## Warning: Removed 61 rows containing non-finite values (stat_boxplot).
 
-    ## Warning: Removed 210 rows containing missing values (geom_point).
+    ## Warning: Removed 61 rows containing missing values (geom_point).
 
 ![](CUE-maturity-length-analysis_files/figure-gfm/unnamed-chunk-4-2.png)<!-- -->
 
@@ -124,8 +129,8 @@ modified_trap_df %>%
   theme(axis.text.x = element_text(vjust = 1.1)) #Set the text angle
 ```
 
-    ## Warning: Removed 210 rows containing non-finite values (stat_boxplot).
-    ## Removed 210 rows containing missing values (geom_point).
+    ## Warning: Removed 61 rows containing non-finite values (stat_boxplot).
+    ## Removed 61 rows containing missing values (geom_point).
 
 ![](CUE-maturity-length-analysis_files/figure-gfm/unnamed-chunk-4-3.png)<!-- -->
 
@@ -156,9 +161,9 @@ modified_trap_df %>%
   theme(axis.text.x = element_text(vjust = 1.1)) #Set the text angle
 ```
 
-    ## Warning: Removed 94 rows containing non-finite values (stat_boxplot).
+    ## Warning: Removed 62 rows containing non-finite values (stat_boxplot).
 
-    ## Warning: Removed 94 rows containing missing values (geom_point).
+    ## Warning: Removed 62 rows containing missing values (geom_point).
 
 ![](CUE-maturity-length-analysis_files/figure-gfm/unnamed-chunk-5-1.png)<!-- -->
 
@@ -174,8 +179,8 @@ modified_trap_df %>%
   theme(axis.text.x = element_text(vjust = 1.1)) #Set the text angle
 ```
 
-    ## Warning: Removed 94 rows containing non-finite values (stat_boxplot).
-    ## Removed 94 rows containing missing values (geom_point).
+    ## Warning: Removed 62 rows containing non-finite values (stat_boxplot).
+    ## Removed 62 rows containing missing values (geom_point).
 
 ![](CUE-maturity-length-analysis_files/figure-gfm/unnamed-chunk-5-2.png)<!-- -->
 
@@ -191,8 +196,8 @@ modified_trap_df %>%
   theme(axis.text.x = element_text(vjust = 1.1)) #Set the text angle
 ```
 
-    ## Warning: Removed 94 rows containing non-finite values (stat_boxplot).
-    ## Removed 94 rows containing missing values (geom_point).
+    ## Warning: Removed 62 rows containing non-finite values (stat_boxplot).
+    ## Removed 62 rows containing missing values (geom_point).
 
 ![](CUE-maturity-length-analysis_files/figure-gfm/unnamed-chunk-5-3.png)<!-- -->
 
@@ -200,7 +205,7 @@ modified_trap_df %>%
 # by month and year 
 modified_trap_df %>% unite(ym, year, month, sep = " ", remove = FALSE) %>% #filter(catch_per_trap < 1500) %>%
   ggplot(aes(x=month, y=grams_per_trap, color=trap_type)) + 
-  facet_wrap(~year, scales = "free_y") +
+  facet_wrap(~year) +
   geom_boxplot(aes(color=trap_type), outlier.size = 0, lwd=0.5) +
  # geom_point(aes(x=month, group=trap_type, y=grams_per_trap, fill=trap_type), pch = 21, size=1) +
   theme_classic() + 
@@ -208,14 +213,14 @@ modified_trap_df %>% unite(ym, year, month, sep = " ", remove = FALSE) %>% #filt
   theme(axis.text.x = element_text(vjust = 1.1, hjust=1.1, angle=60)) #Set the text angle
 ```
 
-    ## Warning: Removed 94 rows containing non-finite values (stat_boxplot).
+    ## Warning: Removed 62 rows containing non-finite values (stat_boxplot).
 
 ![](CUE-maturity-length-analysis_files/figure-gfm/unnamed-chunk-5-4.png)<!-- -->
 
 The relationship between grams per trap and total catch per trap.
 
 ``` r
-modified_trap_df %>% filter(catch_per_trap < 1500) %>%
+modified_trap_df %>%# filter(catch_per_trap < 1500) %>%
   ggplot(aes(x=catch_per_trap, y=grams_per_trap, color=trap_type)) +
   theme_bw() + xlab("total catch per trap") + ylab("grams per trap") +
   geom_smooth(aes(fill=trap_type), method="loess", se=TRUE, fullrange=TRUE, level=0.95, color="black") +
@@ -224,11 +229,11 @@ modified_trap_df %>% filter(catch_per_trap < 1500) %>%
 
     ## `geom_smooth()` using formula 'y ~ x'
 
-    ## Warning: Removed 1 rows containing non-finite values (stat_smooth).
+    ## Warning: Removed 62 rows containing non-finite values (stat_smooth).
 
-    ## Warning: Removed 30 rows containing missing values (geom_smooth).
+    ## Warning: Removed 54 rows containing missing values (geom_smooth).
 
-    ## Warning: Removed 1 rows containing missing values (geom_point).
+    ## Warning: Removed 62 rows containing missing values (geom_point).
 
 ![](CUE-maturity-length-analysis_files/figure-gfm/unnamed-chunk-6-1.png)<!-- -->
 
@@ -260,13 +265,13 @@ var.test(UN$grams_per_trap, MOD$grams_per_trap)
     ##  F test to compare two variances
     ## 
     ## data:  UN$grams_per_trap and MOD$grams_per_trap
-    ## F = 0.75266, num df = 755, denom df = 1290, p-value = 1.576e-05
+    ## F = 0.72688, num df = 1049, denom df = 2828, p-value = 1.259e-09
     ## alternative hypothesis: true ratio of variances is not equal to 1
     ## 95 percent confidence interval:
-    ##  0.6635431 0.8555765
+    ##  0.6583185 0.8044689
     ## sample estimates:
     ## ratio of variances 
-    ##          0.7526603
+    ##          0.7268842
 
 ``` r
 t.test(grams_per_trap~trap_type, data = modified_trap_df, var.equal = FALSE)
@@ -276,13 +281,13 @@ t.test(grams_per_trap~trap_type, data = modified_trap_df, var.equal = FALSE)
     ##  Welch Two Sample t-test
     ## 
     ## data:  grams_per_trap by trap_type
-    ## t = -0.99452, df = 1939.3, p-value = 0.3201
+    ## t = 4.2895, df = 2182.7, p-value = 1.869e-05
     ## alternative hypothesis: true difference in means between group MODIFIED and group UNMODIFIED is not equal to 0
     ## 95 percent confidence interval:
-    ##  -0.06561682  0.02145999
+    ##  0.0403919 0.1084280
     ## sample estimates:
     ##   mean in group MODIFIED mean in group UNMODIFIED 
-    ##                0.8929056                0.9149840
+    ##                0.8647085                0.7902985
 
 #### Total catch per trap
 
@@ -294,13 +299,13 @@ var.test(UN$catch_per_trap, MOD$catch_per_trap)
     ##  F test to compare two variances
     ## 
     ## data:  UN$catch_per_trap and MOD$catch_per_trap
-    ## F = 0.58716, num df = 755, denom df = 1290, p-value = 1.442e-15
+    ## F = 1.873, num df = 1049, denom df = 2828, p-value < 2.2e-16
     ## alternative hypothesis: true ratio of variances is not equal to 1
     ## 95 percent confidence interval:
-    ##  0.5176356 0.6674425
+    ##  1.696297 2.072885
     ## sample estimates:
     ## ratio of variances 
-    ##          0.5871567
+    ##           1.872971
 
 ``` r
 t.test(catch_per_trap~trap_type, data = modified_trap_df, var.equal = FALSE)
@@ -310,13 +315,13 @@ t.test(catch_per_trap~trap_type, data = modified_trap_df, var.equal = FALSE)
     ##  Welch Two Sample t-test
     ## 
     ## data:  catch_per_trap by trap_type
-    ## t = 10.041, df = 1903.5, p-value < 2.2e-16
+    ## t = 16.389, df = 1484, p-value < 2.2e-16
     ## alternative hypothesis: true difference in means between group MODIFIED and group UNMODIFIED is not equal to 0
     ## 95 percent confidence interval:
-    ##  25.27546 37.54562
+    ##  44.18302 56.19691
     ## sample estimates:
     ##   mean in group MODIFIED mean in group UNMODIFIED 
-    ##                 60.88043                 29.46989
+    ##                 69.91612                 19.72616
 
 #### Total catch per trap vs weight in grams per trap.
 
@@ -330,17 +335,12 @@ I’m not sure yet if this is the best way to do this…
 ``` r
 # unmodified
 un_catch_model <- lmer(log(grams_per_trap) ~ catch_per_trap + (1|enumerator) + (1|landing_site), na.action=na.omit, data=UN)
-```
-
-    ## boundary (singular) fit: see help('isSingular')
-
-``` r
 qqPlot(residuals(un_catch_model)) 
 ```
 
 ![](CUE-maturity-length-analysis_files/figure-gfm/unnamed-chunk-10-1.png)<!-- -->
 
-    ## [1] 748 234
+    ## [1] 695  59
 
 ``` r
 hist(residuals(un_catch_model))
@@ -361,7 +361,7 @@ qqPlot(residuals(mod_catch_model))
 
 ![](CUE-maturity-length-analysis_files/figure-gfm/unnamed-chunk-10-3.png)<!-- -->
 
-    ## [1]  396 1263
+    ## [1] 2248 2252
 
 ``` r
 hist(residuals(mod_catch_model))
@@ -378,29 +378,27 @@ summary(un_catch_model)
     ##     landing_site)
     ##    Data: UN
     ## 
-    ## REML criterion at convergence: 1102.1
+    ## REML criterion at convergence: 1582.5
     ## 
     ## Scaled residuals: 
     ##     Min      1Q  Median      3Q     Max 
-    ## -3.9314 -0.5140  0.0612  0.6536  3.3642 
+    ## -3.5194 -0.5961  0.0935  0.7499  3.5994 
     ## 
     ## Random effects:
     ##  Groups       Name        Variance Std.Dev.
-    ##  landing_site (Intercept) 0.0143   0.1196  
-    ##  enumerator   (Intercept) 0.0000   0.0000  
-    ##  Residual                 0.2436   0.4935  
-    ## Number of obs: 756, groups:  landing_site, 4; enumerator, 3
+    ##  landing_site (Intercept) 0.023740 0.15408 
+    ##  enumerator   (Intercept) 0.002161 0.04649 
+    ##  Residual                 0.256968 0.50692 
+    ## Number of obs: 1050, groups:  landing_site, 4; enumerator, 3
     ## 
     ## Fixed effects:
     ##                  Estimate Std. Error t value
-    ## (Intercept)    -0.2839420  0.0681428  -4.167
-    ## catch_per_trap  0.0021206  0.0002958   7.169
+    ## (Intercept)    -0.3488346  0.0862655  -4.044
+    ## catch_per_trap  0.0018086  0.0001827   9.898
     ## 
     ## Correlation of Fixed Effects:
     ##             (Intr)
-    ## ctch_pr_trp -0.276
-    ## optimizer (nloptwrap) convergence code: 0 (OK)
-    ## boundary (singular) fit: see help('isSingular')
+    ## ctch_pr_trp -0.176
 
 ``` r
 summary(mod_catch_model)
@@ -411,27 +409,27 @@ summary(mod_catch_model)
     ##     landing_site)
     ##    Data: MOD
     ## 
-    ## REML criterion at convergence: 2285.6
+    ## REML criterion at convergence: 5476.6
     ## 
     ## Scaled residuals: 
     ##     Min      1Q  Median      3Q     Max 
-    ## -4.2306 -0.6223  0.1676  0.6442  2.9521 
+    ## -5.8131 -0.6071  0.0929  0.6252  3.2744 
     ## 
     ## Random effects:
-    ##  Groups       Name        Variance  Std.Dev. 
-    ##  landing_site (Intercept) 1.655e-16 1.286e-08
-    ##  enumerator   (Intercept) 3.057e-18 1.748e-09
-    ##  Residual                 3.387e-01 5.820e-01
-    ## Number of obs: 1291, groups:  landing_site, 4; enumerator, 3
+    ##  Groups       Name        Variance Std.Dev.
+    ##  landing_site (Intercept) 0.02732  0.1653  
+    ##  enumerator   (Intercept) 0.00000  0.0000  
+    ##  Residual                 0.40148  0.6336  
+    ## Number of obs: 2829, groups:  landing_site, 4; enumerator, 3
     ## 
     ## Fixed effects:
     ##                  Estimate Std. Error t value
-    ## (Intercept)    -0.2785068  0.0172781 -16.119
-    ## catch_per_trap  0.0009228  0.0002039   4.525
+    ## (Intercept)    -0.4224045  0.0851368  -4.961
+    ## catch_per_trap  0.0015269  0.0001803   8.468
     ## 
     ## Correlation of Fixed Effects:
     ##             (Intr)
-    ## ctch_pr_trp -0.348
+    ## ctch_pr_trp -0.045
     ## optimizer (nloptwrap) convergence code: 0 (OK)
     ## boundary (singular) fit: see help('isSingular')
 
@@ -443,8 +441,8 @@ Anova(un_catch_model, ddf="lme4", type='III')
     ## 
     ## Response: log(grams_per_trap)
     ##                 Chisq Df Pr(>Chisq)    
-    ## (Intercept)    17.363  1  3.088e-05 ***
-    ## catch_per_trap 51.398  1  7.543e-13 ***
+    ## (Intercept)    16.352  1  5.261e-05 ***
+    ## catch_per_trap 97.970  1  < 2.2e-16 ***
     ## ---
     ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 
@@ -455,9 +453,9 @@ Anova(mod_catch_model, ddf="lme4", type='III')
     ## Analysis of Deviance Table (Type III Wald chisquare tests)
     ## 
     ## Response: log(grams_per_trap)
-    ##                  Chisq Df Pr(>Chisq)    
-    ## (Intercept)    259.825  1  < 2.2e-16 ***
-    ## catch_per_trap  20.476  1  6.037e-06 ***
+    ##                 Chisq Df Pr(>Chisq)    
+    ## (Intercept)    24.616  1  6.996e-07 ***
+    ## catch_per_trap 71.700  1  < 2.2e-16 ***
     ## ---
     ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 
@@ -509,11 +507,11 @@ species_list %>% subset(trap_type == "MODIFIED") %>%
     ## # A tibble: 5 × 3
     ##   scientific_name       trap_type species_catch
     ##   <chr>                 <chr>             <dbl>
-    ## 1 Siganus sutor         MODIFIED         121529
-    ## 2 Lethrinus nebulosus   MODIFIED           8717
-    ## 3 Scarus ghobban        MODIFIED           7335
-    ## 4 Siganus canaliculatus MODIFIED           3221
-    ## 5 Acanthurus dussumieri MODIFIED           3201
+    ## 1 Siganus sutor         MODIFIED         149176
+    ## 2 Lethrinus nebulosus   MODIFIED          16989
+    ## 3 Scarus ghobban        MODIFIED          10695
+    ## 4 Siganus canaliculatus MODIFIED           6067
+    ## 5 Parupeneus indicus    MODIFIED           4282
 
 ``` r
 # print top 5 species from unmodified traps 
@@ -524,11 +522,11 @@ species_list %>% subset(trap_type == "UNMODIFIED") %>%
     ## # A tibble: 5 × 3
     ##   scientific_name        trap_type  species_catch
     ##   <chr>                  <chr>              <dbl>
-    ## 1 Siganus sutor          UNMODIFIED        178391
-    ## 2 Lethrinus nebulosus    UNMODIFIED         18444
-    ## 3 Scarus ghobban         UNMODIFIED         15690
-    ## 4 Leptoscarus vaigiensis UNMODIFIED         11393
-    ## 5 Parupeneus indicus     UNMODIFIED          6328
+    ## 1 Siganus sutor          UNMODIFIED        231472
+    ## 2 Lethrinus nebulosus    UNMODIFIED         30713
+    ## 3 Scarus ghobban         UNMODIFIED         21715
+    ## 4 Leptoscarus vaigiensis UNMODIFIED         15989
+    ## 5 Siganus canaliculatus  UNMODIFIED         11963
 
 ## <a name="species_pertrap"></a> **Top species stats per trap**
 
@@ -610,13 +608,13 @@ var.test(Topspp_MOD$catch_per_trap, MOD$catch_per_trap) # output is significant 
     ##  F test to compare two variances
     ## 
     ## data:  Topspp_MOD$catch_per_trap and MOD$catch_per_trap
-    ## F = 0.38673, num df = 14582, denom df = 1290, p-value < 2.2e-16
+    ## F = 1.2111, num df = 21601, denom df = 2828, p-value = 4.081e-11
     ## alternative hypothesis: true ratio of variances is not equal to 1
     ## 95 percent confidence interval:
-    ##  0.3563133 0.4185927
+    ##  1.145108 1.279380
     ## sample estimates:
     ## ratio of variances 
-    ##          0.3867316
+    ##           1.211108
 
 ``` r
 #t.test(catch_per_trap~trap_type, data = species_df, var.equal = FALSE)
@@ -703,8 +701,6 @@ maturity %>% select(number_of_fish, trap_type, maturity, scientific_name, total_
   ylab("Number of fish per trap set")
 ```
 
-    ## Warning: Removed 24 rows containing non-finite values (stat_boxplot).
-
 ![](CUE-maturity-length-analysis_files/figure-gfm/unnamed-chunk-16-1.png)<!-- -->
 
 ``` r
@@ -717,8 +713,6 @@ maturity %>% select(number_of_fish, trap_type, maturity, scientific_name, total_
   xlab("Maturity") +
   ylab("Number of fish per trap set")
 ```
-
-    ## Warning: Removed 24 rows containing non-finite values (stat_boxplot).
 
 ![](CUE-maturity-length-analysis_files/figure-gfm/unnamed-chunk-16-2.png)<!-- -->
 
@@ -734,33 +728,33 @@ summary(nofish_maturity_aov)
 ```
 
     ##                       Df  Sum Sq Mean Sq F value Pr(>F)    
-    ## trap_type              1   41359   41359 496.606 <2e-16 ***
-    ## maturity               1   24723   24723 296.861 <2e-16 ***
-    ## trap_type:maturity     1       2       2   0.022  0.883    
-    ## Residuals          44568 3711755      83                   
+    ## trap_type              1   43121   43121 634.973 <2e-16 ***
+    ## maturity               1   35467   35467 522.259 <2e-16 ***
+    ## trap_type:maturity     1      48      48   0.703  0.402    
+    ## Residuals          70065 4758141      68                   
     ## ---
     ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
-    ## 251 observations deleted due to missingness
+    ## 143 observations deleted due to missingness
 
 ``` r
 nofish_maturity_tukey <- TukeyHSD(nofish_maturity_aov)
 nofish_maturity_tukey$`trap_type:maturity`
 ```
 
-    ##                                             diff        lwr        upr
-    ## UNMODIFIED:immature-MODIFIED:immature -2.1288036 -2.4865221 -1.7710851
-    ## MODIFIED:mature-MODIFIED:immature     -1.5164503 -1.9069269 -1.1259738
-    ## UNMODIFIED:mature-MODIFIED:immature   -3.6180805 -3.9686493 -3.2675118
-    ## MODIFIED:mature-UNMODIFIED:immature    0.6123533  0.2902488  0.9344577
-    ## UNMODIFIED:mature-UNMODIFIED:immature -1.4892770 -1.7616330 -1.2169210
-    ## UNMODIFIED:mature-MODIFIED:mature     -2.1016302 -2.4157754 -1.7874850
-    ##                                              p adj
-    ## UNMODIFIED:immature-MODIFIED:immature 0.000000e+00
-    ## MODIFIED:mature-MODIFIED:immature     3.297362e-14
-    ## UNMODIFIED:mature-MODIFIED:immature   0.000000e+00
-    ## MODIFIED:mature-UNMODIFIED:immature   6.193922e-06
-    ## UNMODIFIED:mature-UNMODIFIED:immature 0.000000e+00
-    ## UNMODIFIED:mature-MODIFIED:mature     0.000000e+00
+    ##                                             diff         lwr       upr
+    ## UNMODIFIED:immature-MODIFIED:immature -1.7863916 -2.04200482 -1.530778
+    ## MODIFIED:mature-MODIFIED:immature     -1.5045134 -1.78810411 -1.220923
+    ## UNMODIFIED:mature-MODIFIED:immature   -3.1786405 -3.42982109 -2.927460
+    ## MODIFIED:mature-UNMODIFIED:immature    0.2818781  0.04678129  0.516975
+    ## UNMODIFIED:mature-UNMODIFIED:immature -1.3922489 -1.58702712 -1.197471
+    ## UNMODIFIED:mature-MODIFIED:mature     -1.6741271 -1.90439666 -1.443858
+    ##                                            p adj
+    ## UNMODIFIED:immature-MODIFIED:immature 0.00000000
+    ## MODIFIED:mature-MODIFIED:immature     0.00000000
+    ## UNMODIFIED:mature-MODIFIED:immature   0.00000000
+    ## MODIFIED:mature-UNMODIFIED:immature   0.01112794
+    ## UNMODIFIED:mature-UNMODIFIED:immature 0.00000000
+    ## UNMODIFIED:mature-MODIFIED:mature     0.00000000
 
 ## <a name="length"></a> **Catch and length data of mature fish**
 
@@ -806,16 +800,16 @@ maturity_dist %>% group_by(scientific_name) %>%
   filter(., n_distinct(avg_length_dist) >= 2) %>% # filters out the observations aren't in both categories (takes out species that only have 1 unique mean dist value so only 1 trap type)
   ungroup() %>%
   ggplot(., aes(x=scientific_name, y=avg_length_dist, color = trap_type)) +
+  geom_hline(yintercept = 0, lty = "dotted") +
   geom_line(aes(group = scientific_name), color="grey14") +
   geom_point() + theme_bw() + 
-  geom_hline(yintercept = 0, lty = "dotted") +
   theme(axis.text.x = element_text(angle=60, hjust=1)) +
   labs(y="Mean distance from Lm", x="Genus species", color="Trap Type")
 ```
 
-    ## Warning: Removed 375 row(s) containing missing values (geom_path).
+    ## Warning: Removed 6528 row(s) containing missing values (geom_path).
 
-    ## Warning: Removed 198675 rows containing missing values (geom_point).
+    ## Warning: Removed 276011 rows containing missing values (geom_point).
 
 ![](CUE-maturity-length-analysis_files/figure-gfm/unnamed-chunk-18-1.png)<!-- -->
 
@@ -830,11 +824,11 @@ Check this calculation for each fish not just each survey id???
 
 From the `species_keep` df:
 
-Siganus sutor = 299920  
-Lethrinus nebulosus = 27161  
-Scarus ghobban = 23025  
-Leptoscarus vaigiensis = 14070  
-Siganus canaliculatus = 9509
+Siganus sutor = 380648  
+Lethrinus nebulosus = 47702  
+Scarus ghobban = 32410  
+Leptoscarus vaigiensis = 19606  
+Siganus canaliculatus = 18030
 
 ``` r
 # the column we want to plot: maturity$length_corrected

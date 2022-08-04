@@ -70,22 +70,25 @@ library(naniar)
 
 ```{r, message=FALSE, warning=FALSE}
 ## when running future iterations of raw data file, replace the file name below 
-fishing_operation <- read_excel("data/Fishlandings-data_clay June_updated-IW.xlsx", sheet = "fishing_operation",
+fishing_operation <- read_excel("data/Fishlandings-data- CC-JM-Clay-IW combined 7-28-2022.xlsx", sheet = "fishing_operation",
                                 col_types = c("date", "text", "text", "text", "text", "text", "text", 
                                               "text", "numeric", "date", "text", "date", "text", "numeric", 
-                                              "numeric", "numeric", "numeric", "numeric", "numeric", "text", "skip")) %>% rename(Operation_date = date_dd_mm_yyyy)
+                                              "numeric", "numeric", "numeric", "text", "skip", "skip")) %>%
+  rename(Operation_date = date_dd_mm_yyyy)
 
-nrow(fishing_operation) #7817 fishing operations (keep this # in mind for sanity check at the end)
+nrow(fishing_operation) #10670 fishing operations (keep this # in mind for sanity check at the end)
 
 ## when running future iterations of raw data file, replace the file name below 
-catch_composition <- read_excel("data/Fishlandings-data_clay June_updated-IW.xlsx", sheet = "catch_composition") %>%
-  select(-'...10', -'...11', -'...12', -'...13') %>%
+catch_composition <- read_excel("data/Fishlandings-data- CC-JM-Clay-IW combined 7-28-2022.xlsx", 
+                                sheet = "catch_composition",
+                                col_types = c("date", "text", "text", "text", "text", "text", "numeric",
+                                              "text", "text")) %>%
   rename(Operation_date = Date)
 
-nrow(catch_composition) #43663 fish observations (keep this # in mind for sanity check at the end)
+nrow(catch_composition) #58441 fish observations (keep this # in mind for sanity check at the end)
 
 ## when running future iterations of raw data file, replace the file name below 
-validation_lists <- read_excel("data/Fishlandings-data_clay June_updated-IW.xlsx", sheet = "validation_lists")
+validation_lists <- read_excel("data/Fishlandings-data- CC-JM-Clay-IW combined 7-28-2022.xlsx", sheet = "validation_lists")
 
 # read in enumerator names file 
 enumerator_list <- read_excel("data/enumerator_list.xlsx")
@@ -130,6 +133,7 @@ enumerator_list$enumerator <- toupper(enumerator_list$enumerator)
 df$enumerator <- gsub("CELESTINAR.N.ALI", "CELESTINE N. ALI", df$enumerator)
 df$enumerator <- gsub("^CELESTINAR$", "CELESTINE N. ALI", df$enumerator)
 df$enumerator <- gsub("CELESTINAR NALI", "CELESTINE N. ALI", df$enumerator)
+df$enumerator <- gsub("CELESTINER NALI", "CELESTINE N. ALI", df$enumerator)
 df$enumerator <- gsub("^CLAPERTON$", "CLAPERTON KAZUNGU", df$enumerator)
 df$enumerator <- gsub("MACKSON KAZUNGU", "MAXSON KAZUNGU", df$enumerator)
 df$enumerator <- gsub("BIDALA RASHID", "BIDALLA RASHID", df$enumerator)
@@ -138,6 +142,7 @@ df$enumerator <- gsub("GARAMA K YERI", "GARAMA K. YERI", df$enumerator)
 df$enumerator <- gsub("BRUNO MUYE", "BRUNO MOYE", df$enumerator)
 df$enumerator <- gsub("^ALI$", "CELESTINE N. ALI", df$enumerator) #^ and $ indicate start and end of phrase
 df$enumerator <- gsub("KADZO KAZUNGU", "KADZO BAYA", df$enumerator)
+df$enumerator <- gsub("KADZU BAYA", "KADZO BAYA", df$enumerator)
 df$enumerator <- gsub("ANTONY JUMA", "ANTHONY JUMA", df$enumerator)
 df$enumerator <- gsub("CLAPETRON", "CLAPERTON KAZUNGU", df$enumerator)
 df$enumerator <- gsub("KARIM NYINGE", "KARIMA NYINGE", df$enumerator)
@@ -256,20 +261,20 @@ df$date_time_collected <- parse_date_time(df$date_time_collected, orders = "ymdH
 
 ```{r}
 total_weight_kg <- df %>% select(total_weight_kg) %>% na.omit()
-take_home_weight_kg <- df %>% select(take_home_weight_kg) %>% na.omit()
+#take_home_weight_kg <- df %>% select(take_home_weight_kg) %>% na.omit()
 total_value_KES <- df %>% select(total_value_KES) %>% na.omit()
-take_home_value_KES <- df %>% select(take_home_value_KES) %>% na.omit()
+#take_home_value_KES <- df %>% select(take_home_value_KES) %>% na.omit()
 
 ## Step #4 from protocol: Double check the below values are in the correct ranges
 range(total_weight_kg)
-range(take_home_weight_kg)
+#range(take_home_weight_kg)
 range(total_value_KES)
-range(take_home_value_KES)
+#range(take_home_value_KES)
 
 hist(df$total_weight_kg)
-hist(df$take_home_weight_kg)
+#hist(df$take_home_weight_kg)
 hist(df$total_value_KES)
-hist(df$take_home_value_KES)
+#hist(df$take_home_value_KES)
 ```
 
 ### No. of fishers in crew
@@ -282,7 +287,7 @@ fishermen_no <- df %>% select(`No. of fishers in crew`) %>% na.omit()
 ## Protocol: Double check the below values are in the correct ranges
 range(fishermen_no)
 unique(sort(fishermen_no$`No. of fishers in crew`))
-# 
+
 # df %>% filter(`No. of fishers in crew` > 5)
 # 
 # df <- df %>% 
@@ -550,6 +555,24 @@ df$scientific_name <- gsub("lepsurus", "lepturus", df$scientific_name)
 df$scientific_name <- gsub("duaucelii", "duvauceli", df$scientific_name)
 df$scientific_name <- gsub("duraucelii", "duvauceli", df$scientific_name)
 df$scientific_name <- gsub("duvaucelii", "duvauceli", df$scientific_name)
+df$scientific_name <- gsub("nigricaudus", "nigricauda", df$scientific_name)
+df$scientific_name <- gsub("Ancanthurus", "Acanthurus", df$scientific_name)
+df$scientific_name <- gsub("Elinephelus", "Epinephelus", df$scientific_name)
+df$scientific_name <- gsub("Etinephelus", "Epinephelus", df$scientific_name)
+df$scientific_name <- gsub("Gomphesus", "Gomphosus", df$scientific_name)
+df$scientific_name <- gsub("Laptoscarus", "Leptoscarus", df$scientific_name)
+df$scientific_name <- gsub("lebulous", "nebulosus", df$scientific_name)
+df$scientific_name <- gsub("varigatus", "variegatus", df$scientific_name)
+df$scientific_name <- gsub("veriegatus", "variegatus", df$scientific_name)
+df$scientific_name <- gsub("flulviflamma", "fulviflamma", df$scientific_name)
+df$scientific_name <- gsub("fluviflamma", "fulviflamma", df$scientific_name)
+df$scientific_name <- gsub("bernati", "berndti", df$scientific_name)
+df$scientific_name <- gsub("Ovaculichthys", "Novaculichthys", df$scientific_name)
+df$scientific_name <- gsub("berbarinus", "barberinus", df$scientific_name)
+df$scientific_name <- gsub("semcirculotus", "semicirculatus", df$scientific_name)
+df$scientific_name <- gsub("Scolopis", "Scolopsis", df$scientific_name)
+df$scientific_name <- gsub("Siggg", "Siganus", df$scientific_name)
+df$scientific_name <- gsub("Sinagus", "Siganus", df$scientific_name)
 
 # correcting spellings in validation list 
 validation_lists$scientific_name <- gsub("Gymonthorax", "Gymnothorax", validation_lists$scientific_name)
@@ -574,12 +597,14 @@ unique(sort(unvalidated_names$scientific_name))
 1.) In catch composition and in fishbase but not on validation list. **Suggested fix: address if these are reasonable to find in Ghana and if they are, keep these entries.**  
 
 - Acanthopagrus berda   
+- Aethaloperca rogaa  
 - Amanses scopas   
 - Auxis thazard    
 - Caranx hippos    
 - Cyprichromis leptosoma  
 - Epinephelus melanostigma  
-- Epinephelus spilotoceps  
+- Epinephelus spilotoceps    
+- Gompheus caeruleus  
 - Gymothorax favagineus  
 - Gymnothorax flavimarginatus  
 - Gymnothorax monochrous   
@@ -588,7 +613,9 @@ unique(sort(unvalidated_names$scientific_name))
 - Lethrinus conchliatus  
 - Monotaxis grandoculis  
 - Mugil cephalus   
+- Mulloidichthys pfluegeri  
 - Naso brachycentron  
+- Ostracion nasus  
 - Panulirus homarus  
 - Panulirus ornatus  
 - Panulirus penicillatus   
@@ -597,27 +624,32 @@ unique(sort(unvalidated_names$scientific_name))
 - Platybelone platyura  
 - Plectorhinchus plagiodesmus  
 - Plectorhinchus playfairi  
-- Plotasus canius    
+- Plotosus canius    
 - Pseudorhombus arsius  
 - Sardinella melanura  
+- Scarus vaigiensis  
+- Scolopsis bimaculata  
 - Sepia pharaonis  
 - Siganus canaliculatus  
 - Siganus fuscescens  
 - Siganus guttatus  
 - Sphyraena japonica  
+- Taeniura meyeni  
 - Terapon theraps  
 - Thunnus albacares  
 - Thysanophrys chiltonae  
+- Uroteuthis duvauceli  
 
 
 2.) In catch composition but not in validation list or on fishbase (not close to a name we have so unsure what it is supposed to be). **Suggested fix: if there is not a clear answer to what these are supposed to be, filter them out.** 
 
-- Acanthurus duvaucelii  
+- Acanthurus duvauceli   
 - Acanthurus harak  
 - Carangoides flavimarginatus   
 - Carangoides florimaginatus    
 - Hipposcarus scarus  
-- Leptoscarus triostegus   
+- Leptoscarus triostegus  
+- Lethrinus macronemus   
 - Lethrinus sutor   
 - Lethrinus vaigiensis     
 - Lutjanus canius   
@@ -625,7 +657,9 @@ unique(sort(unvalidated_names$scientific_name))
 - Parupeneus semicirculatus    
 - Pono blue fish (probably meant to be a common name..)  
 - Scarus carolinus  
+- Scarus sutor  
 - Sphyraena leiura  
+- Tafi sutor  
 - Uroteuthis cynea  
 - Uroteuthis lineatus  
 
@@ -687,6 +721,7 @@ df$length_cm <- gsub("11-16", "11-15", df$length_cm)
 df$length_cm <- gsub("21-25 26-30", NA, df$length_cm)
 df$length_cm <- gsub("21-25 26-31", NA, df$length_cm)
 df$length_cm <- gsub("21-25, 26-30", NA, df$length_cm)
+df$length_cm <- gsub("^$", NA, df$length_cm)
 
 # converting <10 to a range of 0-10 
 df <- df %>% 
@@ -754,6 +789,10 @@ Doube check this range is what is expected.
 unique(sort(df$number_of_fish))
 
 df %>% ggplot(., aes(y=number_of_fish)) + geom_boxplot() + theme_bw()
+
+#### filtering out 6,000 and 30,0000 
+df <- df %>%
+  filter(number_of_fish < 1000)
 ```
 
 ### Destination of fish
@@ -783,7 +822,7 @@ unique(df$catch_composition_notes)
 head(df)
 nrow(df)
 
-write_xlsx(df, "data/Fishlandings-cleaned-clay-June_updated-IW.xlsx")
+write_xlsx(df, "data/cleaned-Fishlandings-data- CC-JM-Clay-IW combined 7-28-2022.xlsx")
 ```
 
 
