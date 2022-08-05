@@ -6,8 +6,8 @@ PI: Austin Humphries; University of Rhode Island
 
 ## Data 
 
-- Raw Data = `Fishlandings-data_21052022-May_update-cleaning in progress.xlsx`: excel spreadsheet collected from Fish Landings folder on Box    
-- Cleaned Data = `Fishlandings-cleaned-21052022-May.xlsx`: output from `QC.Rmd` 
+- Raw Data = `Fishlandings-data- CC-JM-Clay-IW combined 7-28-2022`: excel spreadsheet collected from Fish Landings folder on Box    
+- Cleaned Data = `cleaned-Fishlandings-data- CC-JM-Clay-IW combined 7-28-2022`: output from `QC.Rmd` 
 
 ## Scripts 
 
