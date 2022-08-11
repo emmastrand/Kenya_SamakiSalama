@@ -28,6 +28,43 @@ Unmodified traps data:
 2021: January, June, August, September
 2022: January, February, March, April, May, June
 
+Missing Nov and Dec 2021
+
+## Calculations Made (all only unmodified and modified traps)
+
+In `modified_trap_df`:  
+Grouped by survey id (operation date + fisher ID):  
+- `total_catch` (total number of fish in that fishing trip) = sum of `number_of_fish`   
+- `kg_per_trap` (total # kg per trap -- Biomass) = total_biomass_kg/total_traps_collected   
+- `catch_per_trap` (# of fish per trap -- Abundance) = total_catch/total_traps_collected   
+
+
+In `species_list` to calculate top 10 species throughout entire survey:  
+Grouped by species and trap type,
+- `species_catch` = sum of `number_of_fish`  
+
+
+In `species_df` to calculate top species regardless of trap type:  
+Grouped by species,   
+- `species_total_catch` = sum of `number_of_fish`
+
+
+In `species_df` to calculate abundance for each top species:  
+Dataset filtered to only top 10 species:  
+Grouped by survey id and species,  
+- `topspecies_catch` = sum of `number_of_fish` (number of fish in top 10 for each trap, not the same # of fish value as above calculations)    
+- `catch_per_trap` = topspecies_catch/total_traps_collected. *Catch per trap is the # of that species / trap # from that survey* i.e. 25 Siganus sutor individuals / 4 traps collected for that fishing trip = there are 6.25 Siganus sutor per trap set. 
+
+
+In `maturity` to calculate the abundance of mature and immature fish:  
+- `median_length` is the median of the length bin (i.e. 6-10 bin = median length of 8, 71-80 bin = median length of 75.5)  
+Grouped by survey id, species, maturity, trap type:  
+- `nofish_pertrap` = number of fish / total traps collected.  
+
+
+
+  
+
 ## Contents 
 
 - [**Reading in datafiles**](#data)  
@@ -71,6 +108,10 @@ data$month <- factor(data$month, levels=c("Jan", "Feb","Mar","Apr","May","Jun",
                                           "Jul", "Aug", "Sep", "Oct", "Dec", "NA"))
 
 data$total_traps_collected[data$total_traps_collected == 0] <- NA
+
+# creating a survey id
+data <- data %>%
+  unite(survey_id, Operation_date, fisher_id, sep = " ", remove = FALSE)
 ```
 
 ## <a name="catch_effort"></a> **Total catch (grams) per unit effort (trap set)**
@@ -79,23 +120,23 @@ data$total_traps_collected[data$total_traps_collected == 0] <- NA
 
 Grouping by fisher_id but this might be effective to group by enumerator once I have correct list of names. There are 3 boat trips recorded with the exact same fish data that are under 3 different fisher ID names but all the same enumerator.. come back to this in QC.
 
-Goal: grams captured per trap set.
+Goal: kilograms captured per trap set.
 
 ```{r}
-modified_trap_df <- data %>% unite(survey_id, Operation_date, fisher_id, sep = " ", remove = FALSE) %>%
+modified_trap_df <- data %>%
   dplyr::group_by(survey_id) %>% # group by survey id
   mutate(total_catch = sum(number_of_fish), #count the number of fish caught for each survey id
-         grams_per_trap = total_weight_kg/total_traps_collected, #divide total weight for survey id by total traps 
+         kg_per_trap = total_biomass_kg/total_traps_collected, #divide total weight for survey id by total traps 
          catch_per_trap = total_catch/total_traps_collected) %>% #divide total catch per survey id by total traps 
   dplyr::ungroup(survey_id) %>% #ungroup by this column  
   subset(trap_type == "MODIFIED" | trap_type == "UNMODIFIED") %>% #subset for only modified and unmodified traps 
-  select(survey_id, enumerator, trap_type, total_traps_collected, `No. of fishers in crew`, landing_site, total_catch, month, year, grams_per_trap, catch_per_trap) %>%
+  select(survey_id, enumerator, trap_type, total_traps_collected, `No. of fishers in crew`, landing_site, total_catch, month, year, kg_per_trap, catch_per_trap) %>%
   distinct() 
 ```
 
 ### Plotting figures.
 
-Catch per trap 
+Abundance = Catch per trap 
 
 ```{r}
 # basic total catch per trap with no other variables 
@@ -104,7 +145,7 @@ modified_trap_df %>% filter(catch_per_trap < 1500) %>%
   geom_boxplot(aes(color=trap_type), outlier.size = 0, lwd=0.5) +
     geom_point(aes(fill=trap_type), pch = 21, size=1) +
   theme_bw() + 
-  ylab("Total catch per trap") + xlab("Type of trap") +
+  ylab("Abundance (# of individuals per trap collected)") + xlab("Type of trap") +
   theme(axis.text.x = element_text(vjust = 1.1)) #Set the text angle
 
 # by fisherman 
@@ -114,7 +155,7 @@ modified_trap_df %>%
   geom_boxplot(aes(color=trap_type), outlier.size = 0, lwd=0.5) +
     geom_point(aes(fill=trap_type), pch = 21, size=1) +
   theme_bw() + 
-  ylab("Total catch per trap") + xlab("Type of trap") +
+  ylab("Abundance (# of individuals per trap collected)") + xlab("Type of trap") +
   theme(axis.text.x = element_text(vjust = 1.1)) #Set the text angle
 
 # by landing site
@@ -124,7 +165,7 @@ modified_trap_df %>%
   geom_boxplot(aes(color=trap_type), outlier.size = 0, lwd=0.5) +
     geom_point(aes(fill=trap_type), pch = 21, size=1) +
   theme_bw() + 
-  ylab("Total catch per trap") + xlab("Type of trap") +
+  ylab("Abundance (# of individuals per trap collected)") + xlab("Type of trap") +
   theme(axis.text.x = element_text(vjust = 1.1)) #Set the text angle
 
 # by month and year 
@@ -134,59 +175,59 @@ modified_trap_df %>% unite(ym, year, month, sep = " ", remove = FALSE) %>% filte
   geom_boxplot(aes(color=trap_type), outlier.size = 0, lwd=0.5) +
   #geom_point(aes(x=ym, y=catch_per_trap, fill=trap_type), pch = 21, size=1) +
   theme_classic() + 
-  ylab("Total catch per trap") + xlab("Time of year") +
+  ylab("Abundance (# of individuals per trap collected)") + xlab("Time of year") +
   theme(axis.text.x = element_text(vjust = 1.1, hjust=1.1, angle=60)) #Set the text angle
 ```
 
-Grams per trap 
+Biomass = Kilograms per trap 
 
 ```{r}
 # basic grams per trap plot with no other variables 
 modified_trap_df %>% 
-  ggplot(aes(x=trap_type, y=grams_per_trap, color=trap_type)) + 
+  ggplot(aes(x=trap_type, y=kg_per_trap, color=trap_type)) + 
   geom_boxplot(aes(color=trap_type), outlier.size = 0, lwd=0.5) +
     geom_point(aes(fill=trap_type), pch = 21, size=1) +
   theme_bw() + 
-  ylab("Grams of fish per trap") + xlab("Type of trap") +
+  ylab("Biomass (kg per trap collected)") + xlab("Type of trap") +
   theme(axis.text.x = element_text(vjust = 1.1)) #Set the text angle
 
 # visually seeing if this differs by fisherman 
 modified_trap_df %>% 
-  ggplot(aes(x=trap_type, y=grams_per_trap, color=trap_type)) + 
+  ggplot(aes(x=trap_type, y=kg_per_trap, color=trap_type)) + 
   facet_wrap(~enumerator) +
   geom_boxplot(aes(color=trap_type), outlier.size = 0, lwd=0.5) +
     geom_point(aes(fill=trap_type), pch = 21, size=1) +
   theme_bw() + 
-  ylab("Grams of fish per trap") + xlab("Type of trap") +
+  ylab("Biomass (kg per trap collected)") + xlab("Type of trap") +
   theme(axis.text.x = element_text(vjust = 1.1)) #Set the text angle
 
 # visually seeing if this differs by landing site 
 modified_trap_df %>% 
-  ggplot(aes(x=trap_type, y=grams_per_trap, color=trap_type)) + 
+  ggplot(aes(x=trap_type, y=kg_per_trap, color=trap_type)) + 
   facet_wrap(~landing_site) +
   geom_boxplot(aes(color=trap_type), outlier.size = 0, lwd=0.5) +
     geom_point(aes(fill=trap_type), pch = 21, size=1) +
   theme_bw() + 
-  ylab("Grams of fish per trap") + xlab("Type of trap") +
+  ylab("Biomass (kg per trap collected)") + xlab("Type of trap") +
   theme(axis.text.x = element_text(vjust = 1.1)) #Set the text angle
 
 # by month and year 
 modified_trap_df %>% unite(ym, year, month, sep = " ", remove = FALSE) %>% #filter(catch_per_trap < 1500) %>%
-  ggplot(aes(x=month, y=grams_per_trap, color=trap_type)) + 
+  ggplot(aes(x=month, y=kg_per_trap, color=trap_type)) + 
   facet_wrap(~year) +
   geom_boxplot(aes(color=trap_type), outlier.size = 0, lwd=0.5) +
  # geom_point(aes(x=month, group=trap_type, y=grams_per_trap, fill=trap_type), pch = 21, size=1) +
   theme_classic() + 
-  ylab("Grams of fish per trap") + xlab("Time of year") +
+  ylab("Biomass (kg per trap collected)") + xlab("Time of year") +
   theme(axis.text.x = element_text(vjust = 1.1, hjust=1.1, angle=60)) #Set the text angle
 ```
 
 The relationship between grams per trap and total catch per trap. 
 
 ```{r}
-modified_trap_df %>%# filter(catch_per_trap < 1500) %>%
-  ggplot(aes(x=catch_per_trap, y=grams_per_trap, color=trap_type)) +
-  theme_bw() + xlab("total catch per trap") + ylab("grams per trap") +
+modified_trap_df %>% filter(catch_per_trap < 1500) %>%
+  ggplot(aes(x=catch_per_trap, y=kg_per_trap, color=trap_type)) +
+  theme_bw() + xlab("Abundance (# of individuals per trap collected)") + ylab("Biomass (kg per trap collected)") +
   geom_smooth(aes(fill=trap_type), method="loess", se=TRUE, fullrange=TRUE, level=0.95, color="black") +
   geom_point(aes(fill=trap_type), pch = 21, size=1)
 ```
@@ -200,15 +241,15 @@ You can test equal variances with a Fisher's F-test. If p < 0.05 then we include
 We are using an unpaired two sample t-test for this dataset. 
 
 ```{r}
-UN <- modified_trap_df %>% subset(trap_type == "MODIFIED") %>% filter(!is.na(grams_per_trap)) %>% filter(!is.na(catch_per_trap))
-MOD <- modified_trap_df %>% subset(trap_type == "UNMODIFIED") %>% filter(!is.na(grams_per_trap)) %>% filter(!is.na(catch_per_trap))
+UN <- modified_trap_df %>% subset(trap_type == "MODIFIED") %>% filter(!is.na(kg_per_trap)) %>% filter(!is.na(catch_per_trap))
+MOD <- modified_trap_df %>% subset(trap_type == "UNMODIFIED") %>% filter(!is.na(kg_per_trap)) %>% filter(!is.na(catch_per_trap))
 ```
 
-#### Grams per trap 
+#### Kilograms per trap 
 
 ```{r}
-var.test(UN$grams_per_trap, MOD$grams_per_trap)
-t.test(grams_per_trap~trap_type, data = modified_trap_df, var.equal = FALSE)
+var.test(UN$kg_per_trap, MOD$kg_per_trap)
+t.test(kg_per_trap~trap_type, data = modified_trap_df, var.equal = FALSE)
 ```
 
 #### Total catch per trap  
@@ -228,12 +269,12 @@ I'm not sure yet if this is the best way to do this...
 
 ```{r}
 # unmodified
-un_catch_model <- lmer(log(grams_per_trap) ~ catch_per_trap + (1|enumerator) + (1|landing_site), na.action=na.omit, data=UN)
+un_catch_model <- lmer(log(kg_per_trap) ~ catch_per_trap + (1|enumerator) + (1|landing_site), na.action=na.omit, data=UN)
 qqPlot(residuals(un_catch_model)) 
 hist(residuals(un_catch_model))
 
 # modified
-mod_catch_model <- lmer(log(grams_per_trap) ~ catch_per_trap + (1|enumerator) + (1|landing_site), na.action=na.omit, data=MOD)
+mod_catch_model <- lmer(log(kg_per_trap) ~ catch_per_trap + (1|enumerator) + (1|landing_site), na.action=na.omit, data=MOD)
 qqPlot(residuals(mod_catch_model)) 
 hist(residuals(mod_catch_model))
 
@@ -268,6 +309,7 @@ species_list <- data %>% select(scientific_name, number_of_fish, trap_type) %>%
 species_list %>% filter(species_catch > 250) %>%
   ggplot(., aes(x=scientific_name, y=species_catch, group = trap_type, color = trap_type)) + 
   ylab("number of fish caught") + xlab("Genus species") +
+  ggtitle("Species with counts > 250") +
   geom_point() + theme_bw() + theme(axis.text.x = element_text(angle = 60, hjust=1)) #Set the text angle
 
 # species_list %>% filter(species_catch > 250) %>% 
@@ -306,13 +348,13 @@ species_df <- species_df %>% filter(scientific_name %in% species_keep$scientific
 unique(sort(species_df$scientific_name))
 ```
 
-With just the top 10 species, just plotting catch per trap. I don't think I can do weight of just these species by trap because the weight is for the whole catch. 
+### Abundance  
 
 ```{r}
 ### species_df is already subsetted to the top 10 species 
 # within each survey id, for each species calculate topspecies_catch as the number fish in that species in that survey
 # then calculate the catch per trap as the number of fish of that species over the total number of traps collected
-species_df <- species_df %>% unite(survey_id, Operation_date, fisher_id, sep = " ", remove = FALSE) %>%
+species_df <- species_df %>%
   dplyr::group_by(survey_id, scientific_name) %>% # group by survey id
   mutate(topspecies_catch = sum(number_of_fish),
          catch_per_trap = topspecies_catch/total_traps_collected) %>% #divide total catch per survey id by total traps 
@@ -325,10 +367,20 @@ species_df %>% mutate(trap_type = case_when(
   ggplot(aes(x=trap_type, y=catch_per_trap, color=trap_type)) + 
   geom_boxplot(aes(color=trap_type), outlier.size = 0, lwd=0.5) +
   facet_wrap(~scientific_name, scales = "free_y") +
-  theme_classic() + ggtitle("For top 10 most abundant species") +
-  ylab("Catch per trap (species catch # / total catch)") + xlab("Genus species") +
+  theme_classic() + ggtitle("Top 10 most abundant species") +
+  ylab("Abundance (# of individuals per trap collected)") + xlab("Genus species") +
   theme(axis.text.x = element_text()) #Set the text angle
 ```
+
+### Biomass per trap collected
+
+1.) Expand df by # of fish so that each row is a fish observation.    
+2.) Calculate median length of the bin of each fish (L).   
+3.) Find a and b parameters for all fish. Add this to the fishbase and read in that df.  
+4.) Add a and b columns to `species_df` by species Id.  
+5.) Mutate to calculate W=aLb.  
+6.) Group by species and survey id to calculate biomass per trap collected.   
+
 
 ### Statistics for the top ten species
 
@@ -350,79 +402,55 @@ var.test(Topspp_MOD$catch_per_trap, MOD$catch_per_trap) # output is significant 
 #aov(catch_per_trap ~ trap_type + scientific_name, data = species_df)
 ```
 
+
 ## <a name="maturity"></a> **Catch per unit effort for top species by maturity**
 
 **Total mature fish catch per unit effort between modified and traditional traps. This will have to be for the top 3-5 species separately. Go to Fishbase and find the length at first maturity for that particular species, then assign each fish a "mature" or "immature" status in the data and calculate.**
 
 Data pulled from Fishbase and put in the datasheet `fishbase.xlsx`. 
 
-### Creating maturity dataframe based on data pulled from fishbase
-
 ```{r}
 fishbase <- read_excel("data/fishbase.xlsx", sheet = "data") %>% #read in excel file 
-  select(scientific_name, Lm, Lm_se_min, Lm_se_max)
+  select(scientific_name, Lm, Lm_se_min, Lm_se_max, Lmax)
 
 maturity <- full_join(data, fishbase, by = "scientific_name") %>% # joining maturity reproduction info with main dataframe
-  unite(survey_id, Operation_date, fisher_id, sep = " ", remove = FALSE) %>% #creating a survey id based on date and fisherman
   filter(!is.na(Lm)) %>% # taking out observations that don't have an Lm value so only the top species 
-  mutate(Lm_range = case_when( ### making a new column as Lm corrected to then compare to Length_corrected 
-    Lm >= 0 & Lm <= 10.5 ~ "0-10",
-    Lm >= 10.5 & Lm <= 15.4 ~ "11-15",
-    Lm >= 15.5 & Lm <= 20.4 ~ "16-20",
-    Lm >= 20.5 & Lm <= 25.4 ~ "21-25",
-    Lm >= 25.5 & Lm <= 30.4 ~ "26-30",
-    Lm >= 30.5 & Lm <= 35.4 ~ "31-35",
-    Lm >= 35.5 & Lm <= 40.4 ~ "36-40",
-    Lm >= 40.5 & Lm <= 45.4 ~ "41-45",
-    Lm >= 45.5 & Lm <= 50.4 ~ "46-50",
-    Lm >= 50.5 & Lm <= 75 ~ ">50",
-    Lm > 75 ~ ">75")) %>%
-  mutate(Lm_comparison = case_when( ### I can't compare character columns so making a new column to use in comparison
-    Lm_range == "0-10" ~ 1,
-    Lm_range == "11-15" ~ 11,
-    Lm_range == "16-20" ~ 16,
-    Lm_range == "21-25" ~ 21,
-    Lm_range == "26-30" ~ 26,
-    Lm_range == "31-35" ~ 31,
-    Lm_range == "36-40" ~ 36,
-    Lm_range == "41-45" ~ 41,
-    Lm_range == "46-50" ~ 46,
-    Lm_range == ">50" ~ 50,
-    Lm_range == ">75" ~ 75)) %>%
-  mutate(Length_comparison = case_when( ### I can't compare character columns so making a new column to use in comparison
-    length_corrected == "0-10" ~ 1,
-    length_corrected == "11-15" ~ 11,
-    length_corrected == "16-20" ~ 16,
-    length_corrected == "21-25" ~ 21,
-    length_corrected == "26-30" ~ 26,
-    length_corrected == "31-35" ~ 31,
-    length_corrected == "36-40" ~ 36,
-    length_corrected == "41-45" ~ 41,
-    length_corrected == "46-50" ~ 46,
-    length_corrected == ">50" ~ 50,
-    length_corrected == ">75" ~ 75))
-  
-### there is probably a more efficient way to do the above this works for now 
-
-maturity$Length_comparison <- as.numeric(maturity$Length_comparison)
-maturity$Lm_comparison <- as.numeric(maturity$Lm_comparison)
+  mutate(median_length = case_when(
+    length_corrected == "0-10" ~ 5,
+    length_corrected == "11-15" ~ 13,
+    length_corrected == "16-20" ~ 18,
+    length_corrected == "21-25" ~ 23,
+    length_corrected == "26-30" ~ 28,
+    length_corrected == "31-35" ~ 33,
+    length_corrected == "36-40" ~ 38,
+    length_corrected == "41-45" ~ 43,
+    length_corrected == "46-50" ~ 48,
+    length_corrected == "51-60" ~ 55.5,
+    length_corrected == "61-70" ~ 65.5,
+    length_corrected == "71-80" ~ 75.5,
+    length_corrected == "81-90" ~ 85.5,
+    length_corrected == ">90" ~ 100 ### circle back to what value to use here
+  ))
 
 maturity <- maturity %>% 
-  mutate(maturity = if_else(length_corrected >= Lm_comparison, "mature", "immature")) %>%
+  mutate(maturity = if_else(median_length >= Lm, "mature", "immature")) %>%
   subset(trap_type == "MODIFIED" | trap_type == "UNMODIFIED") %>% #subsetting to only the modified and unmodified traps 
-  mutate(nofish_pertrap = number_of_fish/total_traps_collected) #per species per survey id
+  select(survey_id, year, scientific_name, trap_type, maturity, total_traps_collected, 
+         length_corrected, median_length, number_of_fish, Lm) %>%
+  mutate(nofish_pertrap = number_of_fish/total_traps_collected) 
 ```
 
 Immaure and mature fish catch comparison
 
 ```{r}
-maturity %>% select(number_of_fish, trap_type, maturity, scientific_name, total_traps_collected, nofish_pertrap) %>% 
+maturity %>% select(number_of_fish, trap_type, maturity, scientific_name, 
+                    total_traps_collected, nofish_pertrap) %>% 
   na.omit() %>% 
   ggplot(., aes(x=scientific_name, y=nofish_pertrap, color=maturity)) +
   geom_boxplot() + theme_classic() + 
   theme(axis.text.x = element_text(angle=60, hjust=1)) +
   xlab("Species") +
-  ylab("Number of fish per trap set")
+  ylab("Abundance (number of individuals per trap collected)")
 
 maturity %>% select(number_of_fish, trap_type, maturity, scientific_name, total_traps_collected, nofish_pertrap) %>% 
   na.omit() %>%  
@@ -431,7 +459,7 @@ maturity %>% select(number_of_fish, trap_type, maturity, scientific_name, total_
   facet_wrap(~trap_type, scales = "free_y") +
   #theme(axis.text.x = element_text(angle=60, hjust=1)) +
   xlab("Maturity") +
-  ylab("Number of fish per trap set")
+  ylab("Abundance (number of individuals per trap collected)")
 ```
 
 Statistics on the above... 
@@ -448,37 +476,16 @@ nofish_maturity_tukey <- TukeyHSD(nofish_maturity_aov)
 nofish_maturity_tukey$`trap_type:maturity`
 ```
 
-
-
 ## <a name="length"></a> **Catch and length data of mature fish**
 
 **Average length of catch versus length at first maturity (Lmat). Take the difference for each fish in the data against its length at first maturity and then calculate a weighted value for modified versus traditional traps where a value above 0 represents a fish above Lmat and a value below represents a fish below Lmat.**
-
-We only have bins for the length values.. so this might have to be by 5s. 
-i.e. catch = 11-15; Lm 21-25. Can take median values and do that calculation? 
-
-I'm not sure this is the best way to do this... 
 
 Transform count value to that number of observations: https://stackoverflow.com/questions/70759069/transform-count-column-into-number-of-rows. 
 
 ```{r}
 maturity_dist <- maturity %>% 
-  select(survey_id, number_of_fish, scientific_name, trap_type, length_corrected, Lm, Lm_range, Lm_comparison, Length_comparison, maturity) %>%
   mutate(number_of_fish = if_else(is.na(number_of_fish), 1, number_of_fish)) %>% # replacing NAs with the value of 1
   tidyr::uncount(., number_of_fish, .remove = TRUE) %>% # expanding number of fish to number of observations
-  #### notes on below fxn --- maybe not the best way to do this? 0-10 is a bigger bin than 11-15 so median value isn't as representative?
-  mutate(median_length = case_when(
-    length_corrected == "0-10" ~ 5,
-    length_corrected == "11-15" ~ 13,
-    length_corrected == "16-20" ~ 18,
-    length_corrected == "21-25" ~ 23,
-    length_corrected == "26-30" ~ 28,
-    length_corrected == "31-35" ~ 33,
-    length_corrected == "36-40" ~ 38,
-    length_corrected == "41-45" ~ 43,
-    length_corrected == "46-50" ~ 48,
-    length_corrected == ">50" ~ 50,
-    length_corrected == ">75" ~ 75)) %>%
   mutate(length_dist = median_length-Lm) %>%
   group_by(scientific_name, trap_type) %>%
   mutate(avg_length_dist = mean(length_dist)) %>% #### a positive value here = mature; a negative value = immature 
@@ -492,7 +499,7 @@ maturity_dist %>% group_by(scientific_name) %>%
   geom_line(aes(group = scientific_name), color="grey14") +
   geom_point() + theme_bw() + 
   theme(axis.text.x = element_text(angle=60, hjust=1)) +
-  labs(y="Mean distance from Lm", x="Genus species", color="Trap Type")
+  labs(y="Mean distance from Lm (cm)", x="Genus species", color="Trap Type")
 ```
 
 
@@ -516,8 +523,9 @@ Siganus canaliculatus	= 18030
 
 ```{r}
 # the column we want to plot: maturity$length_corrected
-maturity$length_corrected <- factor(maturity$length_corrected, levels=c("0-10", "11-15","16-20","21-25","26-30","31-35","36-40",
-                                                                        "41-45", "46-50", ">75"))
+maturity$length_corrected <- factor(maturity$length_corrected, levels=c("0-10", "11-15","16-20","21-25","26-30",
+                                                                        "31-35","36-40","41-45", "46-50", "51-60",
+                                                                        "61-70", "71-80", "81-90", ">90"))
 
 maturity <- maturity %>% filter(!is.na(length_corrected)) %>%
   group_by(length_corrected, scientific_name, trap_type) %>%
@@ -527,7 +535,23 @@ maturity <- maturity %>% filter(!is.na(length_corrected)) %>%
 maturity2022_topspp <- maturity %>% subset(year=="2022") %>% 
   subset(scientific_name == "Siganus sutor" | scientific_name == "Lethrinus nebulosus" |
            scientific_name == "Scarus ghobban" | scientific_name == "Leptoscarus vaigiensis" |
-           scientific_name == "Siganus canaliculatus")
+           scientific_name == "Siganus canaliculatus") %>%
+    mutate(Lm_range = case_when(
+    Lm >= 0 & Lm <= 10.5 ~ "0-10",
+    Lm >= 10.5 & Lm <= 15.4 ~ "11-15",
+    Lm >= 15.5 & Lm <= 20.4 ~ "16-20",
+    Lm >= 20.5 & Lm <= 25.4 ~ "21-25",
+    Lm >= 25.5 & Lm <= 30.4 ~ "26-30",
+    Lm >= 30.5 & Lm <= 35.4 ~ "31-35",
+    Lm >= 35.5 & Lm <= 40.4 ~ "36-40",
+    Lm >= 40.5 & Lm <= 45.4 ~ "41-45",
+    Lm >= 45.5 & Lm <= 50.4 ~ "46-50",
+    Lm >= 50.5 & Lm <= 60.4 ~ "51-60",
+    Lm >= 60.5 & Lm <= 70.4 ~ "61-70",
+    Lm >= 70.5 & Lm <= 80.4 ~ "71-80",
+    Lm >= 80.5 & Lm <= 90.4 ~ "81-90",
+    Lm > 90.5 ~ ">90")) 
+  
   
 maturity2022_topspp %>% 
   mutate(number_of_fish = if_else(is.na(number_of_fish), 1, number_of_fish)) %>% # replacing NAs with the value of 1
@@ -550,7 +574,20 @@ maturity2022_topspp %>%
 ```
 
 
+## Fishbase R 
 
+https://github.com/ropensci/rfishbase
+
+```{r}
+#remotes::install_github("ropensci/rfishbase")
+library("rfishbase")
+library(curl)
+#install.packages("curl", type = "source")
+```
+
+```{r}
+FB <- fb_tbl("ecology")
+```
 
 
 

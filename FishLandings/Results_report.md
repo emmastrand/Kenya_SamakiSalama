@@ -13,6 +13,30 @@ I've written a [protocol](https://github.com/emmastrand/Kenya_SamakiSalama/blob/
 
 I used the file `Fishlandings-data- CC-JM-Clay-IW combined 7-28-2022.xlsx` as input for the quality control R markdown.
 
+
+### Next Steps 
+
+
+Austin asking Kenya team:  
+1.) The Take-Home info columns were taken out but we still need this information.  
+2.) The # of fishermen column is wonky - these numbers are in the hundreds and thousands. What happened?  
+3.) Nov Dec 2021 data missing.  
+
+Emma focusing on:  
+
+- Look into why scales for abundance (#indiv/trap#) are much smaller for 2021 than 2022? This doesn't apply to biomass kg per trap though..    
+- Excel sheet for action items for AH -- species names (#1 and #2 list), list of fish above 50 cm to validate if this is real or not   
+
+- Biomass figures:  
+1.  W=aL^b equation: grab a and b measures from fishbaseR function. If can't get this to work, then produce list and send to fishbase.   
+2. Once have a and b, calculate our mass (W x #_fish for that species). Produce list of suspicious value reported from survey.  
+
+- Frequency length plot: see the curves instead of just the stacked bars, include n=X and % of fish below Lm
+
+Questions:   
+1. In picking the median length for >90 category, what is the best way to do this?  
+
+
 **Recommendations for project moving forward:**    
 1.) *Require* all data entry to be done with the drop down menu instead of manual entry. During quality control, I found many spelling errors such as 10 different spellings for 1 genus or 1 species name. See `gsub` functions within the QC R markdown file for the mistakes I found and had to correct in R.  
 
@@ -22,7 +46,7 @@ The output from the QC.md script is the file `cleaned-Fishlandings-data- CC-JM-C
 
 Goal: Total catch per unit effort between modified and traditional traps. It would be great to see this as grams captured per trap set.
 
-### Total catch per trap
+### Abundance = Total catch per trap
 
 *Total catch per trap for modified traps was significantly higher (p < 0.0001). This result does not seem to be influenced by any one particular fisherman or landing site (see CUE.Rmd for figures).*
 
@@ -32,39 +56,39 @@ Goal: Total catch per unit effort between modified and traditional traps. It wou
 t.test(catch_per_trap~trap_type, data = modified_trap_df, var.equal = FALSE)
 
 
-	Welch Two Sample t-test
+Welch Two Sample t-test
 
 data:  catch_per_trap by trap_type
-t = 16.389, df = 1484, p-value < 2.2e-16
+t = 16.892, df = 1397.2, p-value < 2.2e-16
 alternative hypothesis: true difference in means between group MODIFIED and group UNMODIFIED is not equal to 0
 95 percent confidence interval:
- 44.18302 56.19691
+ 45.16187 57.02953
 sample estimates:
-  mean in group MODIFIED mean in group UNMODIFIED
-                69.91612                 19.72616
+  mean in group MODIFIED mean in group UNMODIFIED 
+                70.14286                 19.04716 
 ```
 
 ![](https://github.com/emmastrand/Kenya_SamakiSalama/raw/main/FishLandings/scripts/CUE-maturity-length-analysis_files/figure-gfm/unnamed-chunk-4-4.png).
 
-### Grams per trap
+### Biomass = Kilograms per trap
 
 *Gramps per trap set was significantly higher in modified traps (p < 0.0001). This result also does not appear to be influended by one particular fisherman or landing site (see CUE.Rmd for figures).*
 
 ![](https://github.com/emmastrand/Kenya_SamakiSalama/raw/main/FishLandings/scripts/CUE-maturity-length-analysis_files/figure-gfm/unnamed-chunk-5-1.png)
 
 ```
-t.test(grams_per_trap~trap_type, data = modified_trap_df, var.equal = FALSE)
+t.test(kg_per_trap~trap_type, data = modified_trap_df, var.equal = FALSE)
 
 Welch Two Sample t-test
 
-data:  grams_per_trap by trap_type
-t = 4.2895, df = 2182.7, p-value = 1.869e-05
+data:  kg_per_trap by trap_type
+t = 4.154, df = 2306.5, p-value = 3.386e-05
 alternative hypothesis: true difference in means between group MODIFIED and group UNMODIFIED is not equal to 0
 95 percent confidence interval:
-0.0403919 0.1084280
+ 0.03718111 0.10367540
 sample estimates:
-mean in group MODIFIED mean in group UNMODIFIED
-             0.8647085                0.7902985
+  mean in group MODIFIED mean in group UNMODIFIED 
+               0.8588381                0.7884098
 ```
 
 ![](https://github.com/emmastrand/Kenya_SamakiSalama/raw/main/FishLandings/scripts/CUE-maturity-length-analysis_files/figure-gfm/unnamed-chunk-5-4.png)

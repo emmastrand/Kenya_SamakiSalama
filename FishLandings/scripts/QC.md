@@ -115,7 +115,8 @@ df <- full_join(fishing_operation, catch_composition, by = c("fisher_id", "Opera
   select(-`time_in_water (effort)`) %>% # take this out if we start collecting time in water data
   rename(fishing_operation_notes= general_notes) %>%
   rename(catch_composition_notes = notes_picture) %>%
-  rename(scientific_name = SPECIES)
+  rename(scientific_name = SPECIES) %>%
+  rename(total_biomass_kg = total_weight_kg) 
 ```
 
 ## Quality Control
@@ -253,6 +254,9 @@ The only issue I can detect here is some lower case vs upper case.
 
 It would be nice to have a list of expected household and fisher ID’s.
 
+Some IDs only have 2 digits at the end - are these missing an zero in
+front of them? I.e. 90 vs 090?
+
 ``` r
 df$household_id <- toupper(df$household_id)
 unique(df$household_id)
@@ -366,6 +370,10 @@ unique(df$household_id)
     ## [316] "SS/MAY/SB/099"    "SS/MAY/SB/090"    "SS/MAY/SB/091"   
     ## [319] "SS/MAY/SB/092"    "SS/MAY/SB/088"
 
+``` r
+df$household_id <- gsub("/FF", "", df$household_id)
+```
+
 ### <a name="trap"></a> **Trap information**
 
 ### trap\_type
@@ -403,6 +411,9 @@ range(total_traps_collected)
     ## [1]  0 63
 
 ``` r
+## filtering traps to below 40
+df$total_traps_collected <- ifelse(df$total_traps_collected > 40, NA, df$total_traps_collected)
+
 ## Protocol with new df: double check the below range is expected 
 hist(df$total_traps_collected)
 ```
@@ -433,43 +444,49 @@ df$date_time_collected <- parse_date_time(df$date_time_collected, orders = "ymdH
 
 ### <a name="catch"></a> **Catch information**
 
-### Weight and value measures
+### Biomass and value measures
+
+Step \#4 from protocol: Double check the below values are in the correct
+ranges
 
 ``` r
-total_weight_kg <- df %>% select(total_weight_kg) %>% na.omit()
-#take_home_weight_kg <- df %>% select(take_home_weight_kg) %>% na.omit()
-total_value_KES <- df %>% select(total_value_KES) %>% na.omit()
-#take_home_value_KES <- df %>% select(take_home_value_KES) %>% na.omit()
-
-## Step #4 from protocol: Double check the below values are in the correct ranges
-range(total_weight_kg)
+total_biomass_kg <- df %>% select(total_biomass_kg) %>% na.omit()
+range(total_biomass_kg)
 ```
 
     ## [1]   0 490
 
 ``` r
+# filtering biomass kg to under 100 kg 
+df$total_biomass_kg <- ifelse(df$total_biomass_kg > 100, NA, df$total_biomass_kg)
+hist(df$total_biomass_kg)
+```
+
+![](QC_files/figure-gfm/unnamed-chunk-12-1.png)<!-- -->
+
+``` r
+### change to biomass when these columns get added back in 
+#take_home_weight_kg <- df %>% select(take_home_weight_kg) %>% na.omit()
 #range(take_home_weight_kg)
+#hist(df$take_home_weight_kg)
+
+total_value_KES <- df %>% select(total_value_KES) %>% na.omit()
 range(total_value_KES)
 ```
 
     ## [1]     0 23040
 
 ``` r
-#range(take_home_value_KES)
-
-hist(df$total_weight_kg)
-```
-
-![](QC_files/figure-gfm/unnamed-chunk-12-1.png)<!-- -->
-
-``` r
-#hist(df$take_home_weight_kg)
+# filtering to below 5,000 
+df$total_value_KES <- ifelse(df$total_value_KES > 5000, NA, df$total_value_KES)
 hist(df$total_value_KES)
 ```
 
 ![](QC_files/figure-gfm/unnamed-chunk-12-2.png)<!-- -->
 
 ``` r
+#take_home_value_KES <- df %>% select(take_home_value_KES) %>% na.omit()
+#range(take_home_value_KES)
 #hist(df$take_home_value_KES)
 ```
 
@@ -789,6 +806,7 @@ df$scientific_name <- gsub("canaliculutus", "canaliculatus", df$scientific_name)
 df$scientific_name <- gsub("Cholurururs", "Chlorurus", df$scientific_name)
 df$scientific_name <- gsub("stronycephalus", "strongylocephalus", df$scientific_name)
 df$scientific_name <- gsub("Gymonthorax", "Gymnothorax", df$scientific_name)
+df$scientific_name <- gsub("Gymothorax", "Gymnothorax", df$scientific_name)
 df$scientific_name <- gsub("javanicus", "favagineus", df$scientific_name)
 df$scientific_name <- gsub("vaiginsis", "vaigiensis", df$scientific_name)
 df$scientific_name <- gsub("semicirculatus", "semicirculatus", df$scientific_name)
@@ -1027,31 +1045,30 @@ unique(sort(unvalidated_names$scientific_name))
     ##  [9] "Caranx hippos"                "Cyprichromis leptosoma"      
     ## [11] "Epinephelus melanostigma"     "Epinephelus spilotoceps"     
     ## [13] "Gompheus caeruleus"           "Gymnothorax flavimarginatus" 
-    ## [15] "Gymnothorax monochrous"       "Gymothorax favagineus"       
-    ## [17] "Himantura gerrardi"           "Hipposcarus scarus"          
-    ## [19] "Kyphosus bigibbus"            "Leptoscarus triostegus"      
-    ## [21] "Lethrinus conchliatus"        "Lethrinus macronemus"        
-    ## [23] "Lethrinus sutor"              "Lethrinus vaigiensis"        
-    ## [25] "Lutjanus canius"              "Monodactylus argentimailatus"
-    ## [27] "Monotaxis grandoculis"        "Mugil cephalus"              
-    ## [29] "Mulloidichthys pfluegeri"     "Naso brachycentron"          
-    ## [31] "Ostracion nasus"              "Panulirus homarus"           
-    ## [33] "Panulirus ornatus"            "Panulirus penicillatus"      
-    ## [35] "Panulirus versicolor"         "Parupeneus semicirculatus"   
-    ## [37] "Planiliza alata"              "Planiliza sp."               
-    ## [39] "Platybelone platyura"         "Plectorhinchus plagiodesmus" 
-    ## [41] "Plectorhinchus playfairi"     "Plotosus canius"             
-    ## [43] "Pono blue fish"               "Pseudorhombus arsius"        
-    ## [45] "Sardinella melanura"          "Scarus carolinus"            
-    ## [47] "Scarus sutor"                 "Scarus vaigiensis"           
-    ## [49] "Scolopsis bimaculata"         "Sepia pharaonis"             
-    ## [51] "Siganus canaliculatus"        "Siganus fuscescens"          
-    ## [53] "Siganus guttatus"             "Sphyraena japonica"          
-    ## [55] "Sphyraena leiura"             "Taeniura meyeni"             
-    ## [57] "Tafi sutor"                   "Terapon theraps"             
-    ## [59] "Thunnus albacares"            "Thysanophrys chiltonae"      
-    ## [61] "Uroteuthis cynea"             "Uroteuthis duvauceli"        
-    ## [63] "Uroteuthis lineatus"
+    ## [15] "Gymnothorax monochrous"       "Himantura gerrardi"          
+    ## [17] "Hipposcarus scarus"           "Kyphosus bigibbus"           
+    ## [19] "Leptoscarus triostegus"       "Lethrinus conchliatus"       
+    ## [21] "Lethrinus macronemus"         "Lethrinus sutor"             
+    ## [23] "Lethrinus vaigiensis"         "Lutjanus canius"             
+    ## [25] "Monodactylus argentimailatus" "Monotaxis grandoculis"       
+    ## [27] "Mugil cephalus"               "Mulloidichthys pfluegeri"    
+    ## [29] "Naso brachycentron"           "Ostracion nasus"             
+    ## [31] "Panulirus homarus"            "Panulirus ornatus"           
+    ## [33] "Panulirus penicillatus"       "Panulirus versicolor"        
+    ## [35] "Parupeneus semicirculatus"    "Planiliza alata"             
+    ## [37] "Planiliza sp."                "Platybelone platyura"        
+    ## [39] "Plectorhinchus plagiodesmus"  "Plectorhinchus playfairi"    
+    ## [41] "Plotosus canius"              "Pono blue fish"              
+    ## [43] "Pseudorhombus arsius"         "Sardinella melanura"         
+    ## [45] "Scarus carolinus"             "Scarus sutor"                
+    ## [47] "Scarus vaigiensis"            "Scolopsis bimaculata"        
+    ## [49] "Sepia pharaonis"              "Siganus canaliculatus"       
+    ## [51] "Siganus fuscescens"           "Siganus guttatus"            
+    ## [53] "Sphyraena japonica"           "Sphyraena leiura"            
+    ## [55] "Taeniura meyeni"              "Tafi sutor"                  
+    ## [57] "Terapon theraps"              "Thunnus albacares"           
+    ## [59] "Thysanophrys chiltonae"       "Uroteuthis cynea"            
+    ## [61] "Uroteuthis duvauceli"         "Uroteuthis lineatus"
 
 1.) In catch composition and in fishbase but not on validation list.
 **Suggested fix: address if these are reasonable to find in Ghana and if
@@ -1066,7 +1083,6 @@ they are, keep these entries.**
 -   Epinephelus melanostigma  
 -   Epinephelus spilotoceps  
 -   Gompheus caeruleus  
--   Gymothorax favagineus  
 -   Gymnothorax flavimarginatus  
 -   Gymnothorax monochrous  
 -   Himantura gerrardi  
@@ -1292,8 +1308,11 @@ df <- df %>%
     length_calc >= 35.5 & length_calc <= 40.4 ~ "36-40",
     length_calc >= 40.5 & length_calc <= 45.4 ~ "41-45",
     length_calc >= 45.5 & length_calc <= 50.4 ~ "46-50",
-    length_calc >= 50.5 & length_calc <= 75 ~ ">50",
-    length_calc > 75 ~ ">75")) 
+    length_calc >= 50.5 & length_calc <= 60.4 ~ "51-60",
+    length_calc >= 60.5 & length_calc <= 70.4 ~ "60-70",
+    length_calc >= 70.5 & length_calc <= 80.4 ~ "70-80",
+    length_calc >= 80.5 & length_calc <= 90.4 ~ "80-90",
+    length_calc > 90.5 ~ ">90")) 
 
 df <- df %>%
   mutate(length_corrected = if_else(is.na(length_calc), length_cm, length_calc))
@@ -1325,11 +1344,11 @@ unique(sort(df$length_cm))
 unique(sort(df$length_corrected))
 ```
 
-    ##  [1] ">50"   ">75"   "0-10"  "11-15" "16-20" "21-25" "26-30" "31-35" "36-40"
-    ## [10] "41-45" "46-50"
+    ##  [1] ">90"   "0-10"  "11-15" "16-20" "21-25" "26-30" "31-35" "36-40" "41-45"
+    ## [10] "46-50" "51-60" "60-70" "70-80" "80-90"
 
 Correct output for length\_corrected:
-`">50"   ">75"   "0-10"  "11-15" "16-20" "21-25" "26-30" "31-35" "36-40" "41-45" "46-50"`.
+`">90"   "0-10"  "11-15" "16-20" "21-25" "26-30" "31-35" "36-40" "41-45" "46-50" "51-60" "60-70" "70-80" "80-90"`.
 
 ## <a name="gear"></a> **Gear type, and fish numbers/final destination**
 
@@ -1389,9 +1408,11 @@ df %>% ggplot(., aes(y=number_of_fish)) + geom_boxplot() + theme_bw()
 
 ``` r
 #### filtering out 6,000 and 30,0000 
-df <- df %>%
-  filter(number_of_fish < 1000)
+df$number_of_fish <- ifelse(df$number_of_fish > 1000, NA, df$number_of_fish)
+hist(df$number_of_fish)
 ```
+
+![](QC_files/figure-gfm/unnamed-chunk-20-2.png)<!-- -->
 
 ### Destination of fish
 
@@ -1401,12 +1422,13 @@ df$destination <- toupper(df$destination)
 df$destination <- gsub("OTHER WRITE IN:", "", df$destination)
 df$destination <- gsub(" LOCAL CONSUMER", "LOCAL CONSUMER", df$destination)
 df$destination <- gsub("LOCAL CONSUMERS", "LOCAL CONSUMER", df$destination)
+df$destination <- gsub(" MZUNGU", "MZUNGU", df$destination)
 
 unique(sort(df$destination))
 ```
 
-    ## [1] " MZUNGU"        "FISH DEALER"    "GIFT"           "HOME"          
-    ## [5] "LOCAL CONSUMER" "MAMA KARANGA"   "MZUNGU"         "OTHER"
+    ## [1] "FISH DEALER"    "GIFT"           "HOME"           "LOCAL CONSUMER"
+    ## [5] "MAMA KARANGA"   "MZUNGU"         "OTHER"
 
 ## <a name="notes"></a> **Final check: any notes from both datasets**
 
@@ -1483,42 +1505,42 @@ unique(df$fishing_operation_notes)
     ##  [66] "110"                                                                                                                                                    
     ##  [67] "140"                                                                                                                                                    
     ##  [68] "190"                                                                                                                                                    
-    ##  [69] "108"                                                                                                                                                    
-    ##  [70] "285"                                                                                                                                                    
-    ##  [71] "245"                                                                                                                                                    
-    ##  [72] "484"                                                                                                                                                    
-    ##  [73] "350"                                                                                                                                                    
-    ##  [74] "trip 2"                                                                                                                                                 
-    ##  [75] "2700"                                                                                                                                                   
-    ##  [76] "625"                                                                                                                                                    
-    ##  [77] "700"                                                                                                                                                    
-    ##  [78] "375"                                                                                                                                                    
-    ##  [79] "338"                                                                                                                                                    
-    ##  [80] "347"                                                                                                                                                    
-    ##  [81] "973"                                                                                                                                                    
-    ##  [82] "122"                                                                                                                                                    
-    ##  [83] "201"                                                                                                                                                    
-    ##  [84] "1133"                                                                                                                                                   
-    ##  [85] "309"                                                                                                                                                    
-    ##  [86] "119"                                                                                                                                                    
-    ##  [87] "232"                                                                                                                                                    
-    ##  [88] "845"                                                                                                                                                    
-    ##  [89] "345"                                                                                                                                                    
-    ##  [90] "97.5"                                                                                                                                                   
-    ##  [91] "1044"                                                                                                                                                   
-    ##  [92] "221"                                                                                                                                                    
-    ##  [93] "938"                                                                                                                                                    
-    ##  [94] "525"                                                                                                                                                    
-    ##  [95] "1050"                                                                                                                                                   
-    ##  [96] "900"                                                                                                                                                    
-    ##  [97] "104"                                                                                                                                                    
-    ##  [98] "330"                                                                                                                                                    
-    ##  [99] "88"                                                                                                                                                     
-    ## [100] "540"                                                                                                                                                    
-    ## [101] "340"                                                                                                                                                    
-    ## [102] "450"                                                                                                                                                    
-    ## [103] "286"                                                                                                                                                    
-    ## [104] "130"                                                                                                                                                    
+    ##  [69] "130"                                                                                                                                                    
+    ##  [70] "108"                                                                                                                                                    
+    ##  [71] "285"                                                                                                                                                    
+    ##  [72] "245"                                                                                                                                                    
+    ##  [73] "484"                                                                                                                                                    
+    ##  [74] "350"                                                                                                                                                    
+    ##  [75] "trip 2"                                                                                                                                                 
+    ##  [76] "2700"                                                                                                                                                   
+    ##  [77] "625"                                                                                                                                                    
+    ##  [78] "700"                                                                                                                                                    
+    ##  [79] "375"                                                                                                                                                    
+    ##  [80] "338"                                                                                                                                                    
+    ##  [81] "347"                                                                                                                                                    
+    ##  [82] "973"                                                                                                                                                    
+    ##  [83] "122"                                                                                                                                                    
+    ##  [84] "201"                                                                                                                                                    
+    ##  [85] "1133"                                                                                                                                                   
+    ##  [86] "309"                                                                                                                                                    
+    ##  [87] "119"                                                                                                                                                    
+    ##  [88] "232"                                                                                                                                                    
+    ##  [89] "845"                                                                                                                                                    
+    ##  [90] "345"                                                                                                                                                    
+    ##  [91] "97.5"                                                                                                                                                   
+    ##  [92] "1044"                                                                                                                                                   
+    ##  [93] "221"                                                                                                                                                    
+    ##  [94] "938"                                                                                                                                                    
+    ##  [95] "525"                                                                                                                                                    
+    ##  [96] "1050"                                                                                                                                                   
+    ##  [97] "900"                                                                                                                                                    
+    ##  [98] "104"                                                                                                                                                    
+    ##  [99] "330"                                                                                                                                                    
+    ## [100] "88"                                                                                                                                                     
+    ## [101] "540"                                                                                                                                                    
+    ## [102] "340"                                                                                                                                                    
+    ## [103] "450"                                                                                                                                                    
+    ## [104] "286"                                                                                                                                                    
     ## [105] "66"                                                                                                                                                     
     ## [106] "43.05"                                                                                                                                                  
     ## [107] "44.16"                                                                                                                                                  
@@ -1766,7 +1788,7 @@ head(df)
     ## # … with 23 more variables: household_id <chr>, trap_type <chr>,
     ## #   total_traps_collected <dbl>, date_set_dd_mm_yyyy <dttm>,
     ## #   `time_set_24hh:mm` <chr>, date_collected_dd_mm_yyyy <dttm>,
-    ## #   `time_collected_24hh:mm` <chr>, total_weight_kg <dbl>,
+    ## #   `time_collected_24hh:mm` <chr>, total_biomass_kg <dbl>,
     ## #   total_value_KES <dbl>, `No. of fishers in crew` <dbl>,
     ## #   fishing_operation_notes <chr>, Kiswahili_name <chr>, scientific_name <chr>,
     ## #   length_cm <chr>, `gear type` <chr>, number_of_fish <dbl>, …
@@ -1775,7 +1797,7 @@ head(df)
 nrow(df)
 ```
 
-    ## [1] 150363
+    ## [1] 151202
 
 ``` r
 write_xlsx(df, "data/cleaned-Fishlandings-data- CC-JM-Clay-IW combined 7-28-2022.xlsx")

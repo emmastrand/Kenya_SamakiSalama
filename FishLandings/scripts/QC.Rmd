@@ -107,7 +107,8 @@ df <- full_join(fishing_operation, catch_composition, by = c("fisher_id", "Opera
   select(-`time_in_water (effort)`) %>% # take this out if we start collecting time in water data
   rename(fishing_operation_notes= general_notes) %>%
   rename(catch_composition_notes = notes_picture) %>%
-  rename(scientific_name = SPECIES)
+  rename(scientific_name = SPECIES) %>%
+  rename(total_biomass_kg = total_weight_kg) 
 ```
 
 ## Quality Control 
@@ -207,9 +208,13 @@ The only issue I can detect here is some lower case vs upper case.
 
 It would be nice to have a list of expected household and fisher ID's. 
 
+Some IDs only have 2 digits at the end - are these missing an zero in front of them? I.e. 90 vs 090?
+
 ```{r}
 df$household_id <- toupper(df$household_id)
 unique(df$household_id)
+
+df$household_id <- gsub("/FF", "", df$household_id)
 ```
 
 ### <a name="trap"></a> **Trap information**
@@ -230,6 +235,9 @@ View the values put in the df here to double check all values make sense.
 ```{r}
 total_traps_collected <- df %>% select(total_traps_collected) %>% na.omit()
 range(total_traps_collected)
+
+## filtering traps to below 40
+df$total_traps_collected <- ifelse(df$total_traps_collected > 40, NA, df$total_traps_collected)
 
 ## Protocol with new df: double check the below range is expected 
 hist(df$total_traps_collected)
@@ -257,23 +265,30 @@ df$date_time_collected <- parse_date_time(df$date_time_collected, orders = "ymdH
 
 ### <a name="catch"></a> **Catch information**
 
-### Weight and value measures 
+### Biomass and value measures 
+
+Step #4 from protocol: Double check the below values are in the correct ranges
 
 ```{r}
-total_weight_kg <- df %>% select(total_weight_kg) %>% na.omit()
+total_biomass_kg <- df %>% select(total_biomass_kg) %>% na.omit()
+range(total_biomass_kg)
+# filtering biomass kg to under 100 kg 
+df$total_biomass_kg <- ifelse(df$total_biomass_kg > 100, NA, df$total_biomass_kg)
+hist(df$total_biomass_kg)
+
+### change to biomass when these columns get added back in 
 #take_home_weight_kg <- df %>% select(take_home_weight_kg) %>% na.omit()
-total_value_KES <- df %>% select(total_value_KES) %>% na.omit()
-#take_home_value_KES <- df %>% select(take_home_value_KES) %>% na.omit()
-
-## Step #4 from protocol: Double check the below values are in the correct ranges
-range(total_weight_kg)
 #range(take_home_weight_kg)
-range(total_value_KES)
-#range(take_home_value_KES)
-
-hist(df$total_weight_kg)
 #hist(df$take_home_weight_kg)
+
+total_value_KES <- df %>% select(total_value_KES) %>% na.omit()
+range(total_value_KES)
+# filtering to below 5,000 
+df$total_value_KES <- ifelse(df$total_value_KES > 5000, NA, df$total_value_KES)
 hist(df$total_value_KES)
+
+#take_home_value_KES <- df %>% select(take_home_value_KES) %>% na.omit()
+#range(take_home_value_KES)
 #hist(df$take_home_value_KES)
 ```
 
@@ -364,6 +379,7 @@ df$scientific_name <- gsub("canaliculutus", "canaliculatus", df$scientific_name)
 df$scientific_name <- gsub("Cholurururs", "Chlorurus", df$scientific_name)
 df$scientific_name <- gsub("stronycephalus", "strongylocephalus", df$scientific_name)
 df$scientific_name <- gsub("Gymonthorax", "Gymnothorax", df$scientific_name)
+df$scientific_name <- gsub("Gymothorax", "Gymnothorax", df$scientific_name)
 df$scientific_name <- gsub("javanicus", "favagineus", df$scientific_name)
 df$scientific_name <- gsub("vaiginsis", "vaigiensis", df$scientific_name)
 df$scientific_name <- gsub("semicirculatus", "semicirculatus", df$scientific_name)
@@ -605,7 +621,6 @@ unique(sort(unvalidated_names$scientific_name))
 - Epinephelus melanostigma  
 - Epinephelus spilotoceps    
 - Gompheus caeruleus  
-- Gymothorax favagineus  
 - Gymnothorax flavimarginatus  
 - Gymnothorax monochrous   
 - Himantura gerrardi  
@@ -749,8 +764,11 @@ df <- df %>%
     length_calc >= 35.5 & length_calc <= 40.4 ~ "36-40",
     length_calc >= 40.5 & length_calc <= 45.4 ~ "41-45",
     length_calc >= 45.5 & length_calc <= 50.4 ~ "46-50",
-    length_calc >= 50.5 & length_calc <= 75 ~ ">50",
-    length_calc > 75 ~ ">75")) 
+    length_calc >= 50.5 & length_calc <= 60.4 ~ "51-60",
+    length_calc >= 60.5 & length_calc <= 70.4 ~ "61-70",
+    length_calc >= 70.5 & length_calc <= 80.4 ~ "71-80",
+    length_calc >= 80.5 & length_calc <= 90.4 ~ "81-90",
+    length_calc > 90.5 ~ ">90")) 
 
 df <- df %>%
   mutate(length_corrected = if_else(is.na(length_calc), length_cm, length_calc))
@@ -760,7 +778,38 @@ unique(sort(df$length_cm))
 unique(sort(df$length_corrected))
 ```
 
-Correct output for length_corrected: `">50"   ">75"   "0-10"  "11-15" "16-20" "21-25" "26-30" "31-35" "36-40" "41-45" "46-50"`. 
+Correct output for length_corrected: `">90"   "0-10"  "11-15" "16-20" "21-25" "26-30" "31-35" "36-40" "41-45" "46-50" "51-60" "60-70" "70-80" "80-90"`. 
+
+### Comparing Lmax to median length caught
+
+Decide if we need to take these out or not. 
+
+```{r}
+fishbase <- read_excel("data/fishbase.xlsx", sheet = "data") %>% #read in excel file 
+  select(scientific_name, Lm, Lm_se_min, Lm_se_max, Lmax)
+
+length_check <- full_join(df, fishbase, by = "scientific_name") %>%
+  select(survey_id, scientific_name, Lmax, length_corrected) %>%
+  mutate(median_length = case_when(
+    length_corrected == "0-10" ~ 5,
+    length_corrected == "11-15" ~ 13,
+    length_corrected == "16-20" ~ 18,
+    length_corrected == "21-25" ~ 23,
+    length_corrected == "26-30" ~ 28,
+    length_corrected == "31-35" ~ 33,
+    length_corrected == "36-40" ~ 38,
+    length_corrected == "41-45" ~ 43,
+    length_corrected == "46-50" ~ 48,
+    length_corrected == "51-60" ~ 55.5,
+    length_corrected == "61-70" ~ 65.5,
+    length_corrected == "71-80" ~ 75.5,
+    length_corrected == "81-90" ~ 85.5,
+    length_corrected == ">90" ~ 100)) %>% ### circle back to what value to use here
+  mutate(length_check = if_else(median_length > Lmax, "over", "under")) %>%
+  filter(length_check == "over") %>%
+  group_by(length_corrected, scientific_name) %>% 
+  mutate(count = n()) %>% select(-survey_id) %>% distinct(); length_check
+```
 
 ## <a name="gear"></a> **Gear type, and fish numbers/final destination**
 
@@ -791,8 +840,8 @@ unique(sort(df$number_of_fish))
 df %>% ggplot(., aes(y=number_of_fish)) + geom_boxplot() + theme_bw()
 
 #### filtering out 6,000 and 30,0000 
-df <- df %>%
-  filter(number_of_fish < 1000)
+df$number_of_fish <- ifelse(df$number_of_fish > 1000, NA, df$number_of_fish)
+hist(df$number_of_fish)
 ```
 
 ### Destination of fish
@@ -803,6 +852,7 @@ df$destination <- toupper(df$destination)
 df$destination <- gsub("OTHER WRITE IN:", "", df$destination)
 df$destination <- gsub(" LOCAL CONSUMER", "LOCAL CONSUMER", df$destination)
 df$destination <- gsub("LOCAL CONSUMERS", "LOCAL CONSUMER", df$destination)
+df$destination <- gsub(" MZUNGU", "MZUNGU", df$destination)
 
 unique(sort(df$destination))
 ```
