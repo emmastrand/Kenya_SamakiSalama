@@ -580,13 +580,13 @@ https://github.com/ropensci/rfishbase
 
 ```{r}
 #remotes::install_github("ropensci/rfishbase")
-library("rfishbase")
-library(curl)
+#library("rfishbase")
+#library(curl)
 #install.packages("curl", type = "source")
 ```
 
 ```{r}
-FB <- fb_tbl("ecology")
+#FB <- fb_tbl("ecology")
 ```
 
 
