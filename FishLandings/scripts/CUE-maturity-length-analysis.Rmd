@@ -98,7 +98,7 @@ Read in the data frame that is the output of the QC script.
 
 ```{r, message=FALSE, warning=FALSE}
 # read in excel file
-data <- read_excel("data/cleaned-Fishlandings-data- CC-JM-Clay-IW combined 7-28-2022.xlsx") #read in excel file 
+data <- read_excel("data/cleaned-Fishlandings-data- CC-JM-Clay-IW updated 04-09-2022.xlsx") #read in excel file 
 
 data <- data %>% separate(Operation_date, c("year", "month", "day"), remove = FALSE) # creating new columns with month year and date
 data$month <- as.numeric(data$month) #changing this column to numeric instead of a character (needed for next fxn)
@@ -360,7 +360,6 @@ species_df <- species_df %>%
          catch_per_trap = topspecies_catch/total_traps_collected) %>% #divide total catch per survey id by total traps 
   dplyr::ungroup(survey_id, scientific_name) #ungroup by this column
 
-# basic grams per trap plot with no other variables 
 species_df %>% mutate(trap_type = case_when(
     trap_type == "MODIFIED" ~ "MOD",
     trap_type == "UNMODIFIED" ~ "UNMOD")) %>%
@@ -515,11 +514,11 @@ http://derekogle.com/fishR/2017-07-28-JoyPlot
 
 From the `species_keep` df:
 
-Siganus sutor	= 380648  			 
-Lethrinus nebulosus	= 47702	    		
-Scarus ghobban	= 32410			  
-Leptoscarus vaigiensis	= 19606  		  	
-Siganus canaliculatus	= 18030	  
+Siganus sutor	= 311787  	 		 
+Lethrinus nebulosus	= 51612	     		
+Scarus ghobban	= 34253  			  
+Siganus canaliculatus	= 23173  		  	
+Leptoscarus vaigiensis	= 15758	  
 
 ```{r}
 # the column we want to plot: maturity$length_corrected
@@ -579,8 +578,8 @@ maturity2022_topspp %>%
 https://github.com/ropensci/rfishbase
 
 ```{r}
-#remotes::install_github("ropensci/rfishbase")
-#library("rfishbase")
+remotes::install_github("ropensci/rfishbase")
+library("rfishbase")
 #library(curl)
 #install.packages("curl", type = "source")
 ```
@@ -589,8 +588,18 @@ https://github.com/ropensci/rfishbase
 #FB <- fb_tbl("ecology")
 ```
 
+Error: 
 
-
+  `Error in curl::curl_fetch_memory(file, handle): SSL certificate problem: certificate has expired
+  Error in curl::curl_fetch_memory(file, handle): SSL certificate problem: certificate has expired
+  Error in curl::curl_fetch_memory(file, handle): SSL certificate problem: certificate has expired
+  Error in curl::curl_fetch_memory(file, handle): SSL certificate problem: certificate has expired
+  Warning in curl::curl_fetch_memory(url, handle = handle) :
+    SSL certificate problem: certificate has expired
+  Warning in curl::curl_fetch_memory(url, handle = handle) :
+    SSL certificate problem: certificate has expired
+  Error in rbind(deparse.level, ...) : 
+    numbers of columns of arguments do not match`
 
 
 

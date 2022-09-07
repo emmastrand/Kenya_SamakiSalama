@@ -11,16 +11,10 @@ Scripts used:
 
 I've written a [protocol](https://github.com/emmastrand/Kenya_SamakiSalama/blob/main/FishLandings/scripts/QC.md#-protocol-to-run-this-with-a-future-xlsx-file) within the QC R markdown file for future personnel to run the quality control script. Each section requires personnel to read through the output (i.e. output list of fishermen enumerators) and double check that list is as expected. The scientific name section will take the longest.
 
-I used the file `Fishlandings-data- CC-JM-Clay-IW combined 7-28-2022.xlsx` as input for the quality control R markdown.
+I used the file `Fishlandings-data- CC-JM-Clay-IW updated 04-09-2022.xlsx` as input for the quality control R markdown.
 
 
-### Next Steps 
-
-
-Austin asking Kenya team:  
-1.) The Take-Home info columns were taken out but we still need this information.  
-2.) The # of fishermen column is wonky - these numbers are in the hundreds and thousands. What happened?  
-3.) Nov Dec 2021 data missing.  
+### Next Steps
 
 Emma focusing on:  
 
@@ -29,7 +23,7 @@ Emma focusing on:
 
 - Biomass figures:  
 1.  W=aL^b equation: grab a and b measures from fishbaseR function. If can't get this to work, then produce list and send to fishbase.   
-2. Once have a and b, calculate our mass (W x #_fish for that species). Produce list of suspicious value reported from survey.  
+2. Once have a and b, calculate our mass (W x #fish for that species). Produce list of suspicious value reported from survey.  
 
 - Frequency length plot: see the curves instead of just the stacked bars, include n=X and % of fish below Lm
 
@@ -59,13 +53,13 @@ t.test(catch_per_trap~trap_type, data = modified_trap_df, var.equal = FALSE)
 Welch Two Sample t-test
 
 data:  catch_per_trap by trap_type
-t = 16.892, df = 1397.2, p-value < 2.2e-16
+t = 23.928, df = 1749.8, p-value < 2.2e-16
 alternative hypothesis: true difference in means between group MODIFIED and group UNMODIFIED is not equal to 0
 95 percent confidence interval:
- 45.16187 57.02953
+ 32.91773 38.79590
 sample estimates:
-  mean in group MODIFIED mean in group UNMODIFIED 
-                70.14286                 19.04716 
+  mean in group MODIFIED mean in group UNMODIFIED
+                49.25619                 13.39937
 ```
 
 ![](https://github.com/emmastrand/Kenya_SamakiSalama/raw/main/FishLandings/scripts/CUE-maturity-length-analysis_files/figure-gfm/unnamed-chunk-4-4.png).
@@ -82,13 +76,13 @@ t.test(kg_per_trap~trap_type, data = modified_trap_df, var.equal = FALSE)
 Welch Two Sample t-test
 
 data:  kg_per_trap by trap_type
-t = 4.154, df = 2306.5, p-value = 3.386e-05
+t = 2.4187, df = 3674.2, p-value = 0.01563
 alternative hypothesis: true difference in means between group MODIFIED and group UNMODIFIED is not equal to 0
 95 percent confidence interval:
- 0.03718111 0.10367540
+ 0.006639708 0.063477779
 sample estimates:
-  mean in group MODIFIED mean in group UNMODIFIED 
-               0.8588381                0.7884098
+  mean in group MODIFIED mean in group UNMODIFIED
+               0.8317823                0.7967236
 ```
 
 ![](https://github.com/emmastrand/Kenya_SamakiSalama/raw/main/FishLandings/scripts/CUE-maturity-length-analysis_files/figure-gfm/unnamed-chunk-5-4.png)

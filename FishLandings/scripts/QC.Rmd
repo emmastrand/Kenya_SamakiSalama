@@ -17,12 +17,6 @@ editor_options:
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-## Questions for Austin and Clay
-
-Crew size range - double check
-
-
-
 ## Contents 
 
 - [**Protocol to run this with a future xlsx file**](#protocol)   
@@ -66,29 +60,35 @@ library(naniar)
 
 **Load in raw data files.** 
 
+Using this df `Fishlandings-data- CC-JM-Clay-IW updated 04-09-2022`: The date is formatted DD-MM-YYYY. This file is from September. 
+
 [Reading in an excel datafile instead of a csv](http://www.sthda.com/english/wiki/reading-data-from-excel-files-xls-xlsx-into-r). This requires the `readxl` package listed in load all libraries step. 
 
 ```{r, message=FALSE, warning=FALSE}
 ## when running future iterations of raw data file, replace the file name below 
-fishing_operation <- read_excel("data/Fishlandings-data- CC-JM-Clay-IW combined 7-28-2022.xlsx", sheet = "fishing_operation",
+fishing_operation <- read_excel("data/Fishlandings-data- CC-JM-Clay-IW updated 04-09-2022.xlsx", sheet = "fishing_operation",
                                 col_types = c("date", "text", "text", "text", "text", "text", "text", 
                                               "text", "numeric", "date", "text", "date", "text", "numeric", 
-                                              "numeric", "numeric", "numeric", "text", "skip", "skip")) %>%
+                                              "numeric", "numeric", "numeric", "numeric", "numeric","text", "skip")) %>%
   rename(Operation_date = date_dd_mm_yyyy)
 
-nrow(fishing_operation) #10670 fishing operations (keep this # in mind for sanity check at the end)
+nrow(fishing_operation) 
+# 10,670 July updated file; fishing operations (keep this # in mind for sanity check at the end)
+# 8,463 September updated file
 
 ## when running future iterations of raw data file, replace the file name below 
-catch_composition <- read_excel("data/Fishlandings-data- CC-JM-Clay-IW combined 7-28-2022.xlsx", 
+catch_composition <- read_excel("data/Fishlandings-data- CC-JM-Clay-IW updated 04-09-2022.xlsx", 
                                 sheet = "catch_composition",
                                 col_types = c("date", "text", "text", "text", "text", "text", "numeric",
-                                              "text", "text")) %>%
+                                              "text", "text", "skip")) %>%
   rename(Operation_date = Date)
 
-nrow(catch_composition) #58441 fish observations (keep this # in mind for sanity check at the end)
+nrow(catch_composition) 
+# 58,441 July updated file; fish observations (keep this # in mind for sanity check at the end)
+# 65,357 September updated file
 
 ## when running future iterations of raw data file, replace the file name below 
-validation_lists <- read_excel("data/Fishlandings-data- CC-JM-Clay-IW combined 7-28-2022.xlsx", sheet = "validation_lists")
+validation_lists <- read_excel("data/Fishlandings-data- CC-JM-Clay-IW updated 04-09-2022.xlsx", sheet = "validation_lists")
 
 # read in enumerator names file 
 enumerator_list <- read_excel("data/enumerator_list.xlsx")
@@ -277,9 +277,10 @@ df$total_biomass_kg <- ifelse(df$total_biomass_kg > 100, NA, df$total_biomass_kg
 hist(df$total_biomass_kg)
 
 ### change to biomass when these columns get added back in 
-#take_home_weight_kg <- df %>% select(take_home_weight_kg) %>% na.omit()
-#range(take_home_weight_kg)
-#hist(df$take_home_weight_kg)
+take_home_weight_kg <- df %>% select(take_home_weight_kg) %>% na.omit()
+range(take_home_weight_kg)
+hist(df$take_home_weight_kg)
+unique(sort(df$take_home_weight_kg))
 
 total_value_KES <- df %>% select(total_value_KES) %>% na.omit()
 range(total_value_KES)
@@ -287,9 +288,10 @@ range(total_value_KES)
 df$total_value_KES <- ifelse(df$total_value_KES > 5000, NA, df$total_value_KES)
 hist(df$total_value_KES)
 
-#take_home_value_KES <- df %>% select(take_home_value_KES) %>% na.omit()
-#range(take_home_value_KES)
-#hist(df$take_home_value_KES)
+take_home_value_KES <- df %>% select(take_home_value_KES) %>% na.omit()
+range(take_home_value_KES)
+boxplot(df$take_home_value_KES)
+unique(sort(df$take_home_value_KES))
 ```
 
 ### No. of fishers in crew
@@ -298,6 +300,8 @@ Crews above 5 people are unrealistic. I'm changing that data to 'NA' for now.
 
 ```{r}
 fishermen_no <- df %>% select(`No. of fishers in crew`) %>% na.omit()
+
+hist(fishermen_no)
 
 ## Protocol: Double check the below values are in the correct ranges
 range(fishermen_no)
@@ -589,6 +593,32 @@ df$scientific_name <- gsub("semcirculotus", "semicirculatus", df$scientific_name
 df$scientific_name <- gsub("Scolopis", "Scolopsis", df$scientific_name)
 df$scientific_name <- gsub("Siggg", "Siganus", df$scientific_name)
 df$scientific_name <- gsub("Sinagus", "Siganus", df$scientific_name)
+df$scientific_name <- gsub("sandwichlensis", "sandwichiensis", df$scientific_name)
+df$scientific_name <- gsub("lacheri", "lachneri", df$scientific_name)
+df$scientific_name <- gsub("Leptoscurus", "Leptoscarus", df$scientific_name)
+df$scientific_name <- gsub("haak", "harak", df$scientific_name)
+df$scientific_name <- gsub("Lethritus", "Lethrinus", df$scientific_name)
+df$scientific_name <- gsub("Luthrinus", "Lethrinus", df$scientific_name)
+df$scientific_name <- gsub("fulfuiflamma", "fulviflamma", df$scientific_name)
+df$scientific_name <- gsub("orgentimoeulatus", "argentimaculatus", df$scientific_name)
+df$scientific_name <- gsub("argentues", "argenteus", df$scientific_name)
+df$scientific_name <- gsub("orgentues", "argenteus", df$scientific_name)
+df$scientific_name <- gsub("Parapenes", "Parupeneus", df$scientific_name)
+df$scientific_name <- gsub("Parapenius", "Parupeneus", df$scientific_name)
+df$scientific_name <- gsub("Parupeneus", "Parupeneus", df$scientific_name)
+df$scientific_name <- gsub("barberins", "barberinus", df$scientific_name)
+df$scientific_name <- gsub("berberinus", "barberinus", df$scientific_name)
+df$scientific_name <- gsub("Platorhinchus", "Plectorhinchus", df$scientific_name)
+df$scientific_name <- gsub("Plectorhichus", "Plectorhinchus", df$scientific_name)
+df$scientific_name <- gsub("Plectohinchus", "Plectorhinchus", df$scientific_name)
+df$scientific_name <- gsub("Pleitorhinchus", "Plectorhinchus", df$scientific_name)
+df$scientific_name <- gsub("Platybalone", "Platybelone", df$scientific_name)
+df$scientific_name <- gsub("Pomacanthurus", "Pomacanthus", df$scientific_name)
+df$scientific_name <- gsub("Pseudorhombuo", "Pseudorhombus", df$scientific_name)
+df$scientific_name <- gsub("Scanus", "Scarus", df$scientific_name)
+df$scientific_name <- gsub("globiseps", "globiceps", df$scientific_name)
+df$scientific_name <- gsub("acutiplanis", "acutipinnis", df$scientific_name)
+df$scientific_name <- gsub("Utoreuthis", "Uroteuthis", df$scientific_name)
 
 # correcting spellings in validation list 
 validation_lists$scientific_name <- gsub("Gymonthorax", "Gymnothorax", validation_lists$scientific_name)
@@ -608,15 +638,24 @@ unvalidated_names <- setdiff(catch_names, valid_names) %>%
 
 # prints list that appear in survey dataset but don't match the validation list we have 
 unique(sort(unvalidated_names$scientific_name))
+
+# checking to see how many times a particular fish appears in the dataset
+filter(df, scientific_name == "Scylla serrata") %>%
+  select(number_of_fish) %>% filter(!is.na(number_of_fish)) %>%
+  mutate(count = n(),
+         sum = sum(number_of_fish))
 ```
 
 1.) In catch composition and in fishbase but not on validation list. **Suggested fix: address if these are reasonable to find in Ghana and if they are, keep these entries.**  
 
 - Acanthopagrus berda   
+- Acanthurus tennenti  
 - Aethaloperca rogaa  
+- Alepes djedaba  
 - Amanses scopas   
 - Auxis thazard    
 - Caranx hippos    
+- Cephalopholis spp.  
 - Cyprichromis leptosoma  
 - Epinephelus melanostigma  
 - Epinephelus spilotoceps    
@@ -626,24 +665,29 @@ unique(sort(unvalidated_names$scientific_name))
 - Himantura gerrardi  
 - Kyphosus bigibbus  
 - Lethrinus conchliatus  
+- Lujtanus argentimaculatus  
 - Monotaxis grandoculis  
 - Mugil cephalus   
 - Mulloidichthys pfluegeri  
 - Naso brachycentron  
+- Naso thynnoides  
 - Ostracion nasus  
 - Panulirus homarus  
 - Panulirus ornatus  
 - Panulirus penicillatus   
 - Panulirus versicolor  
+- Paracanthurus hepatus  
 - Planiliza alata  
 - Platybelone platyura  
 - Plectorhinchus plagiodesmus  
 - Plectorhinchus playfairi  
 - Plotosus canius    
+- Pomacanthus maculosus  
 - Pseudorhombus arsius  
 - Sardinella melanura  
 - Scarus vaigiensis  
 - Scolopsis bimaculata  
+- Scylla serrata (this is a mud crab..)  
 - Sepia pharaonis  
 - Siganus canaliculatus  
 - Siganus fuscescens  
@@ -662,6 +706,8 @@ unique(sort(unvalidated_names$scientific_name))
 - Acanthurus harak  
 - Carangoides flavimarginatus   
 - Carangoides florimaginatus    
+- Cirnhitus lentjan  
+- Halichoeres hartulanus  
 - Hipposcarus scarus  
 - Leptoscarus triostegus  
 - Lethrinus macronemus   
@@ -669,7 +715,10 @@ unique(sort(unvalidated_names$scientific_name))
 - Lethrinus vaigiensis     
 - Lutjanus canius   
 - Monodactylus argentimailatus   
+- Panulirus merra
+- Parapenes barberins  
 - Parupeneus semicirculatus    
+- Platycephalus crocodilas  
 - Pono blue fish (probably meant to be a common name..)  
 - Scarus carolinus  
 - Scarus sutor  
@@ -731,6 +780,8 @@ df$length_cm <- gsub("16-30", "16-20", df$length_cm)
 df$length_cm <- gsub("110-15", "11-15", df$length_cm)
 df$length_cm <- gsub("111-15", "11-15", df$length_cm)
 df$length_cm <- gsub("11-16", "11-15", df$length_cm)
+df$length_cm <- gsub("41-46", "41-45", df$length_cm)
+
 
 # taking out double values 
 df$length_cm <- gsub("21-25 26-30", NA, df$length_cm)
@@ -789,7 +840,7 @@ fishbase <- read_excel("data/fishbase.xlsx", sheet = "data") %>% #read in excel 
   select(scientific_name, Lm, Lm_se_min, Lm_se_max, Lmax)
 
 length_check <- full_join(df, fishbase, by = "scientific_name") %>%
-  select(survey_id, scientific_name, Lmax, length_corrected) %>%
+  select(Operation_date, fisher_id, scientific_name, Lmax, length_corrected) %>%
   mutate(median_length = case_when(
     length_corrected == "0-10" ~ 5,
     length_corrected == "11-15" ~ 13,
@@ -808,7 +859,7 @@ length_check <- full_join(df, fishbase, by = "scientific_name") %>%
   mutate(length_check = if_else(median_length > Lmax, "over", "under")) %>%
   filter(length_check == "over") %>%
   group_by(length_corrected, scientific_name) %>% 
-  mutate(count = n()) %>% select(-survey_id) %>% distinct(); length_check
+  mutate(count = n()) %>% select(-Operation_date, -fisher_id) %>% distinct(); length_check
 ```
 
 ## <a name="gear"></a> **Gear type, and fish numbers/final destination**
@@ -872,7 +923,7 @@ unique(df$catch_composition_notes)
 head(df)
 nrow(df)
 
-write_xlsx(df, "data/cleaned-Fishlandings-data- CC-JM-Clay-IW combined 7-28-2022.xlsx")
+write_xlsx(df, "data/cleaned-Fishlandings-data- CC-JM-Clay-IW updated 04-09-2022.xlsx")
 ```
 
 
