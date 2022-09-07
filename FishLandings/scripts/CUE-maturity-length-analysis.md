@@ -4,16 +4,6 @@ Author: Emma Strand; <emma_strand@uri.edu>
 
 ## Questions for Austin and Clay
 
-## Summary of dataset
-
-Modified traps data:  
-2022: January, February, March, April, May
-
-Unmodified traps data: 2021: January, June, August, September 2022:
-January, February, March, April, May, June
-
-Missing Nov and Dec 2021
-
 ## Calculations Made (all only unmodified and modified traps)
 
 In `modified_trap_df`:  
