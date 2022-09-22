@@ -425,6 +425,7 @@ Step \#4 from protocol: Double check the below values are in the correct
 ranges
 
 ``` r
+##### TOTAL BIOMASS 
 total_biomass_kg <- df %>% select(total_biomass_kg) %>% na.omit()
 range(total_biomass_kg)
 ```
@@ -440,8 +441,11 @@ hist(df$total_biomass_kg)
 ![](QC_files/figure-gfm/unnamed-chunk-12-1.png)<!-- -->
 
 ``` r
-### change to biomass when these columns get added back in 
+##### TAKE HOME BIOMASS 
+# filtering take home weight to be under 10kg 
 take_home_weight_kg <- df %>% select(take_home_weight_kg) %>% na.omit()
+df$take_home_weight_kg <- ifelse(df$take_home_weight_kg > 10, NA, df$take_home_weight_kg)
+
 range(take_home_weight_kg)
 ```
 
@@ -457,40 +461,27 @@ hist(df$take_home_weight_kg)
 unique(sort(df$take_home_weight_kg))
 ```
 
-    ##   [1]     0.000     0.070     0.100     0.150     0.200     0.224     0.239
-    ##   [8]     0.250     0.287     0.295     0.297     0.300     0.310     0.320
-    ##  [15]     0.343     0.350     0.360     0.370     0.375     0.390     0.393
-    ##  [22]     0.394     0.395     0.400     0.403     0.404     0.405     0.410
-    ##  [29]     0.420     0.430     0.450     0.460     0.470     0.475     0.480
-    ##  [36]     0.490     0.500     0.510     0.520     0.530     0.540     0.560
-    ##  [43]     0.570     0.580     0.590     0.600     0.610     0.620     0.630
-    ##  [50]     0.638     0.640     0.650     0.664     0.670     0.672     0.680
-    ##  [57]     0.690     0.700     0.710     0.720     0.730     0.735     0.738
-    ##  [64]     0.740     0.750     0.760     0.770     0.780     0.785     0.790
-    ##  [71]     0.800     0.810     0.820     0.830     0.840     0.850     0.855
-    ##  [78]     0.860     0.865     0.870     0.890     0.900     0.910     0.920
-    ##  [85]     0.930     0.940     0.945     0.950     0.955     0.960     0.965
-    ##  [92]     0.970     0.975     0.980     0.982     0.987     0.990     1.000
-    ##  [99]     1.030     1.035     1.050     1.060     1.100     1.110     1.125
-    ## [106]     1.155     1.200     1.229     1.236     1.250     1.270     1.274
-    ## [113]     1.300     1.310     1.312     1.390     1.400     1.412     1.437
-    ## [120]     1.470     1.490     1.492     1.500     1.503     1.510     1.511
-    ## [127]     1.512     1.516     1.517     1.518     1.527     1.530     1.531
-    ## [134]     1.535     1.545     1.563     1.570     1.573     1.582     1.590
-    ## [141]     1.595     1.600     1.604     1.609     1.610     1.611     1.612
-    ## [148]     1.613     1.617     1.618     1.627     1.630     1.632     1.670
-    ## [155]     1.681     1.700     1.701     1.703     1.710     1.711     1.713
-    ## [162]     1.721     1.730     1.731     1.741     1.770     1.782     1.800
-    ## [169]     1.810     1.811     1.813     1.815     1.816     1.820     1.830
-    ## [176]     1.831     1.860     1.870     1.900     1.915     1.930     1.931
-    ## [183]     1.937     1.943     2.000     2.010     2.100     2.110     2.130
-    ## [190]     2.200     2.300     2.400     2.500     2.600     2.700     2.800
-    ## [197]     2.890     3.000     3.100     3.200     3.240     3.480     3.500
-    ## [204]     3.600     3.778     4.000     4.200     5.000     6.000     7.000
-    ## [211]     8.000    12.000    12.300    14.000    15.000    16.000    18.000
-    ## [218]    20.000    30.000    58.000    62.000    72.000   700.000 23040.000
+    ##   [1] 0.000 0.070 0.100 0.150 0.200 0.224 0.239 0.250 0.287 0.295 0.297 0.300
+    ##  [13] 0.310 0.320 0.343 0.350 0.360 0.370 0.375 0.390 0.393 0.394 0.395 0.400
+    ##  [25] 0.403 0.404 0.405 0.410 0.420 0.430 0.450 0.460 0.470 0.475 0.480 0.490
+    ##  [37] 0.500 0.510 0.520 0.530 0.540 0.560 0.570 0.580 0.590 0.600 0.610 0.620
+    ##  [49] 0.630 0.638 0.640 0.650 0.664 0.670 0.672 0.680 0.690 0.700 0.710 0.720
+    ##  [61] 0.730 0.735 0.738 0.740 0.750 0.760 0.770 0.780 0.785 0.790 0.800 0.810
+    ##  [73] 0.820 0.830 0.840 0.850 0.855 0.860 0.865 0.870 0.890 0.900 0.910 0.920
+    ##  [85] 0.930 0.940 0.945 0.950 0.955 0.960 0.965 0.970 0.975 0.980 0.982 0.987
+    ##  [97] 0.990 1.000 1.030 1.035 1.050 1.060 1.100 1.110 1.125 1.155 1.200 1.229
+    ## [109] 1.236 1.250 1.270 1.274 1.300 1.310 1.312 1.390 1.400 1.412 1.437 1.470
+    ## [121] 1.490 1.492 1.500 1.503 1.510 1.511 1.512 1.516 1.517 1.518 1.527 1.530
+    ## [133] 1.531 1.535 1.545 1.563 1.570 1.573 1.582 1.590 1.595 1.600 1.604 1.609
+    ## [145] 1.610 1.611 1.612 1.613 1.617 1.618 1.627 1.630 1.632 1.670 1.681 1.700
+    ## [157] 1.701 1.703 1.710 1.711 1.713 1.721 1.730 1.731 1.741 1.770 1.782 1.800
+    ## [169] 1.810 1.811 1.813 1.815 1.816 1.820 1.830 1.831 1.860 1.870 1.900 1.915
+    ## [181] 1.930 1.931 1.937 1.943 2.000 2.010 2.100 2.110 2.130 2.200 2.300 2.400
+    ## [193] 2.500 2.600 2.700 2.800 2.890 3.000 3.100 3.200 3.240 3.480 3.500 3.600
+    ## [205] 3.778 4.000 4.200 5.000 6.000 7.000 8.000
 
 ``` r
+##### TOTAL VALUE 
 total_value_KES <- df %>% select(total_value_KES) %>% na.omit()
 range(total_value_KES)
 ```
@@ -506,7 +497,10 @@ hist(df$total_value_KES)
 ![](QC_files/figure-gfm/unnamed-chunk-12-3.png)<!-- -->
 
 ``` r
+##### TAKE HOME VALUE 
 take_home_value_KES <- df %>% select(take_home_value_KES) %>% na.omit()
+df$take_home_value_KES <- ifelse(df$take_home_value_KES > 5000, NA, df$take_home_value_KES)
+
 range(take_home_value_KES)
 ```
 
@@ -545,7 +539,7 @@ unique(sort(df$take_home_value_KES))
     ## [181]  510.00  520.00  525.00  540.00  560.00  600.00  616.00  620.00  625.00
     ## [190]  650.00  660.00  700.00  720.00  750.00  800.00  845.00  850.00  880.00
     ## [199]  900.00  924.00  938.00  973.00 1044.00 1050.00 1100.00 1120.00 1133.00
-    ## [208] 2000.00 2700.00 3500.00 4000.00 4500.00 5000.00 7500.00
+    ## [208] 2000.00 2700.00 3500.00 4000.00 4500.00 5000.00
 
 ### No. of fishers in crew
 
@@ -574,23 +568,49 @@ unique(sort(fishermen_no$`No. of fishers in crew`))
     ##  [1]  0  1  2  3  4  5  6  7  8 10 12 14 16 18 19 20 21 22 24 34 38
 
 ``` r
-# df %>% filter(`No. of fishers in crew` > 5)
-# 
-# df <- df %>% 
+df %>% filter(`No. of fishers in crew` > 7)
+```
+
+    ## # A tibble: 532 × 28
+    ##    Operation_date      enumerator  landi…¹ BMU   fishe…² fishe…³ house…⁴ trap_…⁵
+    ##    <dttm>              <chr>       <chr>   <chr> <chr>   <chr>   <chr>   <chr>  
+    ##  1 2021-05-18 00:00:00 CELESTINE … MAYUNGU MAYU… SS/MAY… 706822… SS/MAY… UNMODI…
+    ##  2 2021-05-18 00:00:00 CELESTINE … MAYUNGU MAYU… SS/MAY… 706822… SS/MAY… UNMODI…
+    ##  3 2021-05-18 00:00:00 CELESTINE … MAYUNGU MAYU… SS/MAY… 706822… SS/MAY… UNMODI…
+    ##  4 2021-05-18 00:00:00 CELESTINE … MAYUNGU MAYU… SS/MAY… 706822… SS/MAY… UNMODI…
+    ##  5 2021-05-18 00:00:00 CELESTINE … MAYUNGU MAYU… SS/MAY… 706822… SS/MAY… UNMODI…
+    ##  6 2021-05-18 00:00:00 CELESTINE … MAYUNGU MAYU… SS/MAY… 706822… SS/MAY… UNMODI…
+    ##  7 2021-05-18 00:00:00 CELESTINE … MAYUNGU MAYU… SS/MAY… 706822… SS/MAY… UNMODI…
+    ##  8 2021-05-18 00:00:00 CELESTINE … MAYUNGU MAYU… SS/MAY… 706822… SS/MAY… UNMODI…
+    ##  9 2021-12-21 00:00:00 SAIDI MKALI KIVUKO… TAKA… SS/TAK… <NA>    SS/TAK… RINGNET
+    ## 10 2021-12-25 00:00:00 SAIDI MKALI KIVUKO… TAKA… SS/TAK… 710934… SS/TAK… RINGNET
+    ## # … with 522 more rows, 20 more variables: total_traps_collected <dbl>,
+    ## #   date_set_dd_mm_yyyy <dttm>, `time_set_24hh:mm` <chr>,
+    ## #   date_collected_dd_mm_yyyy <dttm>, `time_collected_24hh:mm` <chr>,
+    ## #   total_biomass_kg <dbl>, take_home_weight_kg <dbl>, total_value_KES <dbl>,
+    ## #   take_home_value_KES <dbl>, `No. of fishers in crew` <dbl>,
+    ## #   fishing_operation_notes <chr>, Kiswahili_name <chr>, scientific_name <chr>,
+    ## #   length_cm <chr>, `gear type` <chr>, number_of_fish <dbl>, …
+    ## # ℹ Use `print(n = ...)` to see more rows, and `colnames()` to see all variable names
+
+``` r
+# df <- df %>%
 #  mutate(crew_size = case_when(
-#     `No. of fishers in crew` > 5 ~ "NA"))
+#     `No. of fishers in crew` > 7 ~ "NA"))
 
 df$crew_size_corrected <- df$`No. of fishers in crew`
 
-# # replacing values higher than 5 with NA
-# df <- df %>%
-#  replace_with_na_at(
-#     .vars = 'crew_size_corrected',
-#     condition = ~(.x > 6))
-#   
-# # double checking that the above worked
-# unique(sort(df$crew_size_corrected))
+# replacing values higher than 5 with NA
+df <- df %>%
+ replace_with_na_at(
+    .vars = 'crew_size_corrected',
+    condition = ~(.x > 7))
+
+# double checking that the above worked
+unique(sort(df$crew_size_corrected))
 ```
+
+    ## [1] 0 1 2 3 4 5 6 7
 
 ### Kiswahili\_name
 
@@ -1172,6 +1192,124 @@ just an FYI.**.
 
 -   Acanthurus vaigiensis
 
+#### Filtering out species that may be incorrect or unexpected in our target area.
+
+*Plotosus canius* is a catfish. Austin wanted to ask Chris about this
+one but for now it’s removed.
+
+``` r
+# list of species to filter out
+filter_out_species <- c("Pono blue fish", "Acanthopagrus berda", "Acanthurus duvauceli", "Aethaloperca rogaa", "Alepes djedaba", "Amanses scopas",
+                        "Baracuda", "Carangoides flavimarginatus", "Carangoides florimaginatus", "Cirnhitus lentjan", "Cyprichromis leptosoma",
+                        "Gompheus caeruleus", "Halichoeres hartulanus", "Leptoscarus triostegus", "Lethrinus macronemus", "Lujtanus argentimaculatus",
+                        "Lutjanus canius", "Mulloidichthys pfluegeri", "Naso thynnoides", "Ostracion nasus", "Panulirus merra", "Panulirus ornatus", 
+                        "Panulirus versicolor", "Paracanthurus hepatus", "Parupeneus semicirculatus", "Platycephalus crocodilas", "Plectorhinchus plagiodesmus",
+                        "Pomacanthus maculosus", "Scarus sutor", "Scarus vaigiensis", "Scolopsis bimaculata", "Scylla serrata", "Taeniura meyeni", "Uroteuthis cynea",
+                        "Uroteuthis lineatus", "Sardinella melanura", "Plotosus canius")
+
+filter_sppdf <- data.frame(filter_out_species) %>%
+  rename(scientific_name = filter_out_species)
+
+df <- df %>% 
+  filter(!scientific_name %in% filter_sppdf$scientific_name)
+
+# checking this was removed
+unique(sort(df$scientific_name))
+```
+
+    ##   [1] "Abudefduf sexfasciatus"        "Acanthurus dussumieri"        
+    ##   [3] "Acanthurus harak"              "Acanthurus leucosternon"      
+    ##   [5] "Acanthurus lineatus"           "Acanthurus nigricauda"        
+    ##   [7] "Acanthurus nigrofuscus"        "Acanthurus tennenti"          
+    ##   [9] "Acanthurus tennentii"          "Acanthurus triostegus"        
+    ##  [11] "Acanthurus xanthopterus"       "Amblygaster leiogaster"       
+    ##  [13] "Auxis thazard"                 "Balistapus undulatus"         
+    ##  [15] "Caesio caerulaurea"            "Caesio xanthonota"            
+    ##  [17] "Calotomus carolinus"           "Cantherhines sandwichiensis"  
+    ##  [19] "Carangoides ferdau"            "Caranx hippos"                
+    ##  [21] "Cephalopholis"                 "Cephalopholis argus"          
+    ##  [23] "Cephalopholis miniata"         "Cephalopholis spiloparaea"    
+    ##  [25] "Chaetedon selene"              "Chaetodon auriga"             
+    ##  [27] "Chaetodon kleinii"             "Chaetodon selene"             
+    ##  [29] "Chaetodon trifasciatus"        "Cheilinus chlorourus"         
+    ##  [31] "Cheilinus trilobatus"          "Cheilio inermis"              
+    ##  [33] "Chlorurus strongylocephalus"   "Cirrhitus pinnulatus"         
+    ##  [35] "Coris formosa"                 "Cynoglossus lachneri"         
+    ##  [37] "Diagramma pictum"              "Diodon liturosus"             
+    ##  [39] "Epinephelus coioides"          "Epinephelus fasciatus"        
+    ##  [41] "Epinephelus fuscoguttatus"     "Epinephelus melanostigma"     
+    ##  [43] "Epinephelus merra"             "Epinephelus sp."              
+    ##  [45] "Epinephelus spilotoceps"       "Gerres oyena"                 
+    ##  [47] "Gomphosus caeruleus"           "Gymnothorax favagineus"       
+    ##  [49] "Gymnothorax flavimarginatus"   "Gymnothorax griseus"          
+    ##  [51] "Gymnothorax monochrous"        "Halichoeres hortulanus"       
+    ##  [53] "Heniochus acuminatus"          "Heniochus monoceros"          
+    ##  [55] "Himantura gerrardi"            "Hipposcarus harid"            
+    ##  [57] "Hipposcarus scarus"            "Kyphosus bigibbus"            
+    ##  [59] "Kyphosus vaigiensis"           "Leptoscarus vaigiensis"       
+    ##  [61] "Lethrinus borbonicus"          "Lethrinus conchliatus"        
+    ##  [63] "Lethrinus conchyliatus"        "Lethrinus gibbus"             
+    ##  [65] "Lethrinus harak"               "Lethrinus lentjan"            
+    ##  [67] "Lethrinus mahsena"             "Lethrinus nebulosus"          
+    ##  [69] "Lethrinus obsoletus"           "Lethrinus olivaceus"          
+    ##  [71] "Lethrinus sutor"               "Lethrinus vaigiensis"         
+    ##  [73] "Lethrinus variegatus"          "Lutjanus argentimaculatus"    
+    ##  [75] "Lutjanus bohar"                "Lutjanus fulviflamma"         
+    ##  [77] "Lutjanus gibbus"               "Lutjanus johnii"              
+    ##  [79] "Lutjanus lentjan"              "Luttanus fulviflamma"         
+    ##  [81] "Monodactylus argenteus"        "Monodactylus argentimailatus" 
+    ##  [83] "Monotaxis grandoculis"         "Mugil cephalus"               
+    ##  [85] "Mulloidichthys flavolineatus"  "Myripristis berndti"          
+    ##  [87] "NANA"                          "Naso annulatus"               
+    ##  [89] "Naso brachycention"            "Naso brachycentron"           
+    ##  [91] "Naso hexacanthus"              "Naso lituratus"               
+    ##  [93] "Naso unicornis"                "Novaculichthys taeniourus"    
+    ##  [95] "Octopus cyanea"                "Panulirus homarus"            
+    ##  [97] "Panulirus penicillatus"        "Parupeneus barberinus"        
+    ##  [99] "Parupeneus heptacanthus"       "Parupeneus indicus"           
+    ## [101] "Parupeneus macronema"          "Parupeneus macronemus"        
+    ## [103] "Planiliza alata"               "Planiliza sp."                
+    ## [105] "Platax teira"                  "Platybelone platyura"         
+    ## [107] "Plectorhinchus flavomaculatus" "Plectorhinchus gaterinus"     
+    ## [109] "Plectorhinchus playfairi"      "Plectorhinchus sordidus"      
+    ## [111] "Plectorhinchus vittatus"       "Plotosus lineatus"            
+    ## [113] "Pomacanthus semicirculatus"    "Pomadasys argenteus"          
+    ## [115] "Pomatomus saltatrix"           "Priacanthus hamrur"           
+    ## [117] "Pseudorhombus arsius"          "Pterois miles"                
+    ## [119] "Rhinecanthus aculeatus"        "Sargocentron violaceum"       
+    ## [121] "Scarus carolinus"              "Scarus coeruleus"             
+    ## [123] "Scarus frenatus"               "Scarus ghobban"               
+    ## [125] "Scarus globiceps"              "Scarus psittacus"             
+    ## [127] "Scarus rubroviolaceus"         "Scarus russelii"              
+    ## [129] "Scarus russelli"               "Scarus sp."                   
+    ## [131] "Scomberomorus commerson"       "Sepia pharaonis"              
+    ## [133] "Siganus argenteus"             "Siganus canaliculatus"        
+    ## [135] "Siganus fuscescens"            "Siganus guttatus"             
+    ## [137] "Siganus sp."                   "Siganus stellatus"            
+    ## [139] "Siganus sutor"                 "Sphyraena acutipinnis"        
+    ## [141] "Sphyraena barracuda"           "Sphyraena japonica"           
+    ## [143] "Sphyraena leiura"              "Strongylura leiura"           
+    ## [145] "Strophidon sathete"            "Sufflamen chrysopterum"       
+    ## [147] "Taeniura lymma"                "Tafi sutor"                   
+    ## [149] "Terapon jarbua"                "Terapon theraps"              
+    ## [151] "Thunnus albacares"             "Thysanophrys chiltonae"       
+    ## [153] "Thysanophrys chiltonea"        "Trichiurus lepturus"          
+    ## [155] "Upeneus sulphureus"            "Upeneus tragula"              
+    ## [157] "Uroteuthis duvauceli"          "Variola louti"
+
+#### Changing incorrect scientific names
+
+``` r
+df$scientific_name <- gsub("Scarus carolinus", "Calotomus carolinus", df$scientific_name)
+df$scientific_name <- gsub("Hipposcarus scarus", "Hipposcarus longiceps", df$scientific_name)
+df$scientific_name <- gsub("Lethrinus vaigiensis", "Kyphosus vaigiensis", df$scientific_name)
+df$scientific_name <- gsub("Acanthurus harak", "Lethrinus harak", df$scientific_name)
+df$scientific_name <- gsub("Monodactylus argentimailatus", "Monodactylus argenteus", df$scientific_name)
+df$scientific_name <- gsub("Lethrinus sutor", "Siganus sutor", df$scientific_name)
+df$scientific_name <- gsub("Tafi sutor", "Siganus sutor", df$scientific_name)
+df$scientific_name <- gsub("Sphyraena leiura", "Sphyraena japonica", df$scientific_name)
+```
+
 ### Length (cm)
 
 This column is a character for because of the “&lt;” and “-”.
@@ -1251,37 +1389,36 @@ unique(sort(df$length_cm))
     ## [166] "65"                 "65.3"               "65.400000000000006"
     ## [169] "65.5"               "65.6"               "65.8"              
     ## [172] "66"                 "67"                 "67.1"              
-    ## [175] "67.2"               "67.599999999999994" "67.7"              
-    ## [178] "68"                 "68.1"               "68.2"              
-    ## [181] "68.4"               "68.5"               "68.7"              
-    ## [184] "68.9"               "69"                 "69.099999999999994"
-    ## [187] "69.400000000000006" "69.7"               "69.8"              
-    ## [190] "69.9"               "70"                 "70.5"              
-    ## [193] "71.099999999999994" "71.8"               "72"                
-    ## [196] "72.2"               "72.3"               "72.4"              
-    ## [199] "72.5"               "72.6"               "73"                
-    ## [202] "74"                 "74.1"               "74.2"              
-    ## [205] "74.3"               "74.5"               "74.7"              
-    ## [208] "75"                 "75.5"               "75.6"              
-    ## [211] "75.7"               "75.8"               "75.9"              
-    ## [214] "76"                 "76.4"               "76.6"              
-    ## [217] "76.7"               "76.8"               "76.9"              
-    ## [220] "77"                 "77.2"               "77.8"              
-    ## [223] "78"                 "78.1"               "78.2"              
-    ## [226] "78.3"               "78.4"               "78.5"              
-    ## [229] "78.6"               "78.8"               "79"                
-    ## [232] "79.1"               "79.2"               "79.4"              
-    ## [235] "79.5"               "79.8"               "80"                
-    ## [238] "80.2"               "80.3"               "81"                
-    ## [241] "81.2"               "81.599999999999994" "82"                
-    ## [244] "82.1"               "82.2"               "82.3"              
-    ## [247] "82.4"               "83"                 "84"                
-    ## [250] "85"                 "85.2"               "86"                
-    ## [253] "87"                 "88"                 "89"                
-    ## [256] "90"                 "91"                 "92"                
-    ## [259] "93"                 "94"                 "95"                
-    ## [262] "96"                 "97"                 "98"                
-    ## [265] "99"
+    ## [175] "67.599999999999994" "67.7"               "68"                
+    ## [178] "68.1"               "68.2"               "68.4"              
+    ## [181] "68.5"               "68.7"               "68.9"              
+    ## [184] "69"                 "69.099999999999994" "69.400000000000006"
+    ## [187] "69.7"               "69.8"               "69.9"              
+    ## [190] "70"                 "70.5"               "71.099999999999994"
+    ## [193] "71.8"               "72"                 "72.2"              
+    ## [196] "72.3"               "72.4"               "72.5"              
+    ## [199] "72.6"               "73"                 "74"                
+    ## [202] "74.1"               "74.2"               "74.3"              
+    ## [205] "74.5"               "74.7"               "75"                
+    ## [208] "75.5"               "75.6"               "75.7"              
+    ## [211] "75.8"               "75.9"               "76"                
+    ## [214] "76.4"               "76.6"               "76.7"              
+    ## [217] "76.8"               "76.9"               "77"                
+    ## [220] "77.2"               "77.8"               "78"                
+    ## [223] "78.1"               "78.2"               "78.3"              
+    ## [226] "78.4"               "78.5"               "78.6"              
+    ## [229] "78.8"               "79"                 "79.1"              
+    ## [232] "79.2"               "79.4"               "79.5"              
+    ## [235] "79.8"               "80"                 "80.2"              
+    ## [238] "80.3"               "81"                 "81.2"              
+    ## [241] "81.599999999999994" "82"                 "82.1"              
+    ## [244] "82.2"               "82.3"               "82.4"              
+    ## [247] "83"                 "84"                 "85"                
+    ## [250] "85.2"               "86"                 "87"                
+    ## [253] "88"                 "89"                 "90"                
+    ## [256] "91"                 "92"                 "93"                
+    ## [259] "94"                 "95"                 "96"                
+    ## [262] "97"                 "98"                 "99"
 
 ``` r
 # replace the write in verbiage with no characters
@@ -1394,39 +1531,39 @@ unique(sort(df$length_cm))
     ##  [85] "65.1"               "65.3"               "65.400000000000006"
     ##  [88] "65.5"               "65.6"               "65.7"              
     ##  [91] "65.8"               "66"                 "66.5"              
-    ##  [94] "67"                 "67.1"               "67.2"              
-    ##  [97] "67.599999999999994" "67.6"               "67.7"              
-    ## [100] "68"                 "68.1"               "68.2"              
-    ## [103] "68.4"               "68.5"               "68.7"              
-    ## [106] "68.9"               "69"                 "69.099999999999994"
-    ## [109] "69.3"               "69.400000000000006" "69.5"              
-    ## [112] "69.7"               "69.8"               "69.9"              
-    ## [115] "70"                 "70.5"               "71.099999999999994"
-    ## [118] "71.2"               "71.8"               "71.9"              
-    ## [121] "72"                 "72.1"               "72.2"              
-    ## [124] "72.3"               "72.4"               "72.5"              
-    ## [127] "72.6"               "73"                 "74"                
-    ## [130] "74.1"               "74.2"               "74.3"              
-    ## [133] "74.5"               "74.7"               "75"                
-    ## [136] "75.5"               "75.6"               "75.7"              
-    ## [139] "75.8"               "75.9"               "76"                
-    ## [142] "76.4"               "76.6"               "76.7"              
-    ## [145] "76.8"               "76.9"               "77"                
-    ## [148] "77.2"               "77.8"               "78"                
-    ## [151] "78.1"               "78.2"               "78.3"              
-    ## [154] "78.4"               "78.5"               "78.6"              
-    ## [157] "78.8"               "79"                 "79.1"              
-    ## [160] "79.2"               "79.4"               "79.5"              
-    ## [163] "79.8"               "80"                 "80.2"              
-    ## [166] "80.3"               "81"                 "81.2"              
-    ## [169] "81.599999999999994" "82"                 "82.1"              
-    ## [172] "82.2"               "82.3"               "82.4"              
-    ## [175] "83"                 "84"                 "85"                
-    ## [178] "85.2"               "86"                 "87"                
-    ## [181] "88"                 "89"                 "90"                
-    ## [184] "91"                 "92"                 "93"                
-    ## [187] "94"                 "95"                 "96"                
-    ## [190] "97"                 "98"                 "99"
+    ##  [94] "67"                 "67.1"               "67.599999999999994"
+    ##  [97] "67.6"               "67.7"               "68"                
+    ## [100] "68.1"               "68.2"               "68.4"              
+    ## [103] "68.5"               "68.7"               "68.9"              
+    ## [106] "69"                 "69.099999999999994" "69.3"              
+    ## [109] "69.400000000000006" "69.5"               "69.7"              
+    ## [112] "69.8"               "69.9"               "70"                
+    ## [115] "70.5"               "71.099999999999994" "71.2"              
+    ## [118] "71.8"               "71.9"               "72"                
+    ## [121] "72.1"               "72.2"               "72.3"              
+    ## [124] "72.4"               "72.5"               "72.6"              
+    ## [127] "73"                 "74"                 "74.1"              
+    ## [130] "74.2"               "74.3"               "74.5"              
+    ## [133] "74.7"               "75"                 "75.5"              
+    ## [136] "75.6"               "75.7"               "75.8"              
+    ## [139] "75.9"               "76"                 "76.4"              
+    ## [142] "76.6"               "76.7"               "76.8"              
+    ## [145] "76.9"               "77"                 "77.2"              
+    ## [148] "77.8"               "78"                 "78.1"              
+    ## [151] "78.2"               "78.3"               "78.4"              
+    ## [154] "78.5"               "78.6"               "78.8"              
+    ## [157] "79"                 "79.1"               "79.2"              
+    ## [160] "79.4"               "79.5"               "79.8"              
+    ## [163] "80"                 "80.2"               "80.3"              
+    ## [166] "81"                 "81.2"               "81.599999999999994"
+    ## [169] "82"                 "82.1"               "82.2"              
+    ## [172] "82.3"               "82.4"               "83"                
+    ## [175] "84"                 "85"                 "85.2"              
+    ## [178] "86"                 "87"                 "88"                
+    ## [181] "89"                 "90"                 "91"                
+    ## [184] "92"                 "93"                 "94"                
+    ## [187] "95"                 "96"                 "97"                
+    ## [190] "98"                 "99"
 
 ``` r
 unique(sort(df$length_corrected))
@@ -1487,6 +1624,27 @@ length_check <- full_join(df, fishbase, by = "scientific_name") %>%
     ## 12 Acanthurus dussumieri   54   51-60                     55.5 over            2
     ## # … with abbreviated variable name ¹​length_check
 
+#### Correcting those size bin lengths that are over Lmax
+
+``` r
+df$length_corrected[df$scientific_name == "Acanthurus dussumieri" & df$length_corrected == "51-60"] <- "46-50"
+df$length_corrected[df$scientific_name == "Parupeneus macronemus" & df$length_corrected == "41-45"] <- "36-40"
+
+df$length_corrected[df$scientific_name == "Acanthurus triostegus" & df$length_corrected == "36-40"] <- "21-25"
+df$length_corrected[df$scientific_name == "Acanthurus triostegus" & df$length_corrected == "31-35"] <- "21-25"
+df$length_corrected[df$scientific_name == "Acanthurus triostegus" & df$length_corrected == "26-30"] <- "21-25"
+
+df$length_corrected[df$scientific_name == "Gerres oyena" & df$length_corrected == "36-40"] <- "26-30"
+df$length_corrected[df$scientific_name == "Gerres oyena" & df$length_corrected == "31-35"] <- "26-30"
+
+df$length_corrected[df$scientific_name == "Leptoscarus vaigiensis" & df$length_corrected == "36-40"] <- "31-35"
+df$length_corrected[df$scientific_name == "Leptoscarus vaigiensis" & df$length_corrected == "41-45"] <- "31-35"
+df$length_corrected[df$scientific_name == "Leptoscarus vaigiensis" & df$length_corrected == "51-60"] <- "31-35"
+
+df$length_corrected[df$scientific_name == "Lutjanus fulviflamma" & df$length_corrected == "61-70"] <- "31-35"
+df$length_corrected[df$scientific_name == "Lutjanus fulviflamma" & df$length_corrected == "51-60"] <- "31-35"
+```
+
 ## <a name="gear"></a> **Gear type, and fish numbers/final destination**
 
 ### Gear type
@@ -1522,23 +1680,21 @@ Doube check this range is what is expected.
 unique(sort(df$number_of_fish))
 ```
 
-    ##   [1]     0     1     2     3     4     5     6     7     8     9    10    11
-    ##  [13]    12    13    14    15    16    17    18    19    20    21    22    23
-    ##  [25]    24    25    26    27    28    29    30    31    32    33    34    35
-    ##  [37]    36    37    38    39    40    41    42    43    44    45    46    47
-    ##  [49]    48    49    50    51    52    53    54    55    56    57    58    59
-    ##  [61]    60    61    62    63    64    65    66    67    68    69    70    72
-    ##  [73]    75    76    77    78    79    80    82    83    84    85    87    88
-    ##  [85]    89    92    94    96    98   103   108   111   120   129   140   150
-    ##  [97]   153   160   170   192   234   270   300   363   450  6000  8000 30000
+    ##   [1]    0    1    2    3    4    5    6    7    8    9   10   11   12   13   14
+    ##  [16]   15   16   17   18   19   20   21   22   23   24   25   26   27   28   29
+    ##  [31]   30   31   32   33   34   35   36   37   38   39   40   41   42   43   44
+    ##  [46]   45   46   47   48   49   50   51   52   53   54   55   56   57   58   59
+    ##  [61]   60   61   62   63   64   65   66   67   68   69   70   72   75   76   77
+    ##  [76]   78   79   80   82   83   84   85   87   88   89   92   94   96   98  103
+    ##  [91]  108  111  120  129  140  150  153  160  170  192  234  270  363  450 8000
 
 ``` r
 df %>% ggplot(., aes(y=number_of_fish)) + geom_boxplot() + theme_bw()
 ```
 
-    ## Warning: Removed 509 rows containing non-finite values (stat_boxplot).
+    ## Warning: Removed 508 rows containing non-finite values (stat_boxplot).
 
-![](QC_files/figure-gfm/unnamed-chunk-21-1.png)<!-- -->
+![](QC_files/figure-gfm/unnamed-chunk-24-1.png)<!-- -->
 
 ``` r
 #### filtering out 6,000 and 30,0000 
@@ -1546,7 +1702,7 @@ df$number_of_fish <- ifelse(df$number_of_fish > 1000, NA, df$number_of_fish)
 hist(df$number_of_fish)
 ```
 
-![](QC_files/figure-gfm/unnamed-chunk-21-2.png)<!-- -->
+![](QC_files/figure-gfm/unnamed-chunk-24-2.png)<!-- -->
 
 ### Destination of fish
 
@@ -1659,18 +1815,18 @@ unique(df$catch_composition_notes)
     ##  [68] "1 kg"                                                                                                           
     ##  [69] "0.5 kg"                                                                                                         
     ##  [70] "1.2 kg"                                                                                                         
-    ##  [71] "0.4 kg"                                                                                                         
-    ##  [72] "2.3 kg"                                                                                                         
-    ##  [73] "0.9 kg"                                                                                                         
-    ##  [74] "1.3 kg"                                                                                                         
-    ##  [75] "1.5 kg all take home"                                                                                           
-    ##  [76] "1.1 kg"                                                                                                         
-    ##  [77] "0.6 kg"                                                                                                         
-    ##  [78] "1.7 kg"                                                                                                         
-    ##  [79] "2.2 kg"                                                                                                         
-    ##  [80] "1.6 kg"                                                                                                         
-    ##  [81] "modified trap"                                                                                                  
-    ##  [82] "0.7 kg"                                                                                                         
+    ##  [71] "2.3 kg"                                                                                                         
+    ##  [72] "0.9 kg"                                                                                                         
+    ##  [73] "1.3 kg"                                                                                                         
+    ##  [74] "1.5 kg all take home"                                                                                           
+    ##  [75] "1.1 kg"                                                                                                         
+    ##  [76] "0.6 kg"                                                                                                         
+    ##  [77] "1.7 kg"                                                                                                         
+    ##  [78] "2.2 kg"                                                                                                         
+    ##  [79] "1.6 kg"                                                                                                         
+    ##  [80] "modified trap"                                                                                                  
+    ##  [81] "0.7 kg"                                                                                                         
+    ##  [82] "0.4 kg"                                                                                                         
     ##  [83] "0.5 kg kshs.75"                                                                                                 
     ##  [84] "0.375 kg kshs.56.25"                                                                                            
     ##  [85] "0.5 kg Kshs.100"                                                                                                
@@ -1758,20 +1914,19 @@ unique(df$catch_composition_notes)
     ## [167] "2.1 kg kshs.315"                                                                                                
     ## [168] "monofilament gillnet"                                                                                           
     ## [169] "couldn’t quantify take home"                                                                                    
-    ## [170] "Take home volume are 4 buckets"                                                                                 
-    ## [171] "1.741= 250"                                                                                                     
-    ## [172] "1.511=150"                                                                                                      
-    ## [173] "1.513=160"                                                                                                      
-    ## [174] "2.110=300"                                                                                                      
-    ## [175] "2.110=210"                                                                                                      
-    ## [176] "2.110=400"                                                                                                      
-    ## [177] "1.731="                                                                                                         
-    ## [178] "1.673=160"                                                                                                      
-    ## [179] "5kg-850"                                                                                                        
-    ## [180] "2.5 kg-450sh"                                                                                                   
-    ## [181] "3kg-540"                                                                                                        
-    ## [182] "2.5kg-425sh"                                                                                                    
-    ## [183] "Local consumer"
+    ## [170] "1.741= 250"                                                                                                     
+    ## [171] "1.511=150"                                                                                                      
+    ## [172] "1.513=160"                                                                                                      
+    ## [173] "2.110=300"                                                                                                      
+    ## [174] "2.110=210"                                                                                                      
+    ## [175] "2.110=400"                                                                                                      
+    ## [176] "1.731="                                                                                                         
+    ## [177] "1.673=160"                                                                                                      
+    ## [178] "5kg-850"                                                                                                        
+    ## [179] "2.5 kg-450sh"                                                                                                   
+    ## [180] "3kg-540"                                                                                                        
+    ## [181] "2.5kg-425sh"                                                                                                    
+    ## [182] "Local consumer"
 
 ## <a name="export"></a> **Exporting cleaned dataset**
 
@@ -1801,7 +1956,7 @@ head(df)
 nrow(df)
 ```
 
-    ## [1] 99722
+    ## [1] 99229
 
 ``` r
 write_xlsx(df, "data/cleaned-Fishlandings-data- CC-JM-Clay-IW updated 04-09-2022.xlsx")

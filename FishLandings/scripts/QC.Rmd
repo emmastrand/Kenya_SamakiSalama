@@ -270,25 +270,33 @@ df$date_time_collected <- parse_date_time(df$date_time_collected, orders = "ymdH
 Step #4 from protocol: Double check the below values are in the correct ranges
 
 ```{r}
+##### TOTAL BIOMASS 
 total_biomass_kg <- df %>% select(total_biomass_kg) %>% na.omit()
 range(total_biomass_kg)
 # filtering biomass kg to under 100 kg 
 df$total_biomass_kg <- ifelse(df$total_biomass_kg > 100, NA, df$total_biomass_kg)
 hist(df$total_biomass_kg)
 
-### change to biomass when these columns get added back in 
+##### TAKE HOME BIOMASS 
+# filtering take home weight to be under 10kg 
 take_home_weight_kg <- df %>% select(take_home_weight_kg) %>% na.omit()
+df$take_home_weight_kg <- ifelse(df$take_home_weight_kg > 10, NA, df$take_home_weight_kg)
+
 range(take_home_weight_kg)
 hist(df$take_home_weight_kg)
 unique(sort(df$take_home_weight_kg))
 
+##### TOTAL VALUE 
 total_value_KES <- df %>% select(total_value_KES) %>% na.omit()
 range(total_value_KES)
 # filtering to below 5,000 
 df$total_value_KES <- ifelse(df$total_value_KES > 5000, NA, df$total_value_KES)
 hist(df$total_value_KES)
 
+##### TAKE HOME VALUE 
 take_home_value_KES <- df %>% select(take_home_value_KES) %>% na.omit()
+df$take_home_value_KES <- ifelse(df$take_home_value_KES > 5000, NA, df$take_home_value_KES)
+
 range(take_home_value_KES)
 boxplot(df$take_home_value_KES)
 unique(sort(df$take_home_value_KES))
@@ -307,22 +315,22 @@ hist(fishermen_no)
 range(fishermen_no)
 unique(sort(fishermen_no$`No. of fishers in crew`))
 
-# df %>% filter(`No. of fishers in crew` > 5)
-# 
-# df <- df %>% 
+df %>% filter(`No. of fishers in crew` > 7)
+
+# df <- df %>%
 #  mutate(crew_size = case_when(
-#     `No. of fishers in crew` > 5 ~ "NA"))
+#     `No. of fishers in crew` > 7 ~ "NA"))
 
 df$crew_size_corrected <- df$`No. of fishers in crew`
 
-# # replacing values higher than 5 with NA
-# df <- df %>%
-#  replace_with_na_at(
-#     .vars = 'crew_size_corrected',
-#     condition = ~(.x > 6))
-#   
-# # double checking that the above worked
-# unique(sort(df$crew_size_corrected))
+# replacing values higher than 5 with NA
+df <- df %>%
+ replace_with_na_at(
+    .vars = 'crew_size_corrected',
+    condition = ~(.x > 7))
+
+# double checking that the above worked
+unique(sort(df$crew_size_corrected))
 ```
 
 ### Kiswahili_name
@@ -732,6 +740,46 @@ filter(df, scientific_name == "Scylla serrata") %>%
 
 - Acanthurus vaigiensis
 
+
+#### Filtering out species that may be incorrect or unexpected in our target area.
+
+*Plotosus canius* is a catfish. Austin wanted to ask Chris about this one but for now it's removed. 
+
+```{r}
+# list of species to filter out
+filter_out_species <- c("Pono blue fish", "Acanthopagrus berda", "Acanthurus duvauceli", "Aethaloperca rogaa", "Alepes djedaba", "Amanses scopas",
+                        "Baracuda", "Carangoides flavimarginatus", "Carangoides florimaginatus", "Cirnhitus lentjan", "Cyprichromis leptosoma",
+                        "Gompheus caeruleus", "Halichoeres hartulanus", "Leptoscarus triostegus", "Lethrinus macronemus", "Lujtanus argentimaculatus",
+                        "Lutjanus canius", "Mulloidichthys pfluegeri", "Naso thynnoides", "Ostracion nasus", "Panulirus merra", "Panulirus ornatus", 
+                        "Panulirus versicolor", "Paracanthurus hepatus", "Parupeneus semicirculatus", "Platycephalus crocodilas", "Plectorhinchus plagiodesmus",
+                        "Pomacanthus maculosus", "Scarus sutor", "Scarus vaigiensis", "Scolopsis bimaculata", "Scylla serrata", "Taeniura meyeni", "Uroteuthis cynea",
+                        "Uroteuthis lineatus", "Sardinella melanura", "Plotosus canius")
+
+filter_sppdf <- data.frame(filter_out_species) %>%
+  rename(scientific_name = filter_out_species)
+
+df <- df %>% 
+  filter(!scientific_name %in% filter_sppdf$scientific_name)
+
+# checking this was removed
+unique(sort(df$scientific_name))
+```
+
+#### Changing incorrect scientific names
+
+```{r}
+df$scientific_name <- gsub("Scarus carolinus", "Calotomus carolinus", df$scientific_name)
+df$scientific_name <- gsub("Hipposcarus scarus", "Hipposcarus longiceps", df$scientific_name)
+df$scientific_name <- gsub("Lethrinus vaigiensis", "Kyphosus vaigiensis", df$scientific_name)
+df$scientific_name <- gsub("Acanthurus harak", "Lethrinus harak", df$scientific_name)
+df$scientific_name <- gsub("Monodactylus argentimailatus", "Monodactylus argenteus", df$scientific_name)
+df$scientific_name <- gsub("Lethrinus sutor", "Siganus sutor", df$scientific_name)
+df$scientific_name <- gsub("Tafi sutor", "Siganus sutor", df$scientific_name)
+df$scientific_name <- gsub("Sphyraena leiura", "Sphyraena japonica", df$scientific_name)
+```
+
+
+
 ### Length (cm)
 
 This column is a character for because of the "<" and "-". 
@@ -861,6 +909,28 @@ length_check <- full_join(df, fishbase, by = "scientific_name") %>%
   group_by(length_corrected, scientific_name) %>% 
   mutate(count = n()) %>% select(-Operation_date, -fisher_id) %>% distinct(); length_check
 ```
+
+#### Correcting those size bin lengths that are over Lmax 
+
+```{r}
+df$length_corrected[df$scientific_name == "Acanthurus dussumieri" & df$length_corrected == "51-60"] <- "46-50"
+df$length_corrected[df$scientific_name == "Parupeneus macronemus" & df$length_corrected == "41-45"] <- "36-40"
+
+df$length_corrected[df$scientific_name == "Acanthurus triostegus" & df$length_corrected == "36-40"] <- "21-25"
+df$length_corrected[df$scientific_name == "Acanthurus triostegus" & df$length_corrected == "31-35"] <- "21-25"
+df$length_corrected[df$scientific_name == "Acanthurus triostegus" & df$length_corrected == "26-30"] <- "21-25"
+
+df$length_corrected[df$scientific_name == "Gerres oyena" & df$length_corrected == "36-40"] <- "26-30"
+df$length_corrected[df$scientific_name == "Gerres oyena" & df$length_corrected == "31-35"] <- "26-30"
+
+df$length_corrected[df$scientific_name == "Leptoscarus vaigiensis" & df$length_corrected == "36-40"] <- "31-35"
+df$length_corrected[df$scientific_name == "Leptoscarus vaigiensis" & df$length_corrected == "41-45"] <- "31-35"
+df$length_corrected[df$scientific_name == "Leptoscarus vaigiensis" & df$length_corrected == "51-60"] <- "31-35"
+
+df$length_corrected[df$scientific_name == "Lutjanus fulviflamma" & df$length_corrected == "61-70"] <- "31-35"
+df$length_corrected[df$scientific_name == "Lutjanus fulviflamma" & df$length_corrected == "51-60"] <- "31-35"
+```
+
 
 ## <a name="gear"></a> **Gear type, and fish numbers/final destination**
 
