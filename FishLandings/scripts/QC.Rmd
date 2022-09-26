@@ -884,7 +884,7 @@ Correct output for length_corrected: `">90"   "0-10"  "11-15" "16-20" "21-25" "2
 Decide if we need to take these out or not. 
 
 ```{r}
-fishbase <- read_excel("data/fishbase.xlsx", sheet = "data") %>% #read in excel file 
+fishbase <- read_excel("data/fishbase.xlsx", sheet = "life history") %>% #read in excel file 
   select(scientific_name, Lm, Lm_se_min, Lm_se_max, Lmax)
 
 length_check <- full_join(df, fishbase, by = "scientific_name") %>%

@@ -18,17 +18,21 @@ I used the file `Fishlandings-data- CC-JM-Clay-IW updated 04-09-2022.xlsx` as in
 
 Emma focusing on:  
 
-- Look into why scales for abundance (#indiv/trap#) are much smaller for 2021 than 2022? This doesn't apply to biomass kg per trap though..    
-- Excel sheet for action items for AH -- species names (#1 and #2 list), list of fish above 50 cm to validate if this is real or not   
+- Look into why scales for abundance (#indiv/trap#) are much smaller for 2021 than 2022? This doesn't apply to biomass kg per trap though.. I'm struggling on where to start with this. The calculations are all the same for each year so I don't think this is an issue with the script..? Still looking into this.
 
 - Biomass figures:  
 1.  W=aL^b equation: grab a and b measures from fishbaseR function. If can't get this to work, then produce list and send to fishbase.   
 2. Once have a and b, calculate our mass (W x #fish for that species). Produce list of suspicious value reported from survey.  
 
-- Frequency length plot: see the curves instead of just the stacked bars, include n=X and % of fish below Lm
+- Frequency length plot: fixed the stacked bars but can't find a great way to make a smooth line over it - not sure if that's possible with bins.
 
 Questions:   
 1. In picking the median length for >90 category, what is the best way to do this?  
+2. Frequency length plots: These aren't standardized yet so unmodified looks like the trap catches more but we just had more surveys for unmodified traps.  
+3. What is the best way to pick a and b parameters from the length-weight page on fishbase?  
+4.   
+
+We are still missing November data but have decided to move on from gathering more data together.
 
 
 **Recommendations for project moving forward:**    

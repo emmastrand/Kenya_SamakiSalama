@@ -360,15 +360,6 @@ species_df %>% mutate(trap_type = case_when(
   theme(axis.text.x = element_text()) #Set the text angle
 ```
 
-### Biomass per trap collected
-
-1.) Expand df by # of fish so that each row is a fish observation.    
-2.) Calculate median length of the bin of each fish (L).   
-3.) Find a and b parameters for all fish. Add this to the fishbase and read in that df.  
-4.) Add a and b columns to `species_df` by species Id.  
-5.) Mutate to calculate W=aLb.  
-6.) Group by species and survey id to calculate biomass per trap collected.   
-
 
 ### Statistics for the top ten species
 
@@ -398,7 +389,7 @@ var.test(Topspp_MOD$catch_per_trap, MOD$catch_per_trap) # output is significant 
 Data pulled from Fishbase and put in the datasheet `fishbase.xlsx`. 
 
 ```{r}
-fishbase <- read_excel("data/fishbase.xlsx", sheet = "data") %>% #read in excel file 
+fishbase <- read_excel("data/fishbase.xlsx", sheet = "life history") %>% #read in excel file 
   select(scientific_name, Lm, Lm_se_min, Lm_se_max, Lmax)
 
 maturity <- full_join(data, fishbase, by = "scientific_name") %>% # joining maturity reproduction info with main dataframe
@@ -503,13 +494,15 @@ http://derekogle.com/fishR/2017-07-28-JoyPlot
 
 From the `species_keep` df:
 
-Siganus sutor	= 311787  	 		 
+Siganus sutor	= 311813  	 		 
 Lethrinus nebulosus	= 51612	     		
 Scarus ghobban	= 34253  			  
 Siganus canaliculatus	= 23173  		  	
 Leptoscarus vaigiensis	= 15758	  
 
 ```{r}
+library(ggridges)
+
 # the column we want to plot: maturity$length_corrected
 maturity$length_corrected <- factor(maturity$length_corrected, levels=c("0-10", "11-15","16-20","21-25","26-30",
                                                                         "31-35","36-40","41-45", "46-50", "51-60",
@@ -539,14 +532,15 @@ maturity2022_topspp <- maturity %>% subset(year=="2022") %>%
     Lm >= 70.5 & Lm <= 80.4 ~ "71-80",
     Lm >= 80.5 & Lm <= 90.4 ~ "81-90",
     Lm > 90.5 ~ ">90")) 
-  
-  
-maturity2022_topspp %>% 
+
+# creating table that will work best for visualization 
+maturity_figs <- maturity2022_topspp %>% 
   mutate(number_of_fish = if_else(is.na(number_of_fish), 1, number_of_fish)) %>% # replacing NAs with the value of 1
-  tidyr::uncount(., number_of_fish, .remove = TRUE) %>% # expanding number of fish to number of observations
+  tidyr::uncount(., number_of_fish, .remove = TRUE)
+
+# setting common figure parameters 
+a <- maturity_figs %>% # expanding number of fish to number of observations
   ggplot(., aes(x=length_corrected, fill=trap_type, color=trap_type)) + 
-  geom_bar(alpha=0.3) +
-  geom_vline(data = maturity2022_topspp, mapping = aes(xintercept = Lm_range), lty = "dotted") +
   theme_bw() + xlab("Length (cm)") + ylab("Frequency") +
   theme(axis.text.x.bottom = element_text(colour = 'black', angle = 60, hjust = 1),
         axis.text.y = element_text(colour = 'black', size = 8, face = 'italic')) + 
@@ -558,16 +552,50 @@ maturity2022_topspp %>%
   theme(axis.title.y = element_text(size = 12, face = "bold", margin = margin(t = 0, r = 10, b = 0, l = 0))) +
   theme(axis.title.x = element_text(size = 12, face = "bold", margin = margin(t = 10, r = 0, b = 0, l = 0))) +
   facet_wrap(~scientific_name, scales = "free_y") +
-  ggtitle("Siganus canaliculatus Lm range = 0-10, can edit on in other program")
+  ggtitle("Not standardized by per trap - come back to this?")
 ```
 
+
+### Calculating % fish underneath Lm and sample size per trap type for the figure below 
+
+```{r}
+maturity_calcs <- maturity_figs %>%
+  group_by(scientific_name, trap_type) %>%
+  mutate(sample_size = n(),
+         count_below = sum(median_length <= Lm, na.rm=TRUE),
+         percent_below = (count_below/sample_size)*100) %>%
+ select(scientific_name, trap_type, sample_size, 
+         count_below, percent_below) %>% 
+  ungroup() %>% distinct()
+
+# double checking the above calculation worked
+maturity_figs %>% filter(scientific_name == "Siganus sutor", trap_type == "UNMODIFIED") %>%
+  count(maturity == "immature") 
+```
+
+
+```{r}
+a +
+  geom_bar(position = position_dodge(), alpha=0.5)
+
+### left off at trying to get a density or geom smooth on categorical data - haven't been able to make that work
+a + geom_histogram(aes(y = ..count.., colour = trap_type, fill = trap_type), 
+                   alpha = 0.6, position = position_dodge(), stat="count") +
+  geom_vline(data = maturity_figs, mapping = aes(xintercept = Lm_range), lty = "dotted", size=1.2)
+```
+
+https://rstudio-pubs-static.s3.amazonaws.com/595950_6dc36259819541e5869f9fff162a8a41.html#histogram
+
+https://statisticsglobe.com/normal-density-curve-on-top-of-histogram-ggplot2-r
 
 ## Fishbase R 
 
 https://github.com/ropensci/rfishbase
 
+Left off at FishBase R having SSL certificate problems. Download a and b from fishbase for top 5 and make script for this. 
+
 ```{r}
-remotes::install_github("ropensci/rfishbase")
+#remotes::install_github("ropensci/rfishbase")
 library("rfishbase")
 #library(curl)
 #install.packages("curl", type = "source")
@@ -589,7 +617,34 @@ Error:
     SSL certificate problem: certificate has expired
   Error in rbind(deparse.level, ...) : 
     numbers of columns of arguments do not match`
+    
 
+### Biomass per trap collected
 
+1.) Expand df by # of fish so that each row is a fish observation.    
+2.) Calculate median length of the bin of each fish (L).   
+3.) Find a and b parameters for all fish. Add this to the fishbase and read in that df.  
+4.) Add a and b columns to `species_df` by species Id.  
+5.) Mutate to calculate W=aLb.  
+6.) Group by species and survey id to calculate biomass per trap collected.   
 
+#### Calculating biomass
 
+W=aL^b 
+
+W = Biomass  
+L = Length (in our case, median length)  
+a = (taken from fishbase)
+b = (taken from fishbase)
+
+Read in data from fishbase. 
+```{r}
+biomass_fb <- read_excel("data/fishbase.xlsx", sheet = "biomass") %>% #read in excel file 
+  select(scientific_name, a, b)
+
+biomass_df <- data %>% filter(!is.na(number_of_fish)) %>%
+  subset(trap_type == "MODIFIED" | trap_type == "UNMODIFIED") %>%
+  select(-enumerator, -landing_site, -BMU, -fisher_id, -fisher_phone, -household_id, -date_set_dd_mm_yyyy,
+         -`time_set_24hh:mm`, -date_collected_dd_mm_yyyy, -`time_collected_24hh:mm`, -date_time_set, -date_time_collected) 
+```
+Left off at merging the 2 dataframes and then uncount so each fish observation is a row
