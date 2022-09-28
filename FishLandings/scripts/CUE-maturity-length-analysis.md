@@ -578,8 +578,8 @@ unique(sort(species_df$scientific_name))
 ```
 
     ##  [1] "Acanthurus dussumieri"  "Chaetodon selene"       "Leptoscarus vaigiensis"
-    ##  [4] "Lethrinus nebulosus"    "Parupeneus indicus"     "Scarus ghobban"        
-    ##  [7] "Scarus psittacus"       "Scarus rubroviolaceus"  "Siganus canaliculatus" 
+    ##  [4] "Lethrinus nebulosus"    "Parupeneus indicus"     "Parupeneus macronemus" 
+    ##  [7] "Scarus ghobban"         "Scarus rubroviolaceus"  "Siganus canaliculatus" 
     ## [10] "Siganus sutor"
 
 ### Abundance
@@ -605,20 +605,9 @@ species_df %>% mutate(trap_type = case_when(
   theme(axis.text.x = element_text()) #Set the text angle
 ```
 
-    ## Warning: Removed 203 rows containing non-finite values (stat_boxplot).
+    ## Warning: Removed 199 rows containing non-finite values (stat_boxplot).
 
 ![](CUE-maturity-length-analysis_files/figure-gfm/unnamed-chunk-13-1.png)<!-- -->
-
-### Biomass per trap collected
-
-1.) Expand df by \# of fish so that each row is a fish observation.  
-2.) Calculate median length of the bin of each fish (L).  
-3.) Find a and b parameters for all fish. Add this to the fishbase and
-read in that df.  
-4.) Add a and b columns to `species_df` by species Id.  
-5.) Mutate to calculate W=aLb.  
-6.) Group by species and survey id to calculate biomass per trap
-collected.
 
 ### Statistics for the top ten species
 
@@ -642,13 +631,13 @@ var.test(Topspp_MOD$catch_per_trap, MOD$catch_per_trap) # output is significant 
     ##  F test to compare two variances
     ## 
     ## data:  Topspp_MOD$catch_per_trap and MOD$catch_per_trap
-    ## F = 3.1806, num df = 22129, denom df = 3688, p-value < 2.2e-16
+    ## F = 3.1402, num df = 22602, denom df = 3688, p-value < 2.2e-16
     ## alternative hypothesis: true ratio of variances is not equal to 1
     ## 95 percent confidence interval:
-    ##  3.026261 3.339891
+    ##  2.988050 3.297234
     ## sample estimates:
     ## ratio of variances 
-    ##            3.18061
+    ##           3.140225
 
 ``` r
 #t.test(catch_per_trap~trap_type, data = species_df, var.equal = FALSE)
@@ -667,7 +656,7 @@ status in the data and calculate.**
 Data pulled from Fishbase and put in the datasheet `fishbase.xlsx`.
 
 ``` r
-fishbase <- read_excel("data/fishbase.xlsx", sheet = "data") %>% #read in excel file 
+fishbase <- read_excel("data/fishbase.xlsx", sheet = "life history") %>% #read in excel file 
   select(scientific_name, Lm, Lm_se_min, Lm_se_max, Lmax)
 
 maturity <- full_join(data, fishbase, by = "scientific_name") %>% # joining maturity reproduction info with main dataframe
@@ -736,11 +725,11 @@ nofish_maturity_aov <- aov(number_of_fish ~ trap_type*maturity, data = maturity)
 summary(nofish_maturity_aov)
 ```
 
-    ##                       Df  Sum Sq Mean Sq F value Pr(>F)    
-    ## trap_type              1    8312    8312 135.829 <2e-16 ***
-    ## maturity               1   18693   18693 305.451 <2e-16 ***
-    ## trap_type:maturity     1     326     326   5.332 0.0209 *  
-    ## Residuals          65183 3989011      61                   
+    ##                       Df  Sum Sq Mean Sq F value  Pr(>F)    
+    ## trap_type              1    7404    7404 122.666 < 2e-16 ***
+    ## maturity               1   20335   20335 336.901 < 2e-16 ***
+    ## trap_type:maturity     1     461     461   7.636 0.00572 ** 
+    ## Residuals          66925 4039506      60                    
     ## ---
     ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
     ## 130 observations deleted due to missingness
@@ -751,19 +740,19 @@ nofish_maturity_tukey$`trap_type:maturity`
 ```
 
     ##                                             diff        lwr        upr
-    ## UNMODIFIED:immature-MODIFIED:immature -0.9302315 -1.1691878 -0.6912751
-    ## MODIFIED:mature-MODIFIED:immature     -1.2644424 -1.5303845 -0.9985004
-    ## UNMODIFIED:mature-MODIFIED:immature   -1.8979688 -2.1357075 -1.6602300
-    ## MODIFIED:mature-UNMODIFIED:immature   -0.3342109 -0.5632469 -0.1051750
-    ## UNMODIFIED:mature-UNMODIFIED:immature -0.9677373 -1.1633185 -0.7721560
-    ## UNMODIFIED:mature-MODIFIED:mature     -0.6335263 -0.8612917 -0.4057610
+    ## UNMODIFIED:immature-MODIFIED:immature -0.9104626 -1.1463666 -0.6745585
+    ## MODIFIED:mature-MODIFIED:immature     -1.3297820 -1.5904488 -1.0691152
+    ## UNMODIFIED:mature-MODIFIED:immature   -1.8921065 -2.1258249 -1.6583881
+    ## MODIFIED:mature-UNMODIFIED:immature   -0.4193194 -0.6432236 -0.1954153
+    ## UNMODIFIED:mature-UNMODIFIED:immature -0.9816439 -1.1735037 -0.7897841
+    ## UNMODIFIED:mature-MODIFIED:mature     -0.5623245 -0.7839247 -0.3407242
     ##                                              p adj
-    ## UNMODIFIED:immature-MODIFIED:immature 3.153033e-14
+    ## UNMODIFIED:immature-MODIFIED:immature 3.563816e-14
     ## MODIFIED:mature-MODIFIED:immature     0.000000e+00
     ## UNMODIFIED:mature-MODIFIED:immature   0.000000e+00
-    ## MODIFIED:mature-UNMODIFIED:immature   1.020389e-03
+    ## MODIFIED:mature-UNMODIFIED:immature   8.930421e-06
     ## UNMODIFIED:mature-UNMODIFIED:immature 0.000000e+00
-    ## UNMODIFIED:mature-MODIFIED:mature     5.399681e-12
+    ## UNMODIFIED:mature-MODIFIED:mature     4.243658e-10
 
 ## <a name="length"></a> **Catch and length data of mature fish**
 
@@ -820,6 +809,8 @@ Siganus canaliculatus = 23173
 Leptoscarus vaigiensis = 15758
 
 ``` r
+library(ggridges)
+
 # the column we want to plot: maturity$length_corrected
 maturity$length_corrected <- factor(maturity$length_corrected, levels=c("0-10", "11-15","16-20","21-25","26-30",
                                                                         "31-35","36-40","41-45", "46-50", "51-60",
@@ -849,14 +840,15 @@ maturity2022_topspp <- maturity %>% subset(year=="2022") %>%
     Lm >= 70.5 & Lm <= 80.4 ~ "71-80",
     Lm >= 80.5 & Lm <= 90.4 ~ "81-90",
     Lm > 90.5 ~ ">90")) 
-  
-  
-maturity2022_topspp %>% 
+
+# creating table that will work best for visualization 
+maturity_figs <- maturity2022_topspp %>% 
   mutate(number_of_fish = if_else(is.na(number_of_fish), 1, number_of_fish)) %>% # replacing NAs with the value of 1
-  tidyr::uncount(., number_of_fish, .remove = TRUE) %>% # expanding number of fish to number of observations
+  tidyr::uncount(., number_of_fish, .remove = TRUE)
+
+# setting common figure parameters 
+a <- maturity_figs %>% # expanding number of fish to number of observations
   ggplot(., aes(x=length_corrected, fill=trap_type, color=trap_type)) + 
-  geom_bar(alpha=0.3) +
-  geom_vline(data = maturity2022_topspp, mapping = aes(xintercept = Lm_range), lty = "dotted") +
   theme_bw() + xlab("Length (cm)") + ylab("Frequency") +
   theme(axis.text.x.bottom = element_text(colour = 'black', angle = 60, hjust = 1),
         axis.text.y = element_text(colour = 'black', size = 8, face = 'italic')) + 
@@ -868,10 +860,53 @@ maturity2022_topspp %>%
   theme(axis.title.y = element_text(size = 12, face = "bold", margin = margin(t = 0, r = 10, b = 0, l = 0))) +
   theme(axis.title.x = element_text(size = 12, face = "bold", margin = margin(t = 10, r = 0, b = 0, l = 0))) +
   facet_wrap(~scientific_name, scales = "free_y") +
-  ggtitle("Siganus canaliculatus Lm range = 0-10, can edit on in other program")
+  ggtitle("Not standardized by per trap - come back to this?")
 ```
 
-![](CUE-maturity-length-analysis_files/figure-gfm/unnamed-chunk-19-1.png)<!-- -->
+### Calculating % fish underneath Lm and sample size per trap type for the figure below
+
+``` r
+maturity_calcs <- maturity_figs %>%
+  group_by(scientific_name, trap_type) %>%
+  mutate(sample_size = n(),
+         count_below = sum(median_length <= Lm, na.rm=TRUE),
+         percent_below = (count_below/sample_size)*100) %>%
+ select(scientific_name, trap_type, sample_size, 
+         count_below, percent_below) %>% 
+  ungroup() %>% distinct()
+
+# double checking the above calculation worked
+maturity_figs %>% filter(scientific_name == "Siganus sutor", trap_type == "UNMODIFIED") %>%
+  count(maturity == "immature") 
+```
+
+    ## # A tibble: 2 × 2
+    ##   `maturity == "immature"`     n
+    ##   <lgl>                    <int>
+    ## 1 FALSE                    85557
+    ## 2 TRUE                     70747
+
+``` r
+a +
+  geom_bar(position = position_dodge(), alpha=0.5)
+```
+
+![](CUE-maturity-length-analysis_files/figure-gfm/unnamed-chunk-21-1.png)<!-- -->
+
+``` r
+### left off at trying to get a density or geom smooth on categorical data - haven't been able to make that work
+a + geom_histogram(aes(y = ..count.., colour = trap_type, fill = trap_type), 
+                   alpha = 0.6, position = position_dodge(), stat="count") +
+  geom_vline(data = maturity_figs, mapping = aes(xintercept = Lm_range), lty = "dotted", size=1.2)
+```
+
+    ## Warning: Ignoring unknown parameters: binwidth, bins, pad
+
+![](CUE-maturity-length-analysis_files/figure-gfm/unnamed-chunk-21-2.png)<!-- -->
+
+<https://rstudio-pubs-static.s3.amazonaws.com/595950_6dc36259819541e5869f9fff162a8a41.html#histogram>
+
+<https://statisticsglobe.com/normal-density-curve-on-top-of-histogram-ggplot2-r>
 
 ## Fishbase R
 
@@ -894,3 +929,81 @@ library("rfishbase")
 Error:
 
 `Error in curl::curl_fetch_memory(file, handle): SSL certificate problem: certificate has expired   Error in curl::curl_fetch_memory(file, handle): SSL certificate problem: certificate has expired   Error in curl::curl_fetch_memory(file, handle): SSL certificate problem: certificate has expired   Error in curl::curl_fetch_memory(file, handle): SSL certificate problem: certificate has expired   Warning in curl::curl_fetch_memory(url, handle = handle) :     SSL certificate problem: certificate has expired   Warning in curl::curl_fetch_memory(url, handle = handle) :     SSL certificate problem: certificate has expired   Error in rbind(deparse.level, ...) :      numbers of columns of arguments do not match`
+
+### Biomass per trap collected
+
+1.) Expand df by \# of fish so that each row is a fish observation.  
+2.) Calculate median length of the bin of each fish (L).  
+3.) Find a and b parameters for all fish. Add this to the fishbase and
+read in that df.  
+4.) Add a and b columns to `species_df` by species Id.  
+5.) Mutate to calculate W=aLb.  
+6.) Group by species and survey id to calculate biomass per trap
+collected.
+
+#### Calculating biomass
+
+W=aL^b
+
+W = Biomass  
+L = Length (in our case, median length)  
+a = (taken from fishbase) b = (taken from fishbase)
+
+Read in data from fishbase. These units are in cm and grams.
+
+<https://www.fishbase.de/manual/English/FishbaseThe_LENGTH_WEIGHT_table.htm>
+
+``` r
+biomass_fishbase <- read_excel("data/fishbase.xlsx", sheet = "biomass") %>% #read in excel file 
+  select(scientific_name, a, b)
+
+biomass_survey_data <- data %>% filter(!is.na(number_of_fish)) %>%
+  subset(trap_type == "MODIFIED" | trap_type == "UNMODIFIED") %>%
+  select(survey_id, Operation_date, year, month, day, enumerator, trap_type, total_traps_collected,
+         total_biomass_kg, take_home_weight_kg, total_value_KES, take_home_value_KES, scientific_name, 
+         length_cm, number_of_fish, crew_size_corrected, length_corrected) 
+
+biomass_df <- full_join(biomass_survey_data, biomass_fishbase, by = "scientific_name") 
+
+biomass_df <- biomass_df %>%
+ # mutate(number_of_fish = if_else(is.na(number_of_fish), 1, number_of_fish)) %>% # replacing NAs with the value of 1
+ # tidyr::uncount(., number_of_fish, .remove = TRUE) %>%
+  mutate(median_length = case_when(
+    length_corrected == "0-10" ~ 5,
+    length_corrected == "11-15" ~ 13,
+    length_corrected == "16-20" ~ 18,
+    length_corrected == "21-25" ~ 23,
+    length_corrected == "26-30" ~ 28,
+    length_corrected == "31-35" ~ 33,
+    length_corrected == "36-40" ~ 38,
+    length_corrected == "41-45" ~ 43,
+    length_corrected == "46-50" ~ 48,
+    length_corrected == "51-60" ~ 55.5,
+    length_corrected == "61-70" ~ 65.5,
+    length_corrected == "71-80" ~ 75.5,
+    length_corrected == "81-90" ~ 85.5,
+    length_corrected == ">90" ~ 100 ### circle back to what value to use here
+  )) %>%
+  mutate(W_g = (a*(median_length^b))*number_of_fish,
+         W_kg = W_g/1000) %>% # calculating biomass from W=aL^b 
+  group_by(survey_id) %>%
+  mutate(calculated_total_biomass = sum(W_kg)) %>% ungroup()
+
+biomass_comparison <- biomass_df %>% select(survey_id, total_biomass_kg, calculated_total_biomass) %>%
+  distinct() %>% na.omit() %>%
+  mutate(comparison = if_else(total_biomass_kg > calculated_total_biomass, "REPORTED > CALC", "REPORTED < CALC"),
+         difference = total_biomass_kg-calculated_total_biomass) 
+
+biomass_comparison %>%
+  ggplot(., aes(x=comparison, y=difference)) + theme_bw() +
+  geom_point(aes(color=comparison), size=1) + xlab("") + ylab("difference in value")
+```
+
+![](CUE-maturity-length-analysis_files/figure-gfm/unnamed-chunk-24-1.png)<!-- -->
+List of species to ask Fishbase for a and b.
+
+``` r
+biomass_df %>% 
+  select(scientific_name) %>% distinct() %>%
+  write.csv("data/full_species_list.csv")
+```

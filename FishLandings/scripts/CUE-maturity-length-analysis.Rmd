@@ -637,14 +637,67 @@ L = Length (in our case, median length)
 a = (taken from fishbase)
 b = (taken from fishbase)
 
-Read in data from fishbase. 
+Read in data from fishbase. These units are in cm and grams. 
+
+https://www.fishbase.de/manual/English/FishbaseThe_LENGTH_WEIGHT_table.htm
+
+
 ```{r}
-biomass_fb <- read_excel("data/fishbase.xlsx", sheet = "biomass") %>% #read in excel file 
+biomass_fishbase <- read_excel("data/fishbase.xlsx", sheet = "biomass") %>% #read in excel file 
   select(scientific_name, a, b)
 
-biomass_df <- data %>% filter(!is.na(number_of_fish)) %>%
+biomass_survey_data <- data %>% filter(!is.na(number_of_fish)) %>%
   subset(trap_type == "MODIFIED" | trap_type == "UNMODIFIED") %>%
-  select(-enumerator, -landing_site, -BMU, -fisher_id, -fisher_phone, -household_id, -date_set_dd_mm_yyyy,
-         -`time_set_24hh:mm`, -date_collected_dd_mm_yyyy, -`time_collected_24hh:mm`, -date_time_set, -date_time_collected) 
+  select(survey_id, Operation_date, year, month, day, enumerator, trap_type, total_traps_collected,
+         total_biomass_kg, take_home_weight_kg, total_value_KES, take_home_value_KES, scientific_name, 
+         length_cm, number_of_fish, crew_size_corrected, length_corrected) 
+
+biomass_df <- full_join(biomass_survey_data, biomass_fishbase, by = "scientific_name") 
+
+biomass_df <- biomass_df %>%
+ # mutate(number_of_fish = if_else(is.na(number_of_fish), 1, number_of_fish)) %>% # replacing NAs with the value of 1
+ # tidyr::uncount(., number_of_fish, .remove = TRUE) %>%
+  mutate(median_length = case_when(
+    length_corrected == "0-10" ~ 5,
+    length_corrected == "11-15" ~ 13,
+    length_corrected == "16-20" ~ 18,
+    length_corrected == "21-25" ~ 23,
+    length_corrected == "26-30" ~ 28,
+    length_corrected == "31-35" ~ 33,
+    length_corrected == "36-40" ~ 38,
+    length_corrected == "41-45" ~ 43,
+    length_corrected == "46-50" ~ 48,
+    length_corrected == "51-60" ~ 55.5,
+    length_corrected == "61-70" ~ 65.5,
+    length_corrected == "71-80" ~ 75.5,
+    length_corrected == "81-90" ~ 85.5,
+    length_corrected == ">90" ~ 100 ### circle back to what value to use here
+  )) %>%
+  mutate(W_g = (a*(median_length^b))*number_of_fish,
+         W_kg = W_g/1000) %>% # calculating biomass from W=aL^b 
+  group_by(survey_id) %>%
+  mutate(calculated_total_biomass = sum(W_kg)) %>% ungroup()
+
+biomass_comparison <- biomass_df %>% select(survey_id, total_biomass_kg, calculated_total_biomass) %>%
+  distinct() %>% na.omit() %>%
+  mutate(comparison = if_else(total_biomass_kg > calculated_total_biomass, "REPORTED > CALC", "REPORTED < CALC"),
+         difference = total_biomass_kg-calculated_total_biomass) 
+
+biomass_comparison %>%
+  ggplot(., aes(x=comparison, y=difference)) + theme_bw() +
+  geom_point(aes(color=comparison), size=1) + xlab("") + ylab("difference in value")
 ```
-Left off at merging the 2 dataframes and then uncount so each fish observation is a row
+List of species to ask Fishbase for a and b. 
+
+```{r}
+biomass_df %>% 
+  select(scientific_name) %>% distinct() %>%
+  write.csv("data/full_species_list.csv")
+```
+
+
+
+
+
+
+

@@ -627,10 +627,24 @@ df$scientific_name <- gsub("Scanus", "Scarus", df$scientific_name)
 df$scientific_name <- gsub("globiseps", "globiceps", df$scientific_name)
 df$scientific_name <- gsub("acutiplanis", "acutipinnis", df$scientific_name)
 df$scientific_name <- gsub("Utoreuthis", "Uroteuthis", df$scientific_name)
+df$scientific_name <- gsub("Scarus tricolo$", "Scarus tricolor", df$scientific_name)
+df$scientific_name <- gsub("Parupeneous macronema$", "Parupeneus macronemus", df$scientific_name)
+df$scientific_name <- gsub("Parupeneus macronema$", "Parupeneus macronemus", df$scientific_name)
+df$scientific_name <- gsub("Scarus russelli$", "Scarus russelii", df$scientific_name)
+df$scientific_name <- gsub("Acanthurus tennentii", "Acanthurus tennenti", df$scientific_name)
+df$scientific_name <- gsub("Lethrinus conchliatus", "Lethrinus conchyliatus", df$scientific_name)
+df$scientific_name <- gsub("Naso brachycention", "Naso brachycentron", df$scientific_name)
 
 # correcting spellings in validation list 
 validation_lists$scientific_name <- gsub("Gymonthorax", "Gymnothorax", validation_lists$scientific_name)
 validation_lists$scientific_name <- gsub("Pomatonus", "Pomatomus", validation_lists$scientific_name)
+validation_lists$scientific_name <- gsub("Scarus tricolo$", "Scarus tricolor", validation_lists$scientific_name)
+validation_lists$scientific_name <- gsub("Parupeneous macronema$", "Parupeneus macronemus", validation_lists$scientific_name)
+validation_lists$scientific_name <- gsub("Parupeneus macronema$", "Parupeneus macronemus", validation_lists$scientific_name)
+validation_lists$scientific_name <- gsub("Scarus russelli$", "Scarus russelii", validation_lists$scientific_name)
+validation_lists$scientific_name <- gsub("Acanthurus tennentii", "Acanthurus tennenti", validation_lists$scientific_name)
+validation_lists$scientific_name <- gsub("Lethrinus conchliatus", "Lethrinus conchyliatus", validation_lists$scientific_name)
+validation_lists$scientific_name <- gsub("Naso brachycention", "Naso brachycentron", validation_lists$scientific_name)
 ```
 
 Double checking our df against the valid names so we know what names are typos. 
