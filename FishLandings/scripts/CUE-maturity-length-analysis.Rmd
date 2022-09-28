@@ -676,7 +676,9 @@ biomass_df <- biomass_df %>%
   mutate(W_g = (a*(median_length^b))*number_of_fish,
          W_kg = W_g/1000) %>% # calculating biomass from W=aL^b 
   group_by(survey_id) %>%
-  mutate(calculated_total_biomass = sum(W_kg)) %>% ungroup()
+  mutate(calculated_total_biomass = sum(W_kg),
+         calculated_biomass_pertrap = calculated_total_biomass/total_traps_collected) %>% 
+  ungroup()
 
 biomass_comparison <- biomass_df %>% select(survey_id, total_biomass_kg, calculated_total_biomass) %>%
   distinct() %>% na.omit() %>%
@@ -687,6 +689,31 @@ biomass_comparison %>%
   ggplot(., aes(x=comparison, y=difference)) + theme_bw() +
   geom_point(aes(color=comparison), size=1) + xlab("") + ylab("difference in value")
 ```
+
+Calculated biomass per trap figures. 
+
+```{r}
+# basic grams per trap plot with no other variables 
+biomass_df %>% filter(!is.na(calculated_biomass_pertrap)) %>%
+  ggplot(aes(x=trap_type, y=calculated_biomass_pertrap, color=trap_type)) + 
+  geom_boxplot(aes(color=trap_type), outlier.size = 0, lwd=0.5) +
+    geom_point(aes(fill=trap_type), pch = 21, size=1) +
+  theme_bw() + 
+  ylab("Calculated Biomass (kg per trap collected)") + xlab("Type of trap") +
+  theme(axis.text.x = element_text(vjust = 1.1)) #Set the text angle
+
+# visually seeing if this differs by fisherman 
+biomass_df %>% filter(!is.na(calculated_biomass_pertrap)) %>%
+  ggplot(aes(x=trap_type, y=calculated_biomass_pertrap, color=trap_type)) + 
+  facet_wrap(~enumerator) +
+  geom_boxplot(aes(color=trap_type), outlier.size = 0, lwd=0.5) +
+    geom_point(aes(fill=trap_type), pch = 21, size=1) +
+  theme_bw() + 
+  ylab("Calculated Biomass (kg per trap collected)") + xlab("Type of trap") +
+  theme(axis.text.x = element_text(vjust = 1.1)) #Set the text angle
+```
+
+
 List of species to ask Fishbase for a and b. 
 
 ```{r}
