@@ -27,12 +27,18 @@ Emma focusing on:
 - Frequency length plot: fixed the stacked bars but can't find a great way to make a smooth line over it - not sure if that's possible with bins.
 
 Questions:   
-1. In picking the median length for >90 category, what is the best way to do this?  
+1. In picking the median length for >90 category, what is the best way to do this? 95 is fine   
 2. Frequency length plots: These aren't standardized yet so unmodified looks like the trap catches more but we just had more surveys for unmodified traps.  
 3. What is the best way to pick a and b parameters from the length-weight page on fishbase?  
-4.   
+4.
 
 We are still missing November data but have decided to move on from gathering more data together.
+
+Lmat = 18 sig canal (bottom left graph)
+
+- CUE to CPUE notation
+- Lmat fix to 18 siganus canal
+-
 
 
 **Recommendations for project moving forward:**    
