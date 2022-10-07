@@ -2,6 +2,8 @@
 
 Results written by Emma Strand based on FishLandings survey data from Kenya_SamakiSalama project.
 
+Google slides for figure deck: https://docs.google.com/presentation/d/1-w_XW8_gXJf1OlE-m-AOzcJTGmf5Ofwe0_jLv_Ql7VM/edit#slide=id.p
+
 Scripts used:  
 - Quality Control: [QC.md](https://github.com/emmastrand/Kenya_SamakiSalama/blob/main/FishLandings/scripts/QC.md)    
 - Catch per unit effort and length/maturity analysis: [CPUE-maturity-length-analysis.md](https://github.com/emmastrand/Kenya_SamakiSalama/blob/main/FishLandings/scripts/CPUE-maturity-length-analysis.md)      
