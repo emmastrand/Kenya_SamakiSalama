@@ -447,9 +447,9 @@ Error in as.POSIXlt.character(x, tz, ...) : character string is not in a standar
 Error in lm.fit(x, y, offset = offset, singular.ok = singular.ok, ...) : NA/NaN/Inf in 'y'
 
 ```{r}
-Topspp_MOD <- species_df %>% subset(trap_type == "MODIFIED")
+Topspp_MOD <- species_df %>% subset(trap_type == "Experimental")
 
-Topspp_UNMOD <- species_df %>% subset(trap_type == "UNMODIFIED")  
+Topspp_UNMOD <- species_df %>% subset(trap_type == "Control")  
 
 var.test(Topspp_MOD$catch_per_trap, MOD$catch_per_trap) # output is significant so put false below
 
@@ -527,18 +527,24 @@ maturity_dist <- maturity %>%
   mutate(number_of_fish = if_else(is.na(number_of_fish), 1, number_of_fish)) %>% # replacing NAs with the value of 1
   tidyr::uncount(., number_of_fish, .remove = TRUE) %>% # expanding number of fish to number of observations
   mutate(length_dist = median_length-Lm) %>%
+  filter(!is.na(length_dist)) %>%
   group_by(scientific_name, trap_type) %>%
   mutate(avg_length_dist = mean(length_dist)) %>% #### a positive value here = mature; a negative value = immature 
-  ungroup()
+  ungroup() 
 
-maturity_dist %>% group_by(scientific_name) %>%
+maturity_dist %>%
+  #subset(scientific_name == "Siganus sutor" | scientific_name == "Lethrinus nebulosus" |
+  #         scientific_name == "Scarus ghobban" | scientific_name == "Leptoscarus vaigiensis" |
+  #         scientific_name == "Siganus canaliculatus") %>%
+  group_by(scientific_name) %>%
   filter(., n_distinct(avg_length_dist) >= 2) %>% # filters out the observations aren't in both categories (takes out species that only have 1 unique mean dist value so only 1 trap type)
   ungroup() %>%
-  ggplot(., aes(x=scientific_name, y=avg_length_dist, color = trap_type)) +
+  ggplot(., aes(x=scientific_name, y=avg_length_dist, color = trap_type)) + coord_flip() +
   geom_hline(yintercept = 0, lty = "dotted") +
   geom_line(aes(group = scientific_name), color="grey14") +
   geom_point() + theme_bw() + 
-  theme(axis.text.x = element_text(angle=60, hjust=1)) +
+  theme(axis.title.y = element_text(margin = margin(t = 0, r = 10, b = 0, l = 0))) +
+ # theme(axis.text.x = element_text(angle=60, hjust=1)) +
   labs(y="Mean distance from Lm (cm)", x="Genus species", color="Trap Type")
 ```
 
