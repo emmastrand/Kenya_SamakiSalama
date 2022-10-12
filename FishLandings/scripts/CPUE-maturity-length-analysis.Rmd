@@ -618,8 +618,8 @@ a <- maturity_figs %>% # expanding number of fish to number of observations
    axis.line = element_line(colour = "black")) +
   theme(axis.title.y = element_text(size = 12, face = "bold", margin = margin(t = 0, r = 10, b = 0, l = 0))) +
   theme(axis.title.x = element_text(size = 12, face = "bold", margin = margin(t = 10, r = 0, b = 0, l = 0))) +
-  facet_wrap(~scientific_name, scales = "free_y") +
-  ggtitle("Not standardized by per trap - come back to this?")
+  facet_grid(scientific_name~trap_type, scales = "free_y") +
+  #ggtitle("Not standardized by per trap - come back to this?")
 ```
 
 
@@ -636,14 +636,18 @@ maturity_calcs <- maturity_figs %>%
   ungroup() %>% distinct()
 
 # double checking the above calculation worked
-maturity_figs %>% filter(scientific_name == "Siganus sutor", trap_type == "UNMODIFIED") %>%
+maturity_figs %>% filter(scientific_name == "Siganus sutor", trap_type == "Control") %>%
   count(maturity == "immature") 
 ```
 
 
 ```{r}
-a +
-  geom_bar(position = position_dodge(), alpha=0.5)
+length_freq <- a +
+  geom_bar(position = position_dodge(), alpha=0.5) +
+  scale_fill_manual(values = c("darkblue", "darkgreen")) +
+  scale_color_manual(values = c("darkblue", "darkgreen"))
+
+ggsave(file="output/Length_freq.png", length_freq, width = 6, height = 8, units = c("in"))
 
 ### left off at trying to get a density or geom smooth on categorical data - haven't been able to make that work
 a + geom_histogram(aes(y = ..count.., colour = trap_type, fill = trap_type), 
