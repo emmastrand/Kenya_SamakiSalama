@@ -618,7 +618,7 @@ a <- maturity_figs %>% # expanding number of fish to number of observations
    axis.line = element_line(colour = "black")) +
   theme(axis.title.y = element_text(size = 12, face = "bold", margin = margin(t = 0, r = 10, b = 0, l = 0))) +
   theme(axis.title.x = element_text(size = 12, face = "bold", margin = margin(t = 10, r = 0, b = 0, l = 0))) +
-  facet_grid(scientific_name~trap_type, scales = "free_y") +
+  facet_grid(scientific_name~trap_type, scales = "free_y")
   #ggtitle("Not standardized by per trap - come back to this?")
 ```
 
