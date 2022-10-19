@@ -77,6 +77,7 @@ library(Rmisc)
 library(stats)
 library(lme4)
 library(car)
+library(forcats)
 ```
 
 ## Read in the data frame that is the output of the QC script. 
@@ -163,6 +164,10 @@ length_df <- data %>%
   ungroup() %>% select(-scientific_name, -length_corrected, -median_length, -total_traps_collected) %>%
   distinct()
 
+length_df_stats <- length_df %>% filter(!is.na(mean_length_persurvey))
+length_df_stats <- summarySE(length_df_stats, measurevar = c("mean_length_persurvey"), 
+                             groupvars = c("trap_type"))
+
 Legnth_persurvey <- length_df %>% 
   ggplot(aes(x=trap_type, y=mean_length_persurvey)) +
   geom_boxplot(outlier.size = 0, lwd=0.5) +
@@ -171,8 +176,17 @@ Legnth_persurvey <- length_df %>%
   theme_classic() + 
   ylab("Length (cm)") + #xlab("Type of trap") +
   theme(axis.text.x = element_text(vjust = 1.1)) #Set the text angle
-ggsave(file="output/Length_persurvey.png", Legnth_persurvey, width = 4, height = 4, units = c("in"))
 
+Legnth_persurvey2 <- length_df_stats %>% 
+  ggplot(aes(x=trap_type, y=mean_length_persurvey)) +
+  geom_point(size=4) +
+  geom_errorbar(aes(ymin=mean_length_persurvey-se, ymax=mean_length_persurvey+se), width=.1) +
+  theme_classic() + 
+  ylab("Length (cm)") + #xlab("Type of trap") +
+  theme(axis.text.x = element_text(vjust = 1.1)) #Set the text angle
+
+ggsave(file="output/Length_persurvey.png", Legnth_persurvey, width = 4, height = 4, units = c("in"))
+ggsave(file="output/Length_persurvey2.png", Legnth_persurvey2, width = 4, height = 4, units = c("in"))
 
 UN_length <- length_df %>% subset(trap_type == "Control") %>% filter(!is.na(mean_length_persurvey)) 
 MOD_length <- length_df %>% subset(trap_type == "Experimental") %>% filter(!is.na(mean_length_persurvey))
@@ -195,6 +209,15 @@ modified_trap_df <- data %>%
          `No. of fishers in crew`, landing_site, total_catch, month, 
          year, kg_per_trap, catch_per_trap, value_per_trap) %>%
   distinct()
+
+kg_per_trap_stats <- modified_trap_df %>% filter(!is.na(kg_per_trap))
+kg_per_trap_stats <- summarySE(kg_per_trap_stats, measurevar = c("kg_per_trap"), groupvars = c("trap_type"))
+
+catch_per_trap_stats <- modified_trap_df %>% filter(!is.na(catch_per_trap))
+catch_per_trap_stats <- summarySE(catch_per_trap_stats, measurevar = c("catch_per_trap"), groupvars = c("trap_type"))
+
+value_per_trap_stats <- modified_trap_df %>% filter(!is.na(value_per_trap))
+value_per_trap_stats <- summarySE(value_per_trap_stats, measurevar = c("value_per_trap"), groupvars = c("trap_type"))
 ```
 
 ### Plotting figures.
@@ -211,8 +234,17 @@ CPUE_n <- modified_trap_df %>%
   theme_classic() + 
   ylab("Abundance (# of individuals per trap collected)") + #xlab("Type of trap") +
   theme(axis.text.x = element_text(vjust = 1.1)) #Set the text angle
-ggsave(file="output/CPUE.png", CPUE_n, width = 4, height = 4, units = c("in"))
 
+CPUE_n2 <- catch_per_trap_stats %>% 
+  ggplot(aes(x=trap_type, y=catch_per_trap)) +
+  geom_point(size=1) +
+  geom_errorbar(aes(ymin=catch_per_trap-se, ymax=catch_per_trap+se), width=.1) +
+  theme_classic() + 
+  ylab("Abundance (# of individuals per trap collected)") + #xlab("Type of trap") +
+  theme(axis.text.x = element_text(vjust = 1.1)) #Set the text angle
+
+ggsave(file="output/CPUE.png", CPUE_n, width = 4, height = 4, units = c("in"))
+ggsave(file="output/CPUE2.png", CPUE_n2, width = 4, height = 4, units = c("in"))
 
 # by fisherman 
 modified_trap_df %>% 
@@ -256,8 +288,17 @@ Yield_reported <- modified_trap_df %>%
   theme_classic() + 
   ylab("Biomass (kg per trap collected)") + xlab("Type of trap") +
   theme(axis.text.x = element_text(vjust = 1.1)) #Set the text angle
-ggsave(file="output/Yield_reported.png", Yield_reported, width = 4, height = 4, units = c("in"))
 
+Yield_reported2 <- kg_per_trap_stats %>% 
+  ggplot(aes(x=trap_type, y=kg_per_trap)) + 
+  geom_point(size=4) +
+  geom_errorbar(aes(ymin=kg_per_trap-se, ymax=kg_per_trap+se), width=.1) +
+  theme_classic() + 
+  ylab("Biomass (kg per trap collected)") + xlab("Type of trap") +
+  theme(axis.text.x = element_text(vjust = 1.1)) #Set the text angle
+
+ggsave(file="output/Yield_reported.png", Yield_reported, width = 4, height = 4, units = c("in"))
+ggsave(file="output/Yield_reported2.png", Yield_reported2, width = 4, height = 4, units = c("in"))
 
 # visually seeing if this differs by fisherman 
 modified_trap_df %>% 
@@ -300,7 +341,17 @@ Value_reported <- modified_trap_df %>%
   theme_classic() + 
   ylab("Value (KES per trap collected)") + xlab("Type of trap") +
   theme(axis.text.x = element_text(vjust = 1.1)) #Set the text angle
+
+Value_reported2 <- value_per_trap_stats %>% 
+  ggplot(aes(x=trap_type, y=value_per_trap)) + 
+  geom_point(size=4) +
+  geom_errorbar(aes(ymin=value_per_trap-se, ymax=value_per_trap+se), width=.1) +
+  theme_classic() + 
+  ylab("Value (KES per trap collected)") + xlab("Type of trap") +
+  theme(axis.text.x = element_text(vjust = 1.1)) #Set the text angle
+
 ggsave(file="output/Value_reported.png", Value_reported, width = 4, height = 4, units = c("in"))
+ggsave(file="output/Value_reported2.png", Value_reported2, width = 4, height = 4, units = c("in"))
 ```
 
 
@@ -407,13 +458,13 @@ species_df <- data %>% filter(!is.na(number_of_fish)) %>%
 
 # use the above metric to subset to top 10 of those 
 species_keep <- species_df %>% select(scientific_name, species_total_catch) %>% 
-  distinct() %>% slice_max(species_total_catch, n = 10) 
+  distinct() %>% slice_max(species_total_catch, n = 20) 
 
 # filter species df based on the species_keep list 
 species_df <- species_df %>% filter(scientific_name %in% species_keep$scientific_name)
 
 # double checking the above command worked - output should be only 5 
-unique(sort(species_df$scientific_name))
+unique(sort(species_keep$scientific_name))
 ```
 
 ### Abundance  
@@ -530,22 +581,34 @@ maturity_dist <- maturity %>%
   filter(!is.na(length_dist)) %>%
   group_by(scientific_name, trap_type) %>%
   mutate(avg_length_dist = mean(length_dist)) %>% #### a positive value here = mature; a negative value = immature 
-  ungroup() 
+  ungroup() %>% 
+  filter(scientific_name %in% species_keep$scientific_name) %>%
+  mutate(scientific_name = factor(scientific_name, levels = c("Siganus sutor", "Lethrinus nebulosus",
+                                                              "Scarus ghobban", "Siganus canaliculatus",
+                                                              "Leptoscarus vaigiensis", "Parupeneus indicus",
+                                                              "Acanthurus dussumieri", "Chaetodon selene",
+                                                              "Parupeneus macronemus", "Scarus rubroviolaceus",
+                                                              "Scarus russelii", "Scarus psittacus",
+                                                              "Naso annulatus", "Plectorhinchus vittatus",
+                                                              "Plectorhinchus sordidus", "Plectorhinchus gaterinus",
+                                                              "Lethrinus harak", "Siganus stellatus",
+                                                              "Chaetodon auriga", "Lethrinus mahsena"))) 
+maturity_dist$scientific_name <- fct_rev(maturity_dist$scientific_name)
 
-maturity_dist %>%
-  #subset(scientific_name == "Siganus sutor" | scientific_name == "Lethrinus nebulosus" |
-  #         scientific_name == "Scarus ghobban" | scientific_name == "Leptoscarus vaigiensis" |
-  #         scientific_name == "Siganus canaliculatus") %>%
+maturity_dist_plot <- maturity_dist %>%
   group_by(scientific_name) %>%
   filter(., n_distinct(avg_length_dist) >= 2) %>% # filters out the observations aren't in both categories (takes out species that only have 1 unique mean dist value so only 1 trap type)
   ungroup() %>%
-  ggplot(., aes(x=scientific_name, y=avg_length_dist, color = trap_type)) + coord_flip() +
+  ggplot(., aes(x=scientific_name, y=avg_length_dist, color=trap_type)) + 
+  coord_flip() +
   geom_hline(yintercept = 0, lty = "dotted") +
   geom_line(aes(group = scientific_name), color="grey14") +
-  geom_point() + theme_bw() + 
+  geom_point(size=2) + theme_bw() + 
+  scale_color_manual(values = c("black", "blue")) +
   theme(axis.title.y = element_text(margin = margin(t = 0, r = 10, b = 0, l = 0))) +
- # theme(axis.text.x = element_text(angle=60, hjust=1)) +
-  labs(y="Mean distance from Lm (cm)", x="Genus species", color="Trap Type")
+  labs(y="Mean distance from Lm (cm)", x="", color="Trap Type") 
+
+ggsave(file="output/Maturity.png", maturity_dist_plot, width = 7, height = 6, units = c("in"))
 ```
 
 
@@ -553,9 +616,6 @@ maturity_dist %>%
 ## <a name="freq_plots"></a> **Length Frequency plots of top species**
 
 **Length frequency of top 3-5 species in modified versus traditional (different colors) with Lmat etc. indicators pulled from Fishbase.**
-
-
-Check this calculation for each fish not just each survey id???
 
 http://derekogle.com/fishR/2017-07-28-JoyPlot
 
@@ -580,7 +640,7 @@ maturity <- maturity %>% filter(!is.na(length_corrected)) %>%
   mutate(count.per.bin = sum(number_of_fish)) %>%
   ungroup()
 
-maturity2022_topspp <- maturity %>% subset(year=="2022") %>% 
+maturity_topspp <- maturity %>% #subset(year=="2022") %>% 
   subset(scientific_name == "Siganus sutor" | scientific_name == "Lethrinus nebulosus" |
            scientific_name == "Scarus ghobban" | scientific_name == "Leptoscarus vaigiensis" |
            scientific_name == "Siganus canaliculatus") %>%
@@ -601,12 +661,19 @@ maturity2022_topspp <- maturity %>% subset(year=="2022") %>%
     Lm > 90.5 ~ ">90")) 
 
 # creating table that will work best for visualization 
-maturity_figs <- maturity2022_topspp %>% 
+maturity_figs <- maturity_topspp %>% 
   mutate(number_of_fish = if_else(is.na(number_of_fish), 1, number_of_fish)) %>% # replacing NAs with the value of 1
   tidyr::uncount(., number_of_fish, .remove = TRUE)
 
+maturity_figs$scientific_name = factor(maturity_figs$scientific_name, levels=c('Siganus sutor',
+                                                                               'Lethrinus nebulosus',
+                                                                               'Scarus ghobban',
+                                                                               'Siganus canaliculatus',
+                                                                               'Leptoscarus vaigiensis'))
+
 # setting common figure parameters 
 a <- maturity_figs %>% # expanding number of fish to number of observations
+  filter(!is.na(length_corrected)) %>%
   ggplot(., aes(x=length_corrected, fill=trap_type, color=trap_type)) + 
   theme_bw() + xlab("Length (cm)") + ylab("Frequency") +
   theme(axis.text.x.bottom = element_text(colour = 'black', angle = 60, hjust = 1),
@@ -636,7 +703,8 @@ maturity_calcs <- maturity_figs %>%
   ungroup() %>% distinct()
 
 # double checking the above calculation worked
-maturity_figs %>% filter(scientific_name == "Siganus sutor", trap_type == "Control") %>%
+maturity_figs %>% 
+  filter(scientific_name == "Siganus sutor", trap_type == "Control") %>%
   count(maturity == "immature") 
 ```
 
@@ -644,8 +712,8 @@ maturity_figs %>% filter(scientific_name == "Siganus sutor", trap_type == "Contr
 ```{r}
 length_freq <- a +
   geom_bar(position = position_dodge(), alpha=0.5) +
-  scale_fill_manual(values = c("darkblue", "darkgreen")) +
-  scale_color_manual(values = c("darkblue", "darkgreen"))
+  scale_fill_manual(values = c("white", "white")) +
+  scale_color_manual(values = c("black", "black"))
 
 ggsave(file="output/Length_freq.png", length_freq, width = 6, height = 8, units = c("in"))
 
