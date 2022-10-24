@@ -186,7 +186,7 @@ Legnth_persurvey2 <- length_df_stats %>%
   theme(axis.text.x = element_text(vjust = 1.1)) #Set the text angle
 
 ggsave(file="output/Length_persurvey.png", Legnth_persurvey, width = 4, height = 4, units = c("in"))
-ggsave(file="output/Length_persurvey2.png", Legnth_persurvey2, width = 4, height = 4, units = c("in"))
+ggsave(file="output/Length_persurvey2.png", Legnth_persurvey2, width = 2, height = 3, units = c("in"))
 
 UN_length <- length_df %>% subset(trap_type == "Control") %>% filter(!is.na(mean_length_persurvey)) 
 MOD_length <- length_df %>% subset(trap_type == "Experimental") %>% filter(!is.na(mean_length_persurvey))
@@ -194,6 +194,30 @@ MOD_length <- length_df %>% subset(trap_type == "Experimental") %>% filter(!is.n
 var.test(UN_length$mean_length_persurvey, MOD_length$mean_length_persurvey)
 t.test(mean_length_persurvey~trap_type, data = length_df, var.equal = FALSE)
 ```
+
+
+```{r}
+length_spp <- data %>% 
+  mutate(number_of_fish = if_else(is.na(number_of_fish), 1, number_of_fish)) %>% # replacing NAs with the value of 1
+  tidyr::uncount(., number_of_fish, .remove = TRUE) %>% # expanding number of fish to number of observations
+  filter(!is.na(median_length)) %>%
+  subset(scientific_name == "Siganus sutor" | scientific_name == "Lethrinus nebulosus" |
+           scientific_name == "Scarus ghobban" | scientific_name == "Leptoscarus vaigiensis" |
+           scientific_name == "Siganus canaliculatus")
+
+length_stats <- summarySE(length_spp, measurevar = c("median_length"), 
+                               groupvars = c("scientific_name", "trap_type"))
+
+length_spp <- length_spp %>% subset(scientific_name == "Siganus canaliculatus")
+exp_length <- length_spp %>% subset(trap_type == "Experimental") 
+con_length <- length_spp %>% subset(trap_type == "Control") 
+
+var.test(exp_length$median_length, con_length$median_length)
+t.test(median_length~trap_type, data = length_spp, var.equal = FALSE)
+```
+
+
+
 
 ## <a name="catch_effort"></a> **Total catch (grams) per unit effort (trap set)**
 
@@ -210,6 +234,17 @@ modified_trap_df <- data %>%
          year, kg_per_trap, catch_per_trap, value_per_trap) %>%
   distinct()
 
+#### 
+df_spp <- data %>% filter(!is.na(value_per_trap)) %>%
+  subset(scientific_name == "Leptoscarus vaigiensis")
+exp <- df_spp %>% subset(trap_type == "Experimental") 
+con <- df_spp %>% subset(trap_type == "Control") 
+
+var.test(exp$value_per_trap, con$value_per_trap)
+t.test(value_per_trap~trap_type, data = df_spp, var.equal = FALSE)
+summarySE(df_spp, measurevar = c("value_per_trap"), groupvars = c("trap_type"))
+
+#### 
 kg_per_trap_stats <- modified_trap_df %>% filter(!is.na(kg_per_trap))
 kg_per_trap_stats <- summarySE(kg_per_trap_stats, measurevar = c("kg_per_trap"), groupvars = c("trap_type"))
 
@@ -219,6 +254,26 @@ catch_per_trap_stats <- summarySE(catch_per_trap_stats, measurevar = c("catch_pe
 value_per_trap_stats <- modified_trap_df %>% filter(!is.na(value_per_trap))
 value_per_trap_stats <- summarySE(value_per_trap_stats, measurevar = c("value_per_trap"), groupvars = c("trap_type"))
 ```
+
+```{r}
+df_sppfig <- data %>%
+   subset(scientific_name == "Siganus sutor" | scientific_name == "Lethrinus nebulosus" |
+           scientific_name == "Scarus ghobban" | scientific_name == "Leptoscarus vaigiensis" |
+           scientific_name == "Siganus canaliculatus") %>%
+  gather(measurement, value, 37:40) %>%
+  group_by(scientific_name, trap_type) %>%
+  filter(!is.na(value)) 
+  
+df_sppstats <- summarySE(df_sppfig, measurevar = c("value"), groupvars = c("measurement", "trap_type", "scientific_name"))
+
+spp_fig <- df_sppstats %>%
+  ggplot(., aes(x=scientific_name, y=value, color=trap_type)) + geom_point() +
+  geom_errorbar(aes(ymin=value-se, ymax=value+se), width=.1) + theme_classic() + 
+  facet_wrap(~measurement, scales = "free") 
+
+ggsave(file="output/Metrics_5spp.png", spp_fig, width = 8, height = 6, units = c("in"))
+```
+
 
 ### Plotting figures.
 
@@ -240,11 +295,11 @@ CPUE_n2 <- catch_per_trap_stats %>%
   geom_point(size=1) +
   geom_errorbar(aes(ymin=catch_per_trap-se, ymax=catch_per_trap+se), width=.1) +
   theme_classic() + 
-  ylab("Abundance (# of individuals per trap collected)") + #xlab("Type of trap") +
+  ylab("CPUE (n trap-1)") + #xlab("Type of trap") +
   theme(axis.text.x = element_text(vjust = 1.1)) #Set the text angle
 
 ggsave(file="output/CPUE.png", CPUE_n, width = 4, height = 4, units = c("in"))
-ggsave(file="output/CPUE2.png", CPUE_n2, width = 4, height = 4, units = c("in"))
+ggsave(file="output/CPUE2.png", CPUE_n2, width = 2, height = 3, units = c("in"))
 
 # by fisherman 
 modified_trap_df %>% 
@@ -298,7 +353,7 @@ Yield_reported2 <- kg_per_trap_stats %>%
   theme(axis.text.x = element_text(vjust = 1.1)) #Set the text angle
 
 ggsave(file="output/Yield_reported.png", Yield_reported, width = 4, height = 4, units = c("in"))
-ggsave(file="output/Yield_reported2.png", Yield_reported2, width = 4, height = 4, units = c("in"))
+ggsave(file="output/Yield_reported2.png", Yield_reported2, width = 2, height = 3, units = c("in"))
 
 # visually seeing if this differs by fisherman 
 modified_trap_df %>% 
@@ -351,7 +406,7 @@ Value_reported2 <- value_per_trap_stats %>%
   theme(axis.text.x = element_text(vjust = 1.1)) #Set the text angle
 
 ggsave(file="output/Value_reported.png", Value_reported, width = 4, height = 4, units = c("in"))
-ggsave(file="output/Value_reported2.png", Value_reported2, width = 4, height = 4, units = c("in"))
+ggsave(file="output/Value_reported2.png", Value_reported2, width = 2, height = 3, units = c("in"))
 ```
 
 
