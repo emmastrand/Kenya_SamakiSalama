@@ -839,9 +839,11 @@ https://www.fishbase.de/manual/English/FishbaseThe_LENGTH_WEIGHT_table.htm
 ```{r}
 biomass_fishbase <- read_excel("data/fishbase.xlsx", sheet = "biomass") %>% #read in excel file 
   select(scientific_name, a, b)
+biomass_fishbase$a <- as.numeric(biomass_fishbase$a)
+biomass_fishbase$b <- as.numeric(biomass_fishbase$b)
 
 biomass_survey_data <- data %>% filter(!is.na(number_of_fish)) %>%
-  subset(trap_type == "MODIFIED" | trap_type == "UNMODIFIED") %>%
+  subset(trap_type == "Experimental" | trap_type == "Control") %>%
   select(survey_id, Operation_date, year, month, day, enumerator, trap_type, total_traps_collected,
          total_biomass_kg, take_home_weight_kg, total_value_KES, take_home_value_KES, scientific_name, 
          length_cm, number_of_fish, crew_size_corrected, length_corrected) 
