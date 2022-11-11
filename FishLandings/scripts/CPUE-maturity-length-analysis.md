@@ -95,12 +95,66 @@ data <- data %>%
     trap_type == "MODIFIED" ~ "Experimental",
     trap_type == "UNMODIFIED" ~ "Control")) %>% # renaming modified and unmodified to experimental and control
   dplyr::group_by(survey_id) %>% # group by survey id
-  mutate(total_catch = sum(number_of_fish), #count the number of fish caught for each survey id
-         kg_per_trap = total_biomass_kg/total_traps_collected, #divide total weight for survey id by total traps 
+  mutate(total_catch = sum(number_of_fish)) # count the number of fish caught for each survey id
+
+## filtering total catch 
+unique(sort(data$total_catch))
+```
+
+    ##   [1]    1    2    3    4    5    6    7    8    9   10   11   12   13   14   15
+    ##  [16]   16   17   18   19   20   21   22   23   24   25   26   27   28   29   30
+    ##  [31]   31   32   33   34   35   36   37   38   39   40   41   42   43   44   45
+    ##  [46]   46   47   48   49   50   51   52   53   54   55   56   57   58   59   60
+    ##  [61]   61   62   63   64   65   66   67   68   69   70   71   72   73   74   75
+    ##  [76]   76   77   78   79   80   81   82   83   84   85   86   87   88   89   90
+    ##  [91]   92   93   94   95   96   97   98  100  101  102  103  104  105  106  107
+    ## [106]  108  110  111  112  114  116  117  118  120  122  123  124  126  128  129
+    ## [121]  130  131  132  133  134  135  136  137  138  140  142  143  144  146  148
+    ## [136]  149  150  152  154  156  157  158  159  160  161  162  164  166  168  170
+    ## [151]  172  174  175  176  178  179  180  182  184  186  188  189  190  192  194
+    ## [166]  196  198  200  202  203  204  205  206  208  209  210  212  214  216  218
+    ## [181]  219  220  221  222  223  224  225  226  228  230  232  234  236  238  240
+    ## [196]  242  244  246  248  252  254  256  258  260  262  264  266  268  270  272
+    ## [211]  276  280  282  284  286  288  292  294  296  300  304  306  308  310  312
+    ## [226]  314  316  318  320  322  324  328  330  332  334  336  340  344  346  348
+    ## [241]  351  352  356  358  360  362  364  368  370  372  376  378  380  384  386
+    ## [256]  388  390  392  396  400  404  406  408  412  416  420  424  428  432  436
+    ## [271]  440  442  444  448  450  452  454  456  460  462  464  466  468  472  476
+    ## [286]  478  480  484  488  492  494  496  500  504  509  510  512  516  520  524
+    ## [301]  528  532  534  536  540  544  560  564  570  572  576  580  584  586  588
+    ## [316]  592  594  596  600  604  608  612  616  618  620  624  640  642  644  648
+    ## [331]  652  654  656  660  664  668  672  680  684  692  696  698  700  704  708
+    ## [346]  716  722  728  732  736  740  756  768  772  784  786  792  796  800  812
+    ## [361]  828  832  848  852  860  876  880  888  896  912  918  924  932  936  940
+    ## [376]  944  954  958  960 1000 1008 1018 1024 1040 1044 1052 1056 1072 1088 1176
+    ## [391] 1248 1304 1320 1596
+
+``` r
+hist(data$total_catch)
+```
+
+![](CPUE-maturity-length-analysis_files/figure-gfm/unnamed-chunk-3-1.png)<!-- -->
+
+``` r
+data$total_catch <- ifelse(data$total_catch > 1000, NA, data$total_catch)
+hist(data$total_catch) # double checking this code worked 
+```
+
+![](CPUE-maturity-length-analysis_files/figure-gfm/unnamed-chunk-3-2.png)<!-- -->
+
+``` r
+## resume calculations
+data <- data %>%
+  mutate(kg_per_trap = total_biomass_kg/total_traps_collected, #divide total weight for survey id by total traps 
          catch_per_trap = total_catch/total_traps_collected,
          value_per_trap = total_value_KES/total_traps_collected) %>% #divide total catch per survey id by total traps 
   dplyr::ungroup(survey_id) # ungroup
+
+## checking catch per trap 
+hist(data$catch_per_trap)
 ```
+
+![](CPUE-maturity-length-analysis_files/figure-gfm/unnamed-chunk-3-3.png)<!-- -->
 
 ## Calculating top species
 
@@ -406,9 +460,9 @@ CPUE_n2 <- catch_per_trap_stats %>%
 ggsave(file="output/CPUE.png", CPUE_n, width = 4, height = 4, units = c("in"))
 ```
 
-    ## Warning: Removed 231 rows containing non-finite values (stat_boxplot).
+    ## Warning: Removed 281 rows containing non-finite values (stat_boxplot).
 
-    ## Warning: Removed 231 rows containing missing values (geom_point).
+    ## Warning: Removed 281 rows containing missing values (geom_point).
 
 ``` r
 ggsave(file="output/CPUE2.png", CPUE_n2, width = 2, height = 3, units = c("in"))
@@ -424,8 +478,8 @@ modified_trap_df %>%
   theme(axis.text.x = element_text(vjust = 1.1)) #Set the text angle
 ```
 
-    ## Warning: Removed 231 rows containing non-finite values (stat_boxplot).
-    ## Removed 231 rows containing missing values (geom_point).
+    ## Warning: Removed 281 rows containing non-finite values (stat_boxplot).
+    ## Removed 281 rows containing missing values (geom_point).
 
 ![](CPUE-maturity-length-analysis_files/figure-gfm/unnamed-chunk-9-1.png)<!-- -->
 
@@ -441,8 +495,8 @@ modified_trap_df %>%
   theme(axis.text.x = element_text(vjust = 1.1)) #Set the text angle
 ```
 
-    ## Warning: Removed 231 rows containing non-finite values (stat_boxplot).
-    ## Removed 231 rows containing missing values (geom_point).
+    ## Warning: Removed 281 rows containing non-finite values (stat_boxplot).
+    ## Removed 281 rows containing missing values (geom_point).
 
 ![](CPUE-maturity-length-analysis_files/figure-gfm/unnamed-chunk-9-2.png)<!-- -->
 
@@ -583,7 +637,7 @@ modified_trap_df %>% filter(catch_per_trap < 1500) %>%
 
     ## Warning: Removed 3 rows containing non-finite values (stat_smooth).
 
-    ## Warning: Removed 10 rows containing missing values (geom_smooth).
+    ## Warning: Removed 24 rows containing missing values (geom_smooth).
 
     ## Warning: Removed 3 rows containing missing values (geom_point).
 
@@ -619,13 +673,13 @@ var.test(UN$kg_per_trap, MOD$kg_per_trap)
     ##  F test to compare two variances
     ## 
     ## data:  UN$kg_per_trap and MOD$kg_per_trap
-    ## F = 1.1078, num df = 3445, denom df = 1495, p-value = 0.02055
+    ## F = 1.0911, num df = 3413, denom df = 1479, p-value = 0.04962
     ## alternative hypothesis: true ratio of variances is not equal to 1
     ## 95 percent confidence interval:
-    ##  1.015927 1.206282
+    ##  1.000146 1.188601
     ## sample estimates:
     ## ratio of variances 
-    ##           1.107837
+    ##           1.091123
 
 ``` r
 t.test(kg_per_trap~trap_type, data = modified_trap_df, var.equal = FALSE)
@@ -653,13 +707,13 @@ var.test(UN$catch_per_trap, MOD$catch_per_trap)
     ##  F test to compare two variances
     ## 
     ## data:  UN$catch_per_trap and MOD$catch_per_trap
-    ## F = 0.19402, num df = 3445, denom df = 1495, p-value < 2.2e-16
+    ## F = 0.15332, num df = 3413, denom df = 1479, p-value < 2.2e-16
     ## alternative hypothesis: true ratio of variances is not equal to 1
     ## 95 percent confidence interval:
-    ##  0.1779271 0.2112653
+    ##  0.1405337 0.1670140
     ## sample estimates:
     ## ratio of variances 
-    ##           0.194024
+    ##          0.1533172
 
 ``` r
 t.test(catch_per_trap~trap_type, data = modified_trap_df, var.equal = FALSE)
@@ -669,13 +723,13 @@ t.test(catch_per_trap~trap_type, data = modified_trap_df, var.equal = FALSE)
     ##  Welch Two Sample t-test
     ## 
     ## data:  catch_per_trap by trap_type
-    ## t = -28.012, df = 1751.4, p-value < 2.2e-16
+    ## t = -28.577, df = 1684.4, p-value < 2.2e-16
     ## alternative hypothesis: true difference in means between group Control and group Experimental is not equal to 0
     ## 95 percent confidence interval:
-    ##  -34.30532 -29.81579
+    ##  -33.91600 -29.55934
     ## sample estimates:
     ##      mean in group Control mean in group Experimental 
-    ##                   11.58572                   43.64628
+    ##                   10.87612                   42.61379
 
 #### Total catch per trap
 
@@ -687,13 +741,13 @@ var.test(UN$value_per_trap, MOD$value_per_trap)
     ##  F test to compare two variances
     ## 
     ## data:  UN$value_per_trap and MOD$value_per_trap
-    ## F = 1.048, num df = 3445, denom df = 1495, p-value = 0.2881
+    ## F = 1.0295, num df = 3413, denom df = 1479, p-value = 0.5133
     ## alternative hypothesis: true ratio of variances is not equal to 1
     ## 95 percent confidence interval:
-    ##  0.9610964 1.1411771
+    ##  0.9436811 1.1214961
     ## sample estimates:
     ## ratio of variances 
-    ##           1.048046
+    ##           1.029522
 
 ``` r
 t.test(value_per_trap~trap_type, data = modified_trap_df, var.equal = TRUE)
@@ -728,7 +782,7 @@ qqPlot(residuals(un_catch_model))
 
 ![](CPUE-maturity-length-analysis_files/figure-gfm/unnamed-chunk-17-1.png)<!-- -->
 
-    ## [1] 2675  786
+    ## [1] 1975  786
 
 ``` r
 hist(residuals(un_catch_model))
@@ -744,7 +798,7 @@ qqPlot(residuals(mod_catch_model))
 
 ![](CPUE-maturity-length-analysis_files/figure-gfm/unnamed-chunk-17-3.png)<!-- -->
 
-    ## [1] 976 596
+    ## [1] 973 959
 
 ``` r
 hist(residuals(mod_catch_model))
@@ -761,27 +815,27 @@ summary(un_catch_model)
     ## log(kg_per_trap) ~ catch_per_trap + (1 | enumerator) + (1 | landing_site)
     ##    Data: UN
     ## 
-    ## REML criterion at convergence: 6030.3
+    ## REML criterion at convergence: 5914.6
     ## 
     ## Scaled residuals: 
     ##     Min      1Q  Median      3Q     Max 
-    ## -4.7824 -0.5867  0.0707  0.6665  3.5571 
+    ## -3.9289 -0.5863  0.0580  0.6553  3.6226 
     ## 
     ## Random effects:
     ##  Groups       Name        Variance Std.Dev.
-    ##  landing_site (Intercept) 0.04356  0.2087  
-    ##  enumerator   (Intercept) 0.03094  0.1759  
-    ##  Residual                 0.33333  0.5773  
-    ## Number of obs: 3446, groups:  landing_site, 4; enumerator, 3
+    ##  landing_site (Intercept) 0.04159  0.2039  
+    ##  enumerator   (Intercept) 0.02926  0.1710  
+    ##  Residual                 0.32756  0.5723  
+    ## Number of obs: 3414, groups:  landing_site, 4; enumerator, 3
     ## 
     ## Fixed effects:
     ##                  Estimate Std. Error t value
-    ## (Intercept)    -0.5551629  0.1469235  -3.779
-    ## catch_per_trap  0.0110078  0.0005231  21.045
+    ## (Intercept)    -0.5854171  0.1433069  -4.085
+    ## catch_per_trap  0.0137283  0.0006047  22.703
     ## 
     ## Correlation of Fixed Effects:
     ##             (Intr)
-    ## ctch_pr_trp -0.045
+    ## ctch_pr_trp -0.052
 
 ``` r
 summary(mod_catch_model)
@@ -792,27 +846,27 @@ summary(mod_catch_model)
     ## log(kg_per_trap) ~ catch_per_trap + (1 | enumerator) + (1 | landing_site)
     ##    Data: MOD
     ## 
-    ## REML criterion at convergence: 2222.3
+    ## REML criterion at convergence: 2195
     ## 
     ## Scaled residuals: 
     ##     Min      1Q  Median      3Q     Max 
-    ## -4.2429 -0.6966  0.0685  0.7404  3.4855 
+    ## -4.2204 -0.6943  0.0718  0.7464  3.5120 
     ## 
     ## Random effects:
-    ##  Groups       Name        Variance Std.Dev.
-    ##  landing_site (Intercept) 0.010741 0.10364 
-    ##  enumerator   (Intercept) 0.001252 0.03538 
-    ##  Residual                 0.253954 0.50394 
-    ## Number of obs: 1496, groups:  landing_site, 4; enumerator, 3
+    ##  Groups       Name        Variance  Std.Dev.
+    ##  landing_site (Intercept) 0.0099530 0.09976 
+    ##  enumerator   (Intercept) 0.0007937 0.02817 
+    ##  Residual                 0.2534095 0.50340 
+    ## Number of obs: 1480, groups:  landing_site, 4; enumerator, 3
     ## 
     ## Fixed effects:
     ##                  Estimate Std. Error t value
-    ## (Intercept)    -0.4186052  0.0613548  -6.823
-    ## catch_per_trap  0.0038299  0.0003166  12.095
+    ## (Intercept)    -0.4311357  0.0584219   -7.38
+    ## catch_per_trap  0.0041030  0.0003257   12.60
     ## 
     ## Correlation of Fixed Effects:
     ##             (Intr)
-    ## ctch_pr_trp -0.254
+    ## ctch_pr_trp -0.270
 
 ``` r
 Anova(un_catch_model, ddf="lme4", type='III')
@@ -822,8 +876,8 @@ Anova(un_catch_model, ddf="lme4", type='III')
     ## 
     ## Response: log(kg_per_trap)
     ##                  Chisq Df Pr(>Chisq)    
-    ## (Intercept)     14.278  1  0.0001577 ***
-    ## catch_per_trap 442.889  1  < 2.2e-16 ***
+    ## (Intercept)     16.688  1  4.407e-05 ***
+    ## catch_per_trap 515.425  1  < 2.2e-16 ***
     ## ---
     ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 
@@ -834,9 +888,9 @@ Anova(mod_catch_model, ddf="lme4", type='III')
     ## Analysis of Deviance Table (Type III Wald chisquare tests)
     ## 
     ## Response: log(kg_per_trap)
-    ##                  Chisq Df Pr(>Chisq)    
-    ## (Intercept)     46.549  1  8.934e-12 ***
-    ## catch_per_trap 146.296  1  < 2.2e-16 ***
+    ##                 Chisq Df Pr(>Chisq)    
+    ## (Intercept)     54.46  1  1.587e-13 ***
+    ## catch_per_trap 158.69  1  < 2.2e-16 ***
     ## ---
     ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 
@@ -924,6 +978,51 @@ species_df %>%
 
 ![](CPUE-maturity-length-analysis_files/figure-gfm/unnamed-chunk-20-1.png)<!-- -->
 
+## Economic Data
+
+``` r
+profit <- read_excel("output/statistics.xlsx", sheet = "Supp Table 1 Methods") %>%
+  rename(scientific_name = Species)
+
+profit_data <- full_join(species_df, profit, by = "scientific_name") %>%
+  filter(!is.na(catch_per_trap))
+profit_data$`value (KES)` <- as.factor(profit_data$`value (KES)`)
+
+profit_stats <- summarySE(profit_data, measurevar = c("catch_per_trap"), 
+                               groupvars = c("`value (KES)`", "trap_type"))
+
+## value (KES), catch_per_trap 
+profit_data %>% 
+  ggplot(aes(x=`value (KES)`, y=catch_per_trap)) +
+  theme_classic() + 
+  geom_jitter(alpha=0.05, aes(color=trap_type)) + 
+  geom_point(data = profit_stats, aes(x=`value (KES)`, y=catch_per_trap), size=3) +
+  geom_errorbar(data = profit_stats, aes(ymin=catch_per_trap-se, ymax=catch_per_trap+se), size=0.5, width=.1) 
+```
+
+![](CPUE-maturity-length-analysis_files/figure-gfm/unnamed-chunk-21-1.png)<!-- -->
+
+``` r
+profit_fig <- profit_stats %>% subset(`value (KES)` == "350") %>%
+  ggplot(aes(x=`value (KES)`, y=catch_per_trap)) +
+  theme_classic() + 
+  theme(legend.position = "none") +
+  geom_point(aes(color=trap_type), size=1) +
+  ylab("CPUE (n trap-1)") +
+  geom_errorbar(aes(ymin=catch_per_trap-se, ymax=catch_per_trap+se), size=.5, width=0) 
+
+ggsave(file="output/Profit-350.png", profit_fig, width = 2, height = 4, units = c("in"))
+
+profit_fig <- profit_stats %>% ggplot(aes(x=trap_type, y=catch_per_trap)) +
+  theme_classic() + 
+  facet_wrap(~`value (KES)`, scales = "free", nrow=1, ncol=4) +
+  geom_point(size=2, alpha=0.2) +
+  xlab("") + ylab("CPUE (n trap-1)") +
+  geom_errorbar(data = profit_stats, aes(ymin=catch_per_trap-se, ymax=catch_per_trap+se), size=.5, width=0) 
+
+#ggsave(file="output/Profit.png", profit_fig, width = 7, height = 4, units = c("in"))
+```
+
 ### Statistics for the top ten species
 
 Left off at trying to solve the following error when running aov:
@@ -946,13 +1045,13 @@ var.test(Topspp_MOD$catch_per_trap, MOD$catch_per_trap) # output is significant 
     ##  F test to compare two variances
     ## 
     ## data:  Topspp_MOD$catch_per_trap and MOD$catch_per_trap
-    ## F = 0.51011, num df = 25759, denom df = 1495, p-value < 2.2e-16
+    ## F = 0.53949, num df = 25759, denom df = 1479, p-value < 2.2e-16
     ## alternative hypothesis: true ratio of variances is not equal to 1
     ## 95 percent confidence interval:
-    ##  0.4732561 0.5484851
+    ##  0.5003222 0.5802903
     ## sample estimates:
     ## ratio of variances 
-    ##          0.5101096
+    ##           0.539494
 
 ``` r
 #t.test(catch_per_trap~trap_type, data = species_df, var.equal = FALSE)
@@ -998,7 +1097,7 @@ maturity %>% select(number_of_fish, trap_type, maturity, scientific_name,
   ylab("Abundance (number of individuals per trap collected)")
 ```
 
-![](CPUE-maturity-length-analysis_files/figure-gfm/unnamed-chunk-23-1.png)<!-- -->
+![](CPUE-maturity-length-analysis_files/figure-gfm/unnamed-chunk-24-1.png)<!-- -->
 
 ``` r
 maturity %>% select(number_of_fish, trap_type, maturity, scientific_name, total_traps_collected, nofish_pertrap) %>% 
@@ -1011,7 +1110,7 @@ maturity %>% select(number_of_fish, trap_type, maturity, scientific_name, total_
   ylab("Abundance (number of individuals per trap collected)")
 ```
 
-![](CPUE-maturity-length-analysis_files/figure-gfm/unnamed-chunk-23-2.png)<!-- -->
+![](CPUE-maturity-length-analysis_files/figure-gfm/unnamed-chunk-24-2.png)<!-- -->
 
 Statistics on the above…
 
@@ -1219,7 +1318,7 @@ a + geom_histogram(aes(y = ..count.., colour = trap_type, fill = trap_type),
 
     ## Warning: Ignoring unknown parameters: binwidth, bins, pad
 
-![](CPUE-maturity-length-analysis_files/figure-gfm/unnamed-chunk-28-1.png)<!-- -->
+![](CPUE-maturity-length-analysis_files/figure-gfm/unnamed-chunk-29-1.png)<!-- -->
 
 <https://rstudio-pubs-static.s3.amazonaws.com/595950_6dc36259819541e5869f9fff162a8a41.html#histogram>
 
@@ -1329,7 +1428,7 @@ biomass_comparison %>%
   geom_point(aes(color=comparison), size=1) + xlab("") + ylab("difference in value")
 ```
 
-![](CPUE-maturity-length-analysis_files/figure-gfm/unnamed-chunk-31-1.png)<!-- -->
+![](CPUE-maturity-length-analysis_files/figure-gfm/unnamed-chunk-32-1.png)<!-- -->
 
 Calculated biomass per trap figures.
 
@@ -1344,7 +1443,7 @@ biomass_df %>% filter(!is.na(calculated_biomass_pertrap)) %>%
   theme(axis.text.x = element_text(vjust = 1.1)) #Set the text angle
 ```
 
-![](CPUE-maturity-length-analysis_files/figure-gfm/unnamed-chunk-32-1.png)<!-- -->
+![](CPUE-maturity-length-analysis_files/figure-gfm/unnamed-chunk-33-1.png)<!-- -->
 
 ``` r
 # visually seeing if this differs by fisherman 
@@ -1358,7 +1457,7 @@ biomass_df %>% filter(!is.na(calculated_biomass_pertrap)) %>%
   theme(axis.text.x = element_text(vjust = 1.1)) #Set the text angle
 ```
 
-![](CPUE-maturity-length-analysis_files/figure-gfm/unnamed-chunk-32-2.png)<!-- -->
+![](CPUE-maturity-length-analysis_files/figure-gfm/unnamed-chunk-33-2.png)<!-- -->
 
 List of species to ask Fishbase for a and b.
 

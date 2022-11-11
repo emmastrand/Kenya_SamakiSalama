@@ -106,12 +106,27 @@ data <- data %>%
     trap_type == "MODIFIED" ~ "Experimental",
     trap_type == "UNMODIFIED" ~ "Control")) %>% # renaming modified and unmodified to experimental and control
   dplyr::group_by(survey_id) %>% # group by survey id
-  mutate(total_catch = sum(number_of_fish), #count the number of fish caught for each survey id
-         kg_per_trap = total_biomass_kg/total_traps_collected, #divide total weight for survey id by total traps 
+  mutate(total_catch = sum(number_of_fish)) # count the number of fish caught for each survey id
+
+## filtering total catch 
+unique(sort(data$total_catch))
+hist(data$total_catch)
+data$total_catch <- ifelse(data$total_catch > 1000, NA, data$total_catch)
+hist(data$total_catch) # double checking this code worked 
+
+## resume calculations
+data <- data %>%
+  mutate(kg_per_trap = total_biomass_kg/total_traps_collected, #divide total weight for survey id by total traps 
          catch_per_trap = total_catch/total_traps_collected,
          value_per_trap = total_value_KES/total_traps_collected) %>% #divide total catch per survey id by total traps 
   dplyr::ungroup(survey_id) # ungroup
+
+## checking catch per trap 
+hist(data$catch_per_trap)
 ```
+
+
+
 
 ## Calculating top species 
 
@@ -542,6 +557,48 @@ species_df %>%
   ylab("Abundance (# of individuals per trap collected)") + xlab("Genus species") +
   theme(axis.text.x = element_text()) #Set the text angle
 ```
+
+## Economic Data
+
+```{r}
+profit <- read_excel("output/statistics.xlsx", sheet = "Supp Table 1 Methods") %>%
+  rename(scientific_name = Species)
+
+profit_data <- full_join(species_df, profit, by = "scientific_name") %>%
+  filter(!is.na(catch_per_trap))
+profit_data$`value (KES)` <- as.factor(profit_data$`value (KES)`)
+
+profit_stats <- summarySE(profit_data, measurevar = c("catch_per_trap"), 
+                               groupvars = c("`value (KES)`", "trap_type"))
+
+## value (KES), catch_per_trap 
+profit_data %>% 
+  ggplot(aes(x=`value (KES)`, y=catch_per_trap)) +
+  theme_classic() + 
+  geom_jitter(alpha=0.05, aes(color=trap_type)) + 
+  geom_point(data = profit_stats, aes(x=`value (KES)`, y=catch_per_trap), size=3) +
+  geom_errorbar(data = profit_stats, aes(ymin=catch_per_trap-se, ymax=catch_per_trap+se), size=0.5, width=.1) 
+
+profit_fig <- profit_stats %>% subset(`value (KES)` == "350") %>%
+  ggplot(aes(x=`value (KES)`, y=catch_per_trap)) +
+  theme_classic() + 
+  theme(legend.position = "none") +
+  geom_point(aes(color=trap_type), size=1) +
+  ylab("CPUE (n trap-1)") +
+  geom_errorbar(aes(ymin=catch_per_trap-se, ymax=catch_per_trap+se), size=.5, width=0) 
+
+ggsave(file="output/Profit-350.png", profit_fig, width = 2, height = 4, units = c("in"))
+
+profit_fig <- profit_stats %>% ggplot(aes(x=trap_type, y=catch_per_trap)) +
+  theme_classic() + 
+  facet_wrap(~`value (KES)`, scales = "free", nrow=1, ncol=4) +
+  geom_point(size=2, alpha=0.2) +
+  xlab("") + ylab("CPUE (n trap-1)") +
+  geom_errorbar(data = profit_stats, aes(ymin=catch_per_trap-se, ymax=catch_per_trap+se), size=.5, width=0) 
+
+#ggsave(file="output/Profit.png", profit_fig, width = 7, height = 4, units = c("in"))
+```
+
 
 
 ### Statistics for the top ten species

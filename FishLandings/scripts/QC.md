@@ -543,7 +543,7 @@ unique(sort(df$take_home_value_KES))
 
 ### No. of fishers in crew
 
-Crews above 5 people are unrealistic. I’m changing that data to ‘NA’ for
+Crews above 7 people are unrealistic. I’m changing that data to ‘NA’ for
 now.
 
 ``` r
@@ -1617,23 +1617,22 @@ length_check <- full_join(df, fishbase, by = "scientific_name") %>%
   mutate(count = n()) %>% select(-Operation_date, -fisher_id) %>% distinct(); length_check
 ```
 
-    ## # A tibble: 12 × 6
-    ## # Groups:   length_corrected, scientific_name [12]
+    ## # A tibble: 24 × 6
+    ## # Groups:   length_corrected, scientific_name [24]
     ##    scientific_name         Lmax length_corrected median_length length_ch…¹ count
     ##    <chr>                  <dbl> <chr>                    <dbl> <chr>       <int>
-    ##  1 Parupeneus macronemus   40   41-45                     43   over            1
-    ##  2 Leptoscarus vaigiensis  35.2 36-40                     38   over          120
-    ##  3 Acanthurus triostegus   27   36-40                     38   over            8
-    ##  4 Acanthurus triostegus   27   26-30                     28   over           12
-    ##  5 Lutjanus fulviflamma    35   61-70                     65.5 over            4
-    ##  6 Gerres oyena            30   31-35                     33   over           19
-    ##  7 Lutjanus fulviflamma    35   51-60                     55.5 over            4
-    ##  8 Leptoscarus vaigiensis  35.2 51-60                     55.5 over            2
-    ##  9 Acanthurus triostegus   27   31-35                     33   over            9
-    ## 10 Leptoscarus vaigiensis  35.2 41-45                     43   over           38
-    ## 11 Gerres oyena            30   36-40                     38   over            2
-    ## 12 Acanthurus dussumieri   54   51-60                     55.5 over            2
-    ## # … with abbreviated variable name ¹​length_check
+    ##  1 Chaetodon auriga        23   36-40                       38 over            1
+    ##  2 Acanthurus nigrofuscus  21   31-35                       33 over           41
+    ##  3 Acanthurus nigrofuscus  21   41-45                       43 over            7
+    ##  4 Chaetodon selene        16   21-25                       23 over            8
+    ##  5 Scarus psittacus        34   36-40                       38 over           28
+    ##  6 Parupeneus macronemus   40   41-45                       43 over            1
+    ##  7 Acanthurus nigrofuscus  21   36-40                       38 over           22
+    ##  8 Leptoscarus vaigiensis  35.2 36-40                       38 over          120
+    ##  9 Acanthurus triostegus   27   36-40                       38 over            8
+    ## 10 Acanthurus nigrofuscus  21   21-25                       23 over           86
+    ## # … with 14 more rows, and abbreviated variable name ¹​length_check
+    ## # ℹ Use `print(n = ...)` to see more rows
 
 #### Correcting those size bin lengths that are over Lmax
 
@@ -1709,11 +1708,48 @@ df %>% ggplot(., aes(y=number_of_fish)) + geom_boxplot() + theme_bw()
 
 ``` r
 #### filtering out 6,000 and 30,0000 
-df$number_of_fish <- ifelse(df$number_of_fish > 1000, NA, df$number_of_fish)
+df$number_of_fish <- ifelse(df$number_of_fish > 150, NA, df$number_of_fish)
 hist(df$number_of_fish)
 ```
 
 ![](QC_files/figure-gfm/unnamed-chunk-24-2.png)<!-- -->
+
+``` r
+unique(sort(df$number_of_fish))
+```
+
+    ##  [1]   0   1   2   3   4   5   6   7   8   9  10  11  12  13  14  15  16  17  18
+    ## [20]  19  20  21  22  23  24  25  26  27  28  29  30  31  32  33  34  35  36  37
+    ## [39]  38  39  40  41  42  43  44  45  46  47  48  49  50  51  52  53  54  55  56
+    ## [58]  57  58  59  60  61  62  63  64  65  66  67  68  69  70  72  75  76  77  78
+    ## [77]  79  80  82  83  84  85  87  88  89  92  94  96  98 103 108 111 120 129 140
+    ## [96] 150
+
+``` r
+df %>% subset(trap_type == "MODIFIED" | trap_type == "UNMODIFIED") %>%
+  filter(number_of_fish > 100)
+```
+
+    ## # A tibble: 4 × 31
+    ##   Operation_date      enumerator   landi…¹ BMU   fishe…² fishe…³ house…⁴ trap_…⁵
+    ##   <dttm>              <chr>        <chr>   <chr> <chr>   <chr>   <chr>   <chr>  
+    ## 1 2022-04-25 00:00:00 CLAPERTON K… UYOMBO  UYOM… SS/UYO… 079903… SS/UYO… MODIFI…
+    ## 2 2022-04-25 00:00:00 CLAPERTON K… UYOMBO  UYOM… SS/UYO… 079903… SS/UYO… MODIFI…
+    ## 3 2022-04-25 00:00:00 CLAPERTON K… UYOMBO  UYOM… SS/UYO… 079903… SS/UYO… UNMODI…
+    ## 4 2022-04-25 00:00:00 CLAPERTON K… UYOMBO  UYOM… SS/UYO… 079903… SS/UYO… UNMODI…
+    ## # … with 23 more variables: total_traps_collected <dbl>,
+    ## #   date_set_dd_mm_yyyy <dttm>, `time_set_24hh:mm` <chr>,
+    ## #   date_collected_dd_mm_yyyy <dttm>, `time_collected_24hh:mm` <chr>,
+    ## #   total_biomass_kg <dbl>, take_home_weight_kg <dbl>, total_value_KES <dbl>,
+    ## #   take_home_value_KES <dbl>, `No. of fishers in crew` <dbl>,
+    ## #   fishing_operation_notes <chr>, Kiswahili_name <chr>, scientific_name <chr>,
+    ## #   length_cm <chr>, `gear type` <chr>, number_of_fish <dbl>, …
+    ## # ℹ Use `colnames()` to see all variable names
+
+``` r
+## 103 is highest value for unmodified and modified traps so I am changing the above filter to 150
+## large majority is under 50
+```
 
 ### Destination of fish
 

@@ -304,7 +304,7 @@ unique(sort(df$take_home_value_KES))
 
 ### No. of fishers in crew
 
-Crews above 5 people are unrealistic. I'm changing that data to 'NA' for now. 
+Crews above 7 people are unrealistic. I'm changing that data to 'NA' for now. 
 
 ```{r}
 fishermen_no <- df %>% select(`No. of fishers in crew`) %>% na.omit()
@@ -975,8 +975,15 @@ unique(sort(df$number_of_fish))
 df %>% ggplot(., aes(y=number_of_fish)) + geom_boxplot() + theme_bw()
 
 #### filtering out 6,000 and 30,0000 
-df$number_of_fish <- ifelse(df$number_of_fish > 1000, NA, df$number_of_fish)
+df$number_of_fish <- ifelse(df$number_of_fish > 150, NA, df$number_of_fish)
 hist(df$number_of_fish)
+
+unique(sort(df$number_of_fish))
+
+df %>% subset(trap_type == "MODIFIED" | trap_type == "UNMODIFIED") %>%
+  filter(number_of_fish > 100)
+## 103 is highest value for unmodified and modified traps so I am changing the above filter to 150
+## large majority is under 50
 ```
 
 ### Destination of fish
