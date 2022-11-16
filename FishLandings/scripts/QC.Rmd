@@ -975,7 +975,7 @@ unique(sort(df$number_of_fish))
 df %>% ggplot(., aes(y=number_of_fish)) + geom_boxplot() + theme_bw()
 
 #### filtering out 6,000 and 30,0000 
-df$number_of_fish <- ifelse(df$number_of_fish > 150, NA, df$number_of_fish)
+df$number_of_fish <- ifelse(df$number_of_fish > 20, NA, df$number_of_fish)
 hist(df$number_of_fish)
 
 unique(sort(df$number_of_fish))
