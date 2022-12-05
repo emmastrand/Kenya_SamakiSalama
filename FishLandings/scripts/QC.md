@@ -1708,7 +1708,7 @@ df %>% ggplot(., aes(y=number_of_fish)) + geom_boxplot() + theme_bw()
 
 ``` r
 #### filtering out 6,000 and 30,0000 
-df$number_of_fish <- ifelse(df$number_of_fish > 150, NA, df$number_of_fish)
+df$number_of_fish <- ifelse(df$number_of_fish > 20, NA, df$number_of_fish)
 hist(df$number_of_fish)
 ```
 
@@ -1718,32 +1718,21 @@ hist(df$number_of_fish)
 unique(sort(df$number_of_fish))
 ```
 
-    ##  [1]   0   1   2   3   4   5   6   7   8   9  10  11  12  13  14  15  16  17  18
-    ## [20]  19  20  21  22  23  24  25  26  27  28  29  30  31  32  33  34  35  36  37
-    ## [39]  38  39  40  41  42  43  44  45  46  47  48  49  50  51  52  53  54  55  56
-    ## [58]  57  58  59  60  61  62  63  64  65  66  67  68  69  70  72  75  76  77  78
-    ## [77]  79  80  82  83  84  85  87  88  89  92  94  96  98 103 108 111 120 129 140
-    ## [96] 150
+    ##  [1]  0  1  2  3  4  5  6  7  8  9 10 11 12 13 14 15 16 17 18 19 20
 
 ``` r
 df %>% subset(trap_type == "MODIFIED" | trap_type == "UNMODIFIED") %>%
   filter(number_of_fish > 100)
 ```
 
-    ## # A tibble: 4 × 31
-    ##   Operation_date      enumerator   landi…¹ BMU   fishe…² fishe…³ house…⁴ trap_…⁵
-    ##   <dttm>              <chr>        <chr>   <chr> <chr>   <chr>   <chr>   <chr>  
-    ## 1 2022-04-25 00:00:00 CLAPERTON K… UYOMBO  UYOM… SS/UYO… 079903… SS/UYO… MODIFI…
-    ## 2 2022-04-25 00:00:00 CLAPERTON K… UYOMBO  UYOM… SS/UYO… 079903… SS/UYO… MODIFI…
-    ## 3 2022-04-25 00:00:00 CLAPERTON K… UYOMBO  UYOM… SS/UYO… 079903… SS/UYO… UNMODI…
-    ## 4 2022-04-25 00:00:00 CLAPERTON K… UYOMBO  UYOM… SS/UYO… 079903… SS/UYO… UNMODI…
-    ## # … with 23 more variables: total_traps_collected <dbl>,
-    ## #   date_set_dd_mm_yyyy <dttm>, `time_set_24hh:mm` <chr>,
-    ## #   date_collected_dd_mm_yyyy <dttm>, `time_collected_24hh:mm` <chr>,
+    ## # A tibble: 0 × 31
+    ## # … with 31 variables: Operation_date <dttm>, enumerator <chr>,
+    ## #   landing_site <chr>, BMU <chr>, fisher_id <chr>, fisher_phone <chr>,
+    ## #   household_id <chr>, trap_type <chr>, total_traps_collected <dbl>,
+    ## #   date_set_dd_mm_yyyy <dttm>, time_set_24hh:mm <chr>,
+    ## #   date_collected_dd_mm_yyyy <dttm>, time_collected_24hh:mm <chr>,
     ## #   total_biomass_kg <dbl>, take_home_weight_kg <dbl>, total_value_KES <dbl>,
-    ## #   take_home_value_KES <dbl>, `No. of fishers in crew` <dbl>,
-    ## #   fishing_operation_notes <chr>, Kiswahili_name <chr>, scientific_name <chr>,
-    ## #   length_cm <chr>, `gear type` <chr>, number_of_fish <dbl>, …
+    ## #   take_home_value_KES <dbl>, No. of fishers in crew <dbl>, …
     ## # ℹ Use `colnames()` to see all variable names
 
 ``` r
