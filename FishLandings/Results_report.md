@@ -24,6 +24,17 @@ I used the file `Fishlandings-data- CC-JM-Clay-IW updated 04-09-2022.xlsx` as in
 
 ![](https://github.com/emmastrand/Kenya_SamakiSalama/blob/main/FishLandings/Screen%20Shot%202022-12-05%20at%201.54.50%20PM.png?raw=true)
 
+#### Number of fish per survey = total catch
+
+![](https://github.com/emmastrand/Kenya_SamakiSalama/raw/main/FishLandings/scripts/CPUE-maturity-length-analysis_files/figure-gfm/unnamed-chunk-3-2.png)
+
+Cut off value for this? Currently at 900. 
+
+#### And do the CPUE calculation
+
 Sum of number of fish per survey / total traps per suvey  = CPUE 
 
-So this 
+![](https://github.com/emmastrand/Kenya_SamakiSalama/raw/main/FishLandings/scripts/CPUE-maturity-length-analysis_files/figure-gfm/unnamed-chunk-3-3.png)
+
+![](https://github.com/emmastrand/Kenya_SamakiSalama/blob/main/FishLandings/output/CPUE2.png?raw=true)
+
