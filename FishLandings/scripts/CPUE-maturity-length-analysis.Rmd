@@ -123,7 +123,15 @@ data <- data %>%
 
 ## checking catch per trap 
 hist(data$catch_per_trap)
+
+data %>% subset(trap_type == "Experimental") %>%
+  ggplot(aes(x=total_catch)) + geom_histogram()
+
+data %>% subset(trap_type == "Control") %>%
+  ggplot(aes(x=total_catch)) + geom_histogram()
 ```
+
+
 
 
 

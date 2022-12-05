@@ -16,3 +16,8 @@ I've written a [protocol](https://github.com/emmastrand/Kenya_SamakiSalama/blob/
 I used the file `Fishlandings-data- CC-JM-Clay-IW updated 04-09-2022.xlsx` as input for the quality control R markdown.
 
 
+### CPUE for Experimental control issue 
+
+2 surveys: 'catch composition' and 'fishing operation':
+
+![]
