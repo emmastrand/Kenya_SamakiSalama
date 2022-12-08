@@ -237,7 +237,7 @@ total_traps_collected <- df %>% select(total_traps_collected) %>% na.omit()
 range(total_traps_collected)
 
 ## filtering traps to below 40
-df$total_traps_collected <- ifelse(df$total_traps_collected > 40, NA, df$total_traps_collected)
+df$total_traps_collected <- ifelse(df$total_traps_collected > 16, NA, df$total_traps_collected)
 
 ## Protocol with new df: double check the below range is expected 
 hist(df$total_traps_collected)
