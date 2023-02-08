@@ -78,6 +78,7 @@ library(stats)
 library(lme4)
 library(car)
 library(forcats)
+library(ggstatsplot)
 ```
 
 ## Read in the data frame that is the output of the QC script. 
@@ -211,6 +212,17 @@ Legnth_persurvey2 <- length_df_stats %>%
 ggsave(file="output/Length_persurvey.png", Legnth_persurvey, width = 4, height = 4, units = c("in"))
 ggsave(file="output/Length_persurvey2.png", Legnth_persurvey2, width = 2, height = 3, units = c("in"))
 
+Legnth_persurvey3 <- ggbetweenstats(data=length_df, x = trap_type, y = mean_length_persurvey, 
+               type = "p", plot.type = "boxviolin", sample.size.label = TRUE,
+               mean.point.args = list(size = 2, color = "gray"),
+               mean.label.args = list(size = 2),
+               point.args = list(position = ggplot2::position_jitterdodge(dodge.width = 0.5), 
+                                 alpha= 0.2, size = 1.5, stroke = 0)) +
+  scale_color_manual(values = c( "#387780", "#FF8C61")) +
+  labs(x = "Trap Type", y = "Length (cm)") 
+
+ggsave(file="output/Length_persurvey3.png", Legnth_persurvey3, width = 4.5, height = 5, units = c("in"))
+
 UN_length <- length_df %>% subset(trap_type == "Control") %>% filter(!is.na(mean_length_persurvey)) 
 MOD_length <- length_df %>% subset(trap_type == "Experimental") %>% filter(!is.na(mean_length_persurvey))
 
@@ -303,6 +315,9 @@ ggsave(file="output/Metrics_5spp.png", spp_fig, width = 8, height = 6, units = c
 Abundance = Catch per trap 
 
 ```{r}
+## 
+hist(modified_trap_df$catch_per_trap)
+
 # basic total catch per trap with no other variables 
 CPUE_n <- modified_trap_df %>% 
   ggplot(aes(x=trap_type, y=catch_per_trap)) +
@@ -323,6 +338,17 @@ CPUE_n2 <- catch_per_trap_stats %>%
 
 ggsave(file="output/CPUE.png", CPUE_n, width = 4, height = 4, units = c("in"))
 ggsave(file="output/CPUE2.png", CPUE_n2, width = 2, height = 3, units = c("in"))
+
+CPUE_n3 <- ggbetweenstats(data=modified_trap_df, x = trap_type, y = catch_per_trap, 
+               type = "np", plot.type = "boxviolin", sample.size.label = TRUE,
+               mean.point.args = list(size = 2, color = "gray"),
+               mean.label.args = list(size = 2),
+               point.args = list(position = ggplot2::position_jitterdodge(dodge.width = 0.5), 
+                                 alpha= 0.2, size = 1.5, stroke = 0)) +
+  scale_color_manual(values = c( "#387780", "#FF8C61")) +
+  labs(x = "Trap Type", y = "Abundance (# of individuals per trap collected)") 
+
+ggsave(file="output/CPUE3.png", CPUE_n3, width = 4.5, height = 5, units = c("in"))
 
 # by fisherman 
 modified_trap_df %>% 
@@ -358,6 +384,9 @@ modified_trap_df %>% unite(ym, year, month, sep = " ", remove = FALSE) %>% filte
 Biomass = Kilograms per trap 
 
 ```{r}
+##
+hist(modified_trap_df$kg_per_trap)
+
 # basic grams per trap plot with no other variables 
 Yield_reported <- modified_trap_df %>% 
   ggplot(aes(x=trap_type, y=kg_per_trap)) + 
@@ -377,6 +406,17 @@ Yield_reported2 <- kg_per_trap_stats %>%
 
 ggsave(file="output/Yield_reported.png", Yield_reported, width = 4, height = 4, units = c("in"))
 ggsave(file="output/Yield_reported2.png", Yield_reported2, width = 2, height = 3, units = c("in"))
+
+Yield_reported3 <- ggbetweenstats(data=modified_trap_df, x = trap_type, y = kg_per_trap, 
+               type = "np", plot.type = "boxviolin", sample.size.label = TRUE,
+               mean.point.args = list(size = 2, color = "gray"),
+               mean.label.args = list(size = 2),
+               point.args = list(position = ggplot2::position_jitterdodge(dodge.width = 0.5), 
+                                 alpha= 0.2, size = 1.5, stroke = 0)) +
+  scale_color_manual(values = c( "#387780", "#FF8C61")) +
+  labs(x = "Trap Type", y = "Biomass (kg per trap collected)") 
+
+ggsave(file="output/Yield_reported3.png", Yield_reported3, width = 4.5, height = 5, units = c("in"))
 
 # visually seeing if this differs by fisherman 
 modified_trap_df %>% 
@@ -412,6 +452,8 @@ modified_trap_df %>% unite(ym, year, month, sep = " ", remove = FALSE) %>% #filt
 Value reported per trap
 
 ```{r}
+hist(modified_trap_df$value_per_trap)
+
 Value_reported <- modified_trap_df %>% 
   ggplot(aes(x=trap_type, y=value_per_trap)) + 
   geom_boxplot(outlier.size = 0, lwd=0.5) +
@@ -430,6 +472,17 @@ Value_reported2 <- value_per_trap_stats %>%
 
 ggsave(file="output/Value_reported.png", Value_reported, width = 4, height = 4, units = c("in"))
 ggsave(file="output/Value_reported2.png", Value_reported2, width = 2, height = 3, units = c("in"))
+
+Value_reported3 <- ggbetweenstats(data=modified_trap_df, x = trap_type, y = value_per_trap, 
+               type = "np", plot.type = "boxviolin", sample.size.label = TRUE,
+               mean.point.args = list(size = 2, color = "gray"),
+               mean.label.args = list(size = 2),
+               point.args = list(position = ggplot2::position_jitterdodge(dodge.width = 0.5), 
+                                 alpha= 0.2, size = 1.5, stroke = 0)) +
+  scale_color_manual(values = c( "#387780", "#FF8C61")) +
+  labs(x = "Trap Type", y = "Biomass (kg per trap collected)") 
+
+ggsave(file="output/Value_reported3.png", Value_reported3, width = 4.5, height = 5, units = c("in"))
 ```
 
 
