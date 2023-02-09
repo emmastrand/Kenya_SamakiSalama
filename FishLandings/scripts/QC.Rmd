@@ -60,35 +60,39 @@ library(naniar)
 
 **Load in raw data files.** 
 
-Using this df `Fishlandings-data- CC-JM-Clay-IW updated 04-09-2022`: The date is formatted DD-MM-YYYY. This file is from September. 
+Most updated file: `Fishlandings-data-FEB 2023 JMCC`. 
+
+Previously used this df `Fishlandings-data- CC-JM-Clay-IW updated 04-09-2022`: The date is formatted DD-MM-YYYY. This file is from September. 
 
 [Reading in an excel datafile instead of a csv](http://www.sthda.com/english/wiki/reading-data-from-excel-files-xls-xlsx-into-r). This requires the `readxl` package listed in load all libraries step. 
 
 ```{r, message=FALSE, warning=FALSE}
 ## when running future iterations of raw data file, replace the file name below 
-fishing_operation <- read_excel("data/Fishlandings-data- CC-JM-Clay-IW updated 04-09-2022.xlsx", sheet = "fishing_operation",
+fishing_operation <- read_excel("data/Fishlandings-data-FEB 2023 JMCC.xlsx", sheet = "fishing_operation",
                                 col_types = c("date", "text", "text", "text", "text", "text", "text", 
                                               "text", "numeric", "date", "text", "date", "text", "numeric", 
-                                              "numeric", "numeric", "numeric", "numeric", "numeric","text", "skip")) %>%
+                                              "numeric", "numeric", "numeric", "numeric", "numeric","text")) %>%
   rename(Operation_date = date_dd_mm_yyyy)
 
 nrow(fishing_operation) 
 # 10,670 July updated file; fishing operations (keep this # in mind for sanity check at the end)
 # 8,463 September updated file
+# 8,851 February updated file
 
 ## when running future iterations of raw data file, replace the file name below 
-catch_composition <- read_excel("data/Fishlandings-data- CC-JM-Clay-IW updated 04-09-2022.xlsx", 
+catch_composition <- read_excel("data/Fishlandings-data-FEB 2023 JMCC.xlsx", 
                                 sheet = "catch_composition",
-                                col_types = c("date", "text", "text", "text", "text", "text", "numeric",
-                                              "text", "text", "skip")) %>%
+                                col_types = c("date", "text", "text", "text", "text", 
+                                              "text", "numeric", "text", "text")) %>%
   rename(Operation_date = Date)
 
 nrow(catch_composition) 
 # 58,441 July updated file; fish observations (keep this # in mind for sanity check at the end)
 # 65,357 September updated file
+# 47,070 February updated file
 
 ## when running future iterations of raw data file, replace the file name below 
-validation_lists <- read_excel("data/Fishlandings-data- CC-JM-Clay-IW updated 04-09-2022.xlsx", sheet = "validation_lists")
+validation_lists <- read_excel("data/Fishlandings-data-FEB 2023 JMCC.xlsx", sheet = "validation_lists")
 
 # read in enumerator names file 
 enumerator_list <- read_excel("data/enumerator_list.xlsx")
@@ -131,6 +135,7 @@ df$enumerator <- toupper(df$enumerator)
 enumerator_list$enumerator <- toupper(enumerator_list$enumerator)
 
 # replace incorrect spellings 
+df$enumerator <- gsub("CELESTINER N ALI", "CELESTINE N. ALI", df$enumerator)
 df$enumerator <- gsub("CELESTINAR.N.ALI", "CELESTINE N. ALI", df$enumerator)
 df$enumerator <- gsub("^CELESTINAR$", "CELESTINE N. ALI", df$enumerator)
 df$enumerator <- gsub("CELESTINAR NALI", "CELESTINE N. ALI", df$enumerator)
@@ -634,6 +639,37 @@ df$scientific_name <- gsub("Scarus russelli$", "Scarus russelii", df$scientific_
 df$scientific_name <- gsub("Acanthurus tennentii", "Acanthurus tennenti", df$scientific_name)
 df$scientific_name <- gsub("Lethrinus conchliatus", "Lethrinus conchyliatus", df$scientific_name)
 df$scientific_name <- gsub("Naso brachycention", "Naso brachycentron", df$scientific_name)
+df$scientific_name <- gsub("Acathopacrus berda", "Acanthopagrus berda", df$scientific_name)
+df$scientific_name <- gsub("Colotomus carolinus", "Calotomus carolinus", df$scientific_name)
+df$scientific_name <- gsub("Coranx hippos", "Caranx hippos", df$scientific_name)
+df$scientific_name <- gsub("Cynoglossus lancheri", "Cynoglossus lachneri", df$scientific_name)
+df$scientific_name <- gsub("Gomphosus caeruleos", "Gomphosus caeruleus", df$scientific_name)
+df$scientific_name <- gsub("Gompheus caeruleus", "Gomphosus caeruleus", df$scientific_name)
+df$scientific_name <- gsub("Gymnothirax favagineus", "Gymnothorax favagineus", df$scientific_name)
+df$scientific_name <- gsub("Hinecanthurus aculeatus", "Rhinecanthus aculeatus", df$scientific_name)
+df$scientific_name <- gsub("Hipposcarus globiceps", "Hipposcarus longiceps", df$scientific_name)
+df$scientific_name <- gsub("Leptoscarus vaigiencies", "Leptoscarus vaigiensis", df$scientific_name)
+df$scientific_name <- gsub("Lethhrinus lentjan", "Lethrinus lentjan", df$scientific_name)
+df$scientific_name <- gsub("Lethrinas harak", "Lethrinus harak", df$scientific_name)
+df$scientific_name <- gsub("Lethrnus nebulosus", "Lethrinus nebulosus", df$scientific_name)
+df$scientific_name <- gsub("Litjanus argentimaculatus", "Lutjanus argentimaculatus", df$scientific_name)
+df$scientific_name <- gsub("Litjanus fluiviflamma", "Lutjanus fulviflamma", df$scientific_name)
+df$scientific_name <- gsub("Litjanus fulviflamma", "Lutjanus fulviflamma", df$scientific_name)
+df$scientific_name <- gsub("Litjanus gibbus", "Lutjanus gibbus", df$scientific_name)
+df$scientific_name <- gsub("Lutjanus flaviflammma", "Lutjanus fulviflamma", df$scientific_name)
+df$scientific_name <- gsub("Ostracion cubicum", "Ostracion cubicus", df$scientific_name)
+df$scientific_name <- gsub("Ostracion nasus", "Rhynchostracion nasus", df$scientific_name)
+df$scientific_name <- gsub("Panalirus versicolor", "Panulirus versicolor", df$scientific_name)
+df$scientific_name <- gsub("Panulirus penicillatus", "Panulirus penicilatus", df$scientific_name)
+df$scientific_name <- gsub("Parupeneus indius", "Parupeneus indicus", df$scientific_name)
+df$scientific_name <- gsub("Paruperenus macronemus", "Parupeneus macronemus", df$scientific_name)
+df$scientific_name <- gsub("Perupeneus macronemus", "Parupeneus macronemus", df$scientific_name)
+df$scientific_name <- gsub("Priacanthus humrur", "Priacanthus hamrur", df$scientific_name)
+df$scientific_name <- gsub("Scarius rubroviolaceus", "Scarus rubroviolaceus", df$scientific_name)
+df$scientific_name <- gsub("Scarus ghobbon", "Scarus ghobban", df$scientific_name)
+df$scientific_name <- gsub("Siganas guttatus", "Siganus guttatus", df$scientific_name)
+df$scientific_name <- gsub("Sthrophidon sathete", "Strophidon sathete", df$scientific_name)
+df$scientific_name <- gsub("Uroteuthis duvaucellii", "Uroteuthis duvauceli", df$scientific_name)
 
 # correcting spellings in validation list 
 validation_lists$scientific_name <- gsub("Gymonthorax", "Gymnothorax", validation_lists$scientific_name)
@@ -685,6 +721,7 @@ filter(df, scientific_name == "Scylla serrata") %>%
 - Gymnothorax flavimarginatus  
 - Gymnothorax monochrous   
 - Himantura gerrardi  
+- Hipposcarus longiceps  
 - Kyphosus bigibbus  
 - Lethrinus conchliatus  
 - Lujtanus argentimaculatus  
@@ -737,6 +774,7 @@ filter(df, scientific_name == "Scylla serrata") %>%
 - Lethrinus vaigiensis     
 - Lutjanus canius   
 - Monodactylus argentimailatus   
+- Naso stellatus  
 - Panulirus merra
 - Parapenes barberins  
 - Parupeneus semicirculatus    
@@ -814,6 +852,7 @@ unique(sort(df$length_cm))
 # replace the write in verbiage with no characters
 df$length_cm <- gsub(">50 write in: ", "", df$length_cm)
 df$length_cm <- gsub(">50 write in:", "", df$length_cm)
+df$length_cm <- gsub(">50", "", df$length_cm)
 
 # replacing values that don't make sense
 df$length_cm <- gsub("269-30", "26-30", df$length_cm)
@@ -843,7 +882,8 @@ df$length_cm <- gsub("110-15", "11-15", df$length_cm)
 df$length_cm <- gsub("111-15", "11-15", df$length_cm)
 df$length_cm <- gsub("11-16", "11-15", df$length_cm)
 df$length_cm <- gsub("41-46", "41-45", df$length_cm)
-
+df$length_cm <- gsub("26-25", "21-25", df$length_cm)
+df$length_cm <- gsub("41-50", "46-50", df$length_cm)
 
 # taking out double values 
 df$length_cm <- gsub("21-25 26-30", NA, df$length_cm)
@@ -891,7 +931,7 @@ unique(sort(df$length_cm))
 unique(sort(df$length_corrected))
 ```
 
-Correct output for length_corrected: `">90"   "0-10"  "11-15" "16-20" "21-25" "26-30" "31-35" "36-40" "41-45" "46-50" "51-60" "60-70" "70-80" "80-90"`. 
+Correct output for length_corrected: `">90"   "0-10"  "11-15" "16-20" "21-25" "26-30" "31-35" "36-40" "41-45" "46-50" "51-60" "61-70" "71-80" "81-90"`. 
 
 ### Comparing Lmax to median length caught
 
@@ -929,6 +969,7 @@ length_check <- full_join(df, fishbase, by = "scientific_name") %>%
 ```{r}
 df$length_corrected[df$scientific_name == "Acanthurus dussumieri" & df$length_corrected == "51-60"] <- "46-50"
 df$length_corrected[df$scientific_name == "Parupeneus macronemus" & df$length_corrected == "41-45"] <- "36-40"
+df$length_corrected[df$scientific_name == "Siganus stellatus" & df$length_corrected == "41-45"] <- "36-40"
 
 df$length_corrected[df$scientific_name == "Acanthurus triostegus" & df$length_corrected == "36-40"] <- "21-25"
 df$length_corrected[df$scientific_name == "Acanthurus triostegus" & df$length_corrected == "31-35"] <- "21-25"
@@ -943,6 +984,17 @@ df$length_corrected[df$scientific_name == "Leptoscarus vaigiensis" & df$length_c
 
 df$length_corrected[df$scientific_name == "Lutjanus fulviflamma" & df$length_corrected == "61-70"] <- "31-35"
 df$length_corrected[df$scientific_name == "Lutjanus fulviflamma" & df$length_corrected == "51-60"] <- "31-35"
+
+df$length_corrected[df$scientific_name == "Acanthurus nigrofuscus" & df$length_corrected == "31-35"] <- "16-20"
+df$length_corrected[df$scientific_name == "Acanthurus nigrofuscus" & df$length_corrected == "41-45"] <- "16-20"
+df$length_corrected[df$scientific_name == "Acanthurus nigrofuscus" & df$length_corrected == "21-25"] <- "16-20"
+df$length_corrected[df$scientific_name == "Acanthurus nigrofuscus" & df$length_corrected == "36-40"] <- "16-20"
+df$length_corrected[df$scientific_name == "Acanthurus nigrofuscus" & df$length_corrected == "26-30"] <- "16-20"
+
+df$length_corrected[df$scientific_name == "Parupeneus macronemus" & df$length_corrected == "41-45"] <- "36-40"
+df$length_corrected[df$scientific_name == "Chaetodon selene" & df$length_corrected == "21-25"] <- "11-15"
+df$length_corrected[df$scientific_name == "Chaetodon selene" & df$length_corrected == "16-20"] <- "11-15"
+df$length_corrected[df$scientific_name == "Cephalopholis argus" & df$length_corrected == "81-90"] <- "51-60"
 ```
 
 
@@ -979,9 +1031,12 @@ df$number_of_fish <- ifelse(df$number_of_fish > 20, NA, df$number_of_fish)
 hist(df$number_of_fish)
 
 unique(sort(df$number_of_fish))
-
-df %>% subset(trap_type == "MODIFIED" | trap_type == "UNMODIFIED") %>%
-  filter(number_of_fish > 100)
+unique(sort(df$trap_type))
+# 
+# df %>% 
+#   mutate(crew_size = case_when(trap_type == "MODIFIED TRAP" ~ "MODIFIED")) %>%
+#   subset(trap_type == "MODIFIED TRAP" | trap_type == "UNMODIFIED") %>%
+#   filter(number_of_fish > 100)
 ## 103 is highest value for unmodified and modified traps so I am changing the above filter to 150
 ## large majority is under 50
 ```
@@ -1014,7 +1069,7 @@ unique(df$catch_composition_notes)
 head(df)
 nrow(df)
 
-write_xlsx(df, "data/cleaned-Fishlandings-data- CC-JM-Clay-IW updated 04-09-2022.xlsx")
+write_xlsx(df, "data/cleaned-Fishlandings-data-FEB 2023 JMCC.xlsx")
 ```
 
 
