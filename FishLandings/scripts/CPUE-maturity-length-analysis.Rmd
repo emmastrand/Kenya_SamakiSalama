@@ -85,7 +85,7 @@ library(ggstatsplot)
 
 ```{r, message=FALSE, warning=FALSE}
 # read in excel file
-data <- read_excel("data/cleaned-Fishlandings-data- CC-JM-Clay-IW updated 04-09-2022.xlsx") #read in excel file 
+data <- read_excel("data/cleaned-Fishlandings-data-FEB 2023 JMCC.xlsx") #read in excel file 
 
 data <- data %>% separate(Operation_date, c("year", "month", "day"), remove = FALSE) # creating new columns with month year and date
 data$month <- as.numeric(data$month) #changing this column to numeric instead of a character (needed for next fxn)
@@ -102,12 +102,13 @@ data$total_traps_collected[data$total_traps_collected == 0] <- NA
 ```{r}
 data <- data %>%
   unite(survey_id, Operation_date, fisher_id, date_time_collected, sep = " ", remove = FALSE) %>% # needs to be both bc data input has errors
-  subset(trap_type == "MODIFIED" | trap_type == "UNMODIFIED") %>%
   mutate(trap_type = case_when(
-    trap_type == "MODIFIED" ~ "Experimental",
+    trap_type == "MODIFIED TRAP" ~ "Experimental",
     trap_type == "UNMODIFIED" ~ "Control")) %>% # renaming modified and unmodified to experimental and control
+  subset(trap_type == "Experimental" | trap_type == "Control") %>%
   dplyr::group_by(survey_id) %>% # group by survey id
   mutate(total_catch = sum(number_of_fish)) # count the number of fish caught for each survey id
+
 
 ## filtering total catch 
 unique(sort(data$total_catch))
@@ -232,23 +233,23 @@ t.test(mean_length_persurvey~trap_type, data = length_df, var.equal = FALSE)
 
 
 ```{r}
-length_spp <- data %>% 
-  mutate(number_of_fish = if_else(is.na(number_of_fish), 1, number_of_fish)) %>% # replacing NAs with the value of 1
-  tidyr::uncount(., number_of_fish, .remove = TRUE) %>% # expanding number of fish to number of observations
-  filter(!is.na(median_length)) %>%
-  subset(scientific_name == "Siganus sutor" | scientific_name == "Lethrinus nebulosus" |
-           scientific_name == "Scarus ghobban" | scientific_name == "Leptoscarus vaigiensis" |
-           scientific_name == "Siganus canaliculatus")
-
-length_stats <- summarySE(length_spp, measurevar = c("median_length"), 
-                               groupvars = c("scientific_name", "trap_type"))
-
-length_spp <- length_spp %>% subset(scientific_name == "Siganus canaliculatus")
-exp_length <- length_spp %>% subset(trap_type == "Experimental") 
-con_length <- length_spp %>% subset(trap_type == "Control") 
-
-var.test(exp_length$median_length, con_length$median_length)
-t.test(median_length~trap_type, data = length_spp, var.equal = FALSE)
+# length_spp <- data %>% 
+#   mutate(number_of_fish = if_else(is.na(number_of_fish), 1, number_of_fish)) %>% # replacing NAs with the value of 1
+#   tidyr::uncount(., number_of_fish, .remove = TRUE) %>% # expanding number of fish to number of observations
+#   filter(!is.na(median_length)) %>%
+#   subset(scientific_name == "Siganus sutor" | scientific_name == "Lethrinus nebulosus" |
+#            scientific_name == "Scarus ghobban" | scientific_name == "Leptoscarus vaigiensis" |
+#            scientific_name == "Siganus canaliculatus")
+# 
+# length_stats <- summarySE(length_spp, measurevar = c("median_length"), 
+#                                groupvars = c("scientific_name", "trap_type"))
+# 
+# length_spp <- length_spp %>% subset(scientific_name == "Siganus canaliculatus")
+# exp_length <- length_spp %>% subset(trap_type == "Experimental") 
+# con_length <- length_spp %>% subset(trap_type == "Control") 
+# 
+# var.test(exp_length$median_length, con_length$median_length)
+# t.test(median_length~trap_type, data = length_spp, var.equal = FALSE)
 ```
 
 
@@ -291,22 +292,22 @@ value_per_trap_stats <- summarySE(value_per_trap_stats, measurevar = c("value_pe
 ```
 
 ```{r}
-df_sppfig <- data %>%
-   subset(scientific_name == "Siganus sutor" | scientific_name == "Lethrinus nebulosus" |
-           scientific_name == "Scarus ghobban" | scientific_name == "Leptoscarus vaigiensis" |
-           scientific_name == "Siganus canaliculatus") %>%
-  gather(measurement, value, 37:40) %>%
-  group_by(scientific_name, trap_type) %>%
-  filter(!is.na(value)) 
-  
-df_sppstats <- summarySE(df_sppfig, measurevar = c("value"), groupvars = c("measurement", "trap_type", "scientific_name"))
-
-spp_fig <- df_sppstats %>%
-  ggplot(., aes(x=scientific_name, y=value, color=trap_type)) + geom_point() +
-  geom_errorbar(aes(ymin=value-se, ymax=value+se), width=.1) + theme_classic() + 
-  facet_wrap(~measurement, scales = "free") 
-
-ggsave(file="output/Metrics_5spp.png", spp_fig, width = 8, height = 6, units = c("in"))
+# df_sppfig <- data %>%
+#    subset(scientific_name == "Siganus sutor" | scientific_name == "Lethrinus nebulosus" |
+#            scientific_name == "Scarus ghobban" | scientific_name == "Leptoscarus vaigiensis" |
+#            scientific_name == "Siganus canaliculatus") %>%
+#   gather(measurement, value, 37:40) %>%
+#   group_by(scientific_name, trap_type) %>%
+#   filter(!is.na(value)) 
+#   
+# df_sppstats <- summarySE(df_sppfig, measurevar = c("value"), groupvars = c("measurement", "trap_type", "scientific_name"))
+# 
+# spp_fig <- df_sppstats %>%
+#   ggplot(., aes(x=scientific_name, y=value, color=trap_type)) + geom_point() +
+#   geom_errorbar(aes(ymin=value-se, ymax=value+se), width=.1) + theme_classic() + 
+#   facet_wrap(~measurement, scales = "free") 
+# 
+# ggsave(file="output/Metrics_5spp.png", spp_fig, width = 8, height = 6, units = c("in"))
 ```
 
 
