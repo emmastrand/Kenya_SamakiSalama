@@ -17,12 +17,6 @@ editor_options:
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-## Aims and Results 
-
-**1. Quantify and visualize relative abundance for each modified and unmodified trap using phyloseq.** 
-
-**2. Alpha and beta diversity for fish species between modified and unmodified traps. Does using modified traps affect the diversity of fish caught?**  
-
 ## Contents 
 
 - [**Reading in datafiles**](#data)  
@@ -52,18 +46,18 @@ library(funrar) #make relative fxn
 
 ```{r}
 # read in excel file
-df<- read_excel("data/Fishlandings-cleaned-21052022-May.xlsx") %>% #read in excel file 
+div_df <- read_excel("data/cleaned-Fishlandings-data-FEB 2023 JMCC.xlsx") %>% #read in excel file 
   unite(survey_id, Operation_date, fisher_id, sep = "-", remove = FALSE) # creating a new variable called survey id
 
-data_matrix <- df %>% # modified original 
-  select(trap_type, scientific_name, number_of_fish) %>% # selecting only desired columns for matrix
-  subset(trap_type == "UNMODIFIED" | trap_type == "MODIFIED") %>%
-  filter(!is.na(number_of_fish)) %>%
-  group_by(scientific_name, trap_type) %>% 
-  mutate(number_corrected = sum(number_of_fish)) %>% ungroup() %>% # calculating total number of that fish per survey id
-  select(-number_of_fish) %>% distinct() %>% # removing original count column and taking out repetitive rows 
-  spread(scientific_name, number_corrected) %>% # creating matrix from fish name and number columns
-  column_to_rownames(var="trap_type") # moving survey id column to row names 
+data_matrix <- div_df %>% # modified original 
+  dplyr::select(survey_id, trap_type, scientific_name, number_of_fish) %>% # selecting only desired columns for matrix
+  mutate(trap_type = case_when(
+    trap_type == "MODIFIED TRAP" ~ "Experimental",
+    trap_type == "UNMODIFIED" ~ "Control")) %>% # renaming modified and unmodified to experimental and control
+  subset(trap_type == "Experimental" | trap_type == "Control") %>%
+  mutate(number_of_fish = if_else(is.na(number_of_fish), 1, number_of_fish)) %>%
+  spread(., scientific_name, number_of_fish) %>% # creating matrix from fish name and number columns
+  column_to_rownames(var="survey_id") # moving survey id column to row names 
 
 data_matrix[is.na(data_matrix)] <- 0 #changing NAs to zeros 
 
