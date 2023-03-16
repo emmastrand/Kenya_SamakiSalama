@@ -522,13 +522,14 @@ data %>%
   group_by(survey_id) %>%
   mutate(richness = n_distinct(scientific_name),
          richness_trap = richness/total_traps_collected) %>%
-  filter(catch_per_trap < 10) %>%
-  ggplot(aes(x=catch_per_trap, y=richness_trap, color=trap_type)) +
+  #filter(catch_per_trap < 10) %>%
+  ggplot(aes(x=trap_type, y=richness_trap, color=trap_type)) +
   scale_color_manual(values = c( "#387780", "#FF8C61")) +
   scale_fill_manual(values = c( "#387780", "#FF8C61")) +
-  theme_bw() + xlab("CPUE (n trap-1)") + ylab("Richness (unique n-1)") +
-  geom_point(aes(fill=trap_type), pch = 21, size=1, alpha=0.2) +
-  geom_smooth(aes(fill=trap_type), method="loess", se=TRUE, fullrange=TRUE, level=0.95, color="black")
+  theme_bw() + xlab("") + ylab("Richness (# of unique species trap-1)") +
+  geom_boxplot() + geom_jitter(size=0.5, alpha=0.1, width=0.2) 
+  #geom_point(aes(fill=trap_type), pch = 21, size=1, alpha=0.2) 
+  #geom_smooth(aes(fill=trap_type), method="loess", se=TRUE, fullrange=TRUE, level=0.95, color="black")
 ```
 
 ## correlation plot 
@@ -647,7 +648,7 @@ species_df <- data %>% filter(!is.na(number_of_fish)) %>%
   group_by(scientific_name) %>%
   mutate(species_total_catch = sum(number_of_fish)) %>% ungroup() #must ungroup for following commands 
 
-# use the above metric to subset to top 10 of those 
+# use the above metric to subset to top X of those 
 species_keep <- species_df %>% select(scientific_name, species_total_catch) %>% 
   distinct() %>% slice_max(species_total_catch, n = 20) 
 
@@ -1188,6 +1189,53 @@ biomass_df %>%
   write.csv("data/full_species_list.csv")
 ```
 
+## Nutrient info 
+
+```{r}
+nutrient_raw <- read.csv("data/SpeciesData_GatedTraps_Galligan.csv", sep = ",", header=TRUE) %>%
+  dplyr::rename(scientific_name = Species)
+
+nut_biomassdf <- left_join(biomass_df, nutrient_raw, by = "scientific_name")
+
+### to calculate nutrient components per group of fish per survey 
+## W_g = calculated biomass (g)
+## Nutrient_mgPer100g 
+## (W_g/100)*Nutrient_mgPer100g = nutrientmg for that group of fish in that survey 
+nut_biomassdf <- nut_biomassdf %>%
+  # calculating nutrient for each scientific name within a survey 
+  mutate(group_Calcium = (W_g/100)*Calcium_mgPer100g,
+         group_Iron = (W_g/100)*Iron_mgPer100g,
+         group_Omega3 = (W_g/100)*Omega3_gPer100g,
+         group_Protein = (W_g/100)*Protein_gPer100g,
+         group_VitaminA = (W_g/100)*VitaminA_ugPer100g,
+         group_Selenium = (W_g/100)*Selenium_ugPer100g,
+         group_Zinc = (W_g/100)*Zinc_mgPer100g) %>% 
+  # calculating total nutrient for each survey 
+  group_by(survey_id) %>%
+  mutate(total_Calcium = sum(group_Calcium)/total_traps_collected,
+         total_Iron = sum(group_Iron)/total_traps_collected,
+         total_Omega3 = sum(group_Omega3)/total_traps_collected,
+         total_Protein = sum(group_Protein)/total_traps_collected,
+         total_VitaminA = sum(group_VitaminA)/total_traps_collected,
+         total_Selenium = sum(group_Selenium)/total_traps_collected,
+         total_Zinc = sum(group_Zinc)/total_traps_collected) %>% ungroup()
+
+nutrient_plot <- nut_biomassdf %>%
+  dplyr::select(survey_id, trap_type, total_Calcium, total_Iron, total_Omega3, total_Protein, total_VitaminA, 
+                total_Selenium, total_Zinc) %>%
+  gather(., "measurement", "value", 3:9) %>% distinct() %>%
+  filter(!is.na(trap_type)) %>%
+  ggplot(., aes(x=trap_type, y=value, color = trap_type)) + 
+  geom_boxplot() + geom_jitter(size=0.5, alpha=0.1, width=0.2) + theme_classic() +
+  facet_wrap(~measurement, scales = "free_y") + 
+  scale_color_manual(values = c( "#387780", "#FF8C61")) +
+  theme(strip.text.x = element_text(size = 12, color = "black", face = "bold"),
+  strip.text.y = element_text(size = 12, color = "black", face = "bold")) +
+  theme(strip.background = element_rect(color="black", fill="white", linewidth=0.5, linetype="solid")) +
+  ylab("nutritional content (mg survey-1)")
+
+ggsave(file="output/Nutrient.png", nutrient_plot, width = 10, height = 8, units = c("in"))
+```
 
 
 
