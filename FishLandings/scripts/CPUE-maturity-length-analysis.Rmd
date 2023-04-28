@@ -122,16 +122,10 @@ data <- data %>%
          value_per_trap = total_value_KES/total_traps_collected) %>% #divide total catch per survey id by total traps 
   dplyr::ungroup(survey_id)# ungroup
 
-data$catch_per_trap <- ifelse(data$catch_per_trap > 40, NA, data$catch_per_trap)
+data$catch_per_trap <- ifelse(data$catch_per_trap > 25, NA, data$catch_per_trap)
 
 ## checking catch per trap 
 hist(data$catch_per_trap)
-
-data %>% subset(trap_type == "Experimental") %>%
-  ggplot(aes(x=total_catch)) + geom_histogram()
-
-data %>% subset(trap_type == "Control") %>%
-  ggplot(aes(x=total_catch)) + geom_histogram()
 ```
 
 
@@ -332,7 +326,7 @@ CPUE_n <- modified_trap_df %>%
   geom_boxplot(outlier.size = 0, lwd=0.5) +
   #color_scale_manual(values = c(""))
     geom_point(size=0.75) +
-  theme_classic() + 
+  theme_classic() + facet_wrap(~enumerator, scales = "free_y") +
   ylab("Abundance (# of individuals per trap collected)") + #xlab("Type of trap") +
   theme(axis.text.x = element_text(vjust = 1.1)) #Set the text angle
 
@@ -397,7 +391,7 @@ hist(modified_trap_df$kg_per_trap)
 
 # basic grams per trap plot with no other variables 
 Yield_reported <- modified_trap_df %>% 
-  ggplot(aes(x=trap_type, y=kg_per_trap)) + 
+  ggplot(aes(x=trap_type, y=kg_per_trap)) + facet_wrap(~enumerator, scales = "free_y") +
   geom_boxplot(outlier.size = 0, lwd=0.5) +
     geom_point(size=0.75) +
   theme_classic() + 
@@ -523,13 +517,22 @@ data %>%
   mutate(richness = n_distinct(scientific_name),
          richness_trap = richness/total_traps_collected) %>%
   #filter(catch_per_trap < 10) %>%
-  ggplot(aes(x=trap_type, y=richness_trap, color=trap_type)) +
+  ggplot(aes(x=trap_type, y=richness, color=trap_type)) +
   scale_color_manual(values = c( "#387780", "#FF8C61")) +
   scale_fill_manual(values = c( "#387780", "#FF8C61")) +
-  theme_bw() + xlab("") + ylab("Richness (# of unique species trap-1)") +
+  theme_bw() + xlab("") + ylab("Richness (# of unique species per fishing trip)") +
   geom_boxplot() + geom_jitter(size=0.5, alpha=0.1, width=0.2) 
   #geom_point(aes(fill=trap_type), pch = 21, size=1, alpha=0.2) 
   #geom_smooth(aes(fill=trap_type), method="loess", se=TRUE, fullrange=TRUE, level=0.95, color="black")
+
+data %>%
+  select(survey_id, month, BMU, trap_type, catch_per_trap, 
+         scientific_name, total_traps_collected) %>% distinct() %>%
+  group_by(survey_id) %>%
+  mutate(richness = n_distinct(scientific_name)) %>%
+  ggplot(., aes(x = richness, fill = trap_type)) +                       # Draw overlaying histogram
+    geom_histogram(position = "identity", alpha = 0.4, bins = 10) + theme_bw() +
+  scale_fill_manual(values = c( "#387780", "#FF8C61")) 
 ```
 
 ## correlation plot 
@@ -550,11 +553,6 @@ corrplot(cor(correlation), addCoef.col = 1,    # Change font size of correlation
          number.cex = 1.3, cl.cex = 2.5, tl.col="black", tl.cex = 2)
 dev.off()
 ```
-
-
-
-
-
 
 ### Statistics on the above. 
 
@@ -655,7 +653,7 @@ species_keep <- species_df %>% select(scientific_name, species_total_catch) %>%
 # filter species df based on the species_keep list 
 species_df <- species_df %>% filter(scientific_name %in% species_keep$scientific_name)
 
-# double checking the above command worked - output should be only 5 
+# double checking the above command worked - output should be the n = value above  
 unique(sort(species_keep$scientific_name))
 ```
 
@@ -683,31 +681,99 @@ species_df %>%
 
 ## Economic Data
 
+Profit data from Gilligan's sheet. 
+
 ```{r}
-profit <- read_excel("output/statistics_v2.xlsx", sheet = "Profit sheet for R", skip=3) %>%
-  gather("key", "rev_KES", 2:21) %>% rename(scientific_name = Species) %>%
-  mutate(key = case_when(
-    key == "<16 cm...2" ~ "MAYUNGU Kaskazi cm<16",
-    key == ">16 cm...3" ~ "MAYUNGU Kaskazi cm>16",
-    key == "<16 cm...4" ~ "MAYUNGU Kusi cm<16",
-    key == ">16 cm...5" ~ "MAYUNGU Kusi cm>16",
-    key == "<10 cm...6" ~ "UYOMBO Kaskazi cm<10",
-    key == ">16 cm...7" ~ "UYOMBO Kaskazi cm>10",
-    key == "<10 cm...8" ~ "UYOMBO Kusi cm<10",
-    key == ">10 cm...9" ~ "UYOMBO Kusi cm>10",
-    key == "<10 cm...10" ~ "KURUWITU Kaskazi cm<10",
-    key == ">10 cm...11" ~ "KURUWITU Kaskazi cm>10",
-    key == "<10 cm...12" ~ "KURUWITU Kusi cm<10",
-    key == ">10 cm...13" ~ "KURUWITU Kusi cm>10",
-    key == "<15 cm...14" ~ "TAKAUNGU Kaskazi cm<15",
-    key == ">15 cm...15" ~ "TAKAUNGU Kaskazi cm>15",
-    key == "<15 cm...16" ~ "TAKAUNGU Kusi cm<15",
-    key == ">15 cm...17" ~ "TAKAUNGU Kusi cm>15",
-    key == "<10 cm...18" ~ "KANAMI Kaskazi cm<10",
-    key == ">10 cm...19" ~ "KANAMI Kaskazi cm>10",
-    key == "<10 cm...20" ~ "KANAMI Kusi cm<10",
-    key == ">10 cm...21" ~ "KANAMI Kusi cm>10")) %>%
-  separate(key, c("BMU", "Season", "Length_category"), sep = " ")
+gilligan_profit <- read.csv("data/SpeciesData_GatedTraps_Galligan.csv", header=TRUE, sep = ",") %>%
+  dplyr::select(Species, Price_KSHPerkg) %>% dplyr::rename(scientific_name = Species)
+
+## species df for profit analysis 
+species_df_forprofit <- species_df %>% select(survey_id, month, scientific_name, trap_type) %>% distinct()
+
+## adding gilligan to the species df above
+## need to also add the calculated biomass  values 
+## run the biomass_df chunk at the bottom of this script 
+biomass_df_forprofit <- biomass_df %>% 
+  dplyr::select(survey_id, scientific_name, trap_type, total_traps_collected, W_kg) %>% 
+  filter(!is.na(W_kg)) %>%
+  group_by(survey_id) %>% mutate(yield_calc_kg = sum(W_kg), 
+                                 yield_calc_kg_trap = yield_calc_kg/total_traps_collected) %>% 
+  ungroup() %>% distinct()
+
+gilligan_profit_data <- left_join(species_df_forprofit, gilligan_profit, by = "scientific_name") %>%
+  left_join(., biomass_df_forprofit, by = c("scientific_name", "survey_id", "trap_type")) %>% distinct() %>%
+  mutate(KSHperspp = Price_KSHPerkg*W_kg) %>% group_by(survey_id) %>%
+  mutate(KSHpersurvey = sum(KSHperspp)) %>% ungroup() %>%
+  mutate(KSHpertrap = KSHpersurvey/total_traps_collected)
+
+gilligan_profit_data_slim <- gilligan_profit_data %>% 
+  select(trap_type, month, survey_id, KSHpertrap) %>% distinct()
+
+biomass_df_forprofit_slim <- biomass_df_forprofit %>%
+  select(trap_type, survey_id, yield_calc_kg_trap) %>% distinct()
+
+gilligan_profit_data_means <- summarySE(data=gilligan_profit_data_slim, measurevar = c("KSHpertrap"), 
+                               groupvars = c("trap_type", "month"), na.rm = TRUE)
+
+gilligan_profit_data_slim %>% 
+  ggplot(., aes(x=month, y=KSHpertrap, color=trap_type)) +  
+  scale_color_manual(values = c( "#387780", "#FF8C61")) +
+  scale_fill_manual(values = c( "#387780", "#FF8C61")) +
+  theme_bw() + xlab("Month") + ylab("Revenue (KSH trap-1)") +
+  geom_line(data=gilligan_profit_data_means, aes(group = trap_type), size=0.5) +
+  geom_point(data = gilligan_profit_data_means, aes(x=month, y=KSHpertrap), size=1) +
+  geom_errorbar(data = gilligan_profit_data_means, aes(ymin=KSHpertrap-se, ymax=KSHpertrap+se), size=0.5, width=.2)
+
+### 
+KSHplot <- ggbetweenstats(data=gilligan_profit_data_slim, x = trap_type, y = KSHpertrap, 
+               type = "np", plot.type = "boxviolin", sample.size.label = TRUE,
+               mean.point.args = list(size = 2, color = "gray"),
+               mean.label.args = list(size = 2),
+               point.args = list(position = ggplot2::position_jitterdodge(dodge.width = 0.5), 
+                                 alpha= 0.2, size = 1.5, stroke = 0)) +
+  scale_color_manual(values = c( "#387780", "#FF8C61")) +
+  labs(x = "Trap Type", y = "KSH per trap") 
+
+Wkgplot <- ggbetweenstats(data=biomass_df_forprofit_slim, x = trap_type, y = yield_calc_kg_trap, 
+               type = "np", plot.type = "boxviolin", sample.size.label = TRUE,
+               mean.point.args = list(size = 2, color = "gray"),
+               mean.label.args = list(size = 2),
+               point.args = list(position = ggplot2::position_jitterdodge(dodge.width = 0.5), 
+                                 alpha= 0.2, size = 1.5, stroke = 0)) +
+  scale_color_manual(values = c( "#387780", "#FF8C61")) +
+  labs(x = "Trap Type", y = "Yield (kg) per trap")
+
+ggsave(file="output/Value_calculated.png", KSHplot, width = 4.5, height = 5, units = c("in"))
+ggsave(file="output/Yield_calculated.png", Wkgplot, width = 4.5, height = 5, units = c("in"))
+```
+
+Profit data from Kenya team. 
+
+```{r}
+# profit <- read_excel("output/statistics_v2.xlsx", sheet = "Profit sheet for R", skip=3) %>%
+#   gather("key", "rev_KES", 2:21) %>% rename(scientific_name = Species) %>%
+#   mutate(key = case_when(
+#     key == "<16 cm...2" ~ "MAYUNGU Kaskazi cm<16",
+#     key == ">16 cm...3" ~ "MAYUNGU Kaskazi cm>16",
+#     key == "<16 cm...4" ~ "MAYUNGU Kusi cm<16",
+#     key == ">16 cm...5" ~ "MAYUNGU Kusi cm>16",
+#     key == "<10 cm...6" ~ "UYOMBO Kaskazi cm<10",
+#     key == ">16 cm...7" ~ "UYOMBO Kaskazi cm>10",
+#     key == "<10 cm...8" ~ "UYOMBO Kusi cm<10",
+#     key == ">10 cm...9" ~ "UYOMBO Kusi cm>10",
+#     key == "<10 cm...10" ~ "KURUWITU Kaskazi cm<10",
+#     key == ">10 cm...11" ~ "KURUWITU Kaskazi cm>10",
+#     key == "<10 cm...12" ~ "KURUWITU Kusi cm<10",
+#     key == ">10 cm...13" ~ "KURUWITU Kusi cm>10",
+#     key == "<15 cm...14" ~ "TAKAUNGU Kaskazi cm<15",
+#     key == ">15 cm...15" ~ "TAKAUNGU Kaskazi cm>15",
+#     key == "<15 cm...16" ~ "TAKAUNGU Kusi cm<15",
+#     key == ">15 cm...17" ~ "TAKAUNGU Kusi cm>15",
+#     key == "<10 cm...18" ~ "KANAMI Kaskazi cm<10",
+#     key == ">10 cm...19" ~ "KANAMI Kaskazi cm>10",
+#     key == "<10 cm...20" ~ "KANAMI Kusi cm<10",
+#     key == ">10 cm...21" ~ "KANAMI Kusi cm>10")) %>%
+#   separate(key, c("BMU", "Season", "Length_category"), sep = " ")
 
 profit_data <- species_df %>%
   #full_join(species_df, profit, by = "scientific_name") %>%
@@ -1143,6 +1209,7 @@ biomass_df <- biomass_df %>%
   mutate(W_g = (a*(median_length^b))*number_of_fish,
          W_kg = W_g/1000) %>% # calculating biomass from W=aL^b 
   group_by(survey_id) %>%
+  filter(!is.na(W_kg)) %>%
   mutate(calculated_total_biomass = sum(W_kg),
          calculated_biomass_pertrap = calculated_total_biomass/total_traps_collected) %>% 
   ungroup()
@@ -1203,22 +1270,22 @@ nut_biomassdf <- left_join(biomass_df, nutrient_raw, by = "scientific_name")
 ## (W_g/100)*Nutrient_mgPer100g = nutrientmg for that group of fish in that survey 
 nut_biomassdf <- nut_biomassdf %>%
   # calculating nutrient for each scientific name within a survey 
-  mutate(group_Calcium = (W_g/100)*Calcium_mgPer100g,
-         group_Iron = (W_g/100)*Iron_mgPer100g,
-         group_Omega3 = (W_g/100)*Omega3_gPer100g,
-         group_Protein = (W_g/100)*Protein_gPer100g,
-         group_VitaminA = (W_g/100)*VitaminA_ugPer100g,
-         group_Selenium = (W_g/100)*Selenium_ugPer100g,
-         group_Zinc = (W_g/100)*Zinc_mgPer100g) %>% 
+  mutate(spp_Calcium = (W_g/100)*Calcium_mgPer100g,
+         spp_Iron = (W_g/100)*Iron_mgPer100g,
+         spp_Omega3 = (W_g/100)*Omega3_gPer100g,
+         spp_Protein = (W_g/100)*Protein_gPer100g,
+         spp_VitaminA = (W_g/100)*VitaminA_ugPer100g,
+         spp_Selenium = (W_g/100)*Selenium_ugPer100g,
+         spp_Zinc = (W_g/100)*Zinc_mgPer100g) %>% 
   # calculating total nutrient for each survey 
   group_by(survey_id) %>%
-  mutate(total_Calcium = sum(group_Calcium)/total_traps_collected,
-         total_Iron = sum(group_Iron)/total_traps_collected,
-         total_Omega3 = sum(group_Omega3)/total_traps_collected,
-         total_Protein = sum(group_Protein)/total_traps_collected,
-         total_VitaminA = sum(group_VitaminA)/total_traps_collected,
-         total_Selenium = sum(group_Selenium)/total_traps_collected,
-         total_Zinc = sum(group_Zinc)/total_traps_collected) %>% ungroup()
+  mutate(pertrap_Calcium = sum(spp_Calcium)/total_traps_collected,
+         pertrap_Iron = sum(spp_Iron)/total_traps_collected,
+         pertrap_Omega3 = sum(spp_Omega3)/total_traps_collected,
+         pertrap_Protein = sum(spp_Protein)/total_traps_collected,
+         pertrap_VitaminA = sum(spp_VitaminA)/total_traps_collected,
+         pertrap_Selenium = sum(spp_Selenium)/total_traps_collected,
+         pertrap_Zinc = sum(spp_Zinc)/total_traps_collected) %>% ungroup()
 
 nutrient_plot <- nut_biomassdf %>%
   dplyr::select(survey_id, trap_type, total_Calcium, total_Iron, total_Omega3, total_Protein, total_VitaminA, 
@@ -1237,6 +1304,51 @@ nutrient_plot <- nut_biomassdf %>%
 ggsave(file="output/Nutrient.png", nutrient_plot, width = 10, height = 8, units = c("in"))
 ```
 
+Individual plots 
+
+```{r}
+nut_biomassdf_individual<- nut_biomassdf %>% 
+  select(survey_id, total_Zinc, trap_type) %>% distinct() %>%
+  ggbetweenstats(., x = trap_type, y = total_Zinc, 
+               type = "np", plot.type = "boxviolin", sample.size.label = TRUE,
+               mean.point.args = list(size = 2, color = "gray"),
+               mean.label.args = list(size = 2),
+               point.args = list(position = ggplot2::position_jitterdodge(dodge.width = 0.5), 
+                                 alpha= 0.2, size = 1.5, stroke = 0)) +
+  scale_color_manual(values = c( "#387780", "#FF8C61")) +
+  labs(x = "Trap Type", y = "Zinc (mg per trap)")
+
+ggsave(file="output/Nutrient_Zinc_calculated.png", nut_biomassdf_individual, width = 4.5, height = 5, units = c("in"))
+```
+
+### Creating dataframe for collaborators
+
+```{r}
+collabdf1 <- data %>% dplyr::select(survey_id, Operation_date, year, month, day, enumerator, landing_site, 
+                                    BMU, fisher_id, household_id) %>% distinct()
+
+collabdf2 <- modified_trap_df %>% 
+  dplyr::select(survey_id, trap_type, total_traps_collected, kg_per_trap, catch_per_trap, value_per_trap) %>%
+  dplyr::rename(reported_kg_trap = kg_per_trap) %>% dplyr::rename(CPUE = catch_per_trap) %>%
+  dplyr::rename(reported_KES_trap = value_per_trap) %>% distinct()
+
+collabdf3 <- nut_biomassdf %>% dplyr::select(-Operation_date, -year, -month, -day, -enumerator, -trap_type,
+                                             -total_traps_collected, -total_biomass_kg, -total_value_KES,
+                                             -length_cm, -number_of_fish, -crew_size_corrected,
+                                             -median_length, -FishGroups, -EnglishName) %>% distinct()
+
+collabdf4 <- gilligan_profit_data %>% 
+  dplyr::select(survey_id, scientific_name, KSHperspp, KSHpersurvey, KSHpertrap) %>% distinct()
+
+collabdf <- left_join(collabdf1, collabdf2, by = "survey_id") %>% 
+  full_join(., collabdf3, by = "survey_id") %>%
+  full_join(., collabdf4, by = c("survey_id", "scientific_name")) %>% distinct()
+
+collabdf1 %>% write.csv("output/survey_metainfo.csv")
+collabdf2 %>% write.csv("output/survey_reported_pertrap_metrics.csv")
+collabdf3 %>% write.csv("output/survey_biomass_nutrient.csv")
+collabdf4 %>% write.csv("output/survey_revenue.csv")
+```
 
 
 
