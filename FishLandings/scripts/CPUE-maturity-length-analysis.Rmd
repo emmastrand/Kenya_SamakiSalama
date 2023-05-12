@@ -1344,12 +1344,30 @@ collabdf <- left_join(collabdf1, collabdf2, by = "survey_id") %>%
   full_join(., collabdf3, by = "survey_id") %>%
   full_join(., collabdf4, by = c("survey_id", "scientific_name")) %>% distinct()
 
+# collabdf1 %>% write.csv("output/survey_metainfo.csv")
+# collabdf2 %>% write.csv("output/survey_reported_pertrap_metrics.csv")
+# collabdf3 %>% write.csv("output/survey_biomass_nutrient.csv")
+# collabdf4 %>% write.csv("output/survey_revenue.csv")
+```
+
+Editing dataframe for collaborators 
+
+```{r}
+collabdf1 <- read.csv("output/survey_metainfo.csv") %>% dplyr::select(-X)
+collabdf2 <- read.csv("output/survey_reported_pertrap_metrics.csv") %>% dplyr::select(-X)
+collabdf3 <- read.csv("output/survey_biomass_nutrient.csv") %>% dplyr::select(-X) %>%
+  dplyr::select(survey_id, calculated_total_biomass, calculated_biomass_pertrap, 
+                pertrap_Calcium, pertrap_Iron, pertrap_Omega3, pertrap_Protein, 
+                pertrap_VitaminA, pertrap_Selenium, pertrap_Zinc) %>%
+  dplyr::rename(calculated_biomass_persurvey = calculated_total_biomass) %>% distinct()
+collabdf4 <- read.csv("output/survey_revenue.csv") %>% dplyr::select(-X) %>%
+  dplyr::select(survey_id, KSHpersurvey, KSHpertrap) %>% distinct()
+
 collabdf1 %>% write.csv("output/survey_metainfo.csv")
 collabdf2 %>% write.csv("output/survey_reported_pertrap_metrics.csv")
 collabdf3 %>% write.csv("output/survey_biomass_nutrient.csv")
 collabdf4 %>% write.csv("output/survey_revenue.csv")
 ```
-
 
 
 
