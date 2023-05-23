@@ -128,11 +128,6 @@ data$catch_per_trap <- ifelse(data$catch_per_trap > 25, NA, data$catch_per_trap)
 hist(data$catch_per_trap)
 ```
 
-
-
-
-
-
 ## Calculating top species 
 
 ```{r}
@@ -679,203 +674,7 @@ species_df %>%
   theme(axis.text.x = element_text()) #Set the text angle
 ```
 
-## Economic Data
 
-Profit data from Gilligan's sheet. 
-
-```{r}
-gilligan_profit <- read.csv("data/SpeciesData_GatedTraps_Galligan.csv", header=TRUE, sep = ",") %>%
-  dplyr::select(Species, Price_KSHPerkg) %>% dplyr::rename(scientific_name = Species)
-
-## species df for profit analysis 
-species_df_forprofit <- species_df %>% select(survey_id, month, scientific_name, trap_type) %>% distinct()
-
-## adding gilligan to the species df above
-## need to also add the calculated biomass  values 
-## run the biomass_df chunk at the bottom of this script 
-biomass_df_forprofit <- biomass_df %>% 
-  dplyr::select(survey_id, scientific_name, trap_type, total_traps_collected, W_kg) %>% 
-  filter(!is.na(W_kg)) %>%
-  group_by(survey_id) %>% mutate(yield_calc_kg = sum(W_kg), 
-                                 yield_calc_kg_trap = yield_calc_kg/total_traps_collected) %>% 
-  ungroup() %>% distinct()
-
-gilligan_profit_data <- left_join(species_df_forprofit, gilligan_profit, by = "scientific_name") %>%
-  left_join(., biomass_df_forprofit, by = c("scientific_name", "survey_id", "trap_type")) %>% distinct() %>%
-  mutate(KSHperspp = Price_KSHPerkg*W_kg) %>% group_by(survey_id) %>%
-  mutate(KSHpersurvey = sum(KSHperspp)) %>% ungroup() %>%
-  mutate(KSHpertrap = KSHpersurvey/total_traps_collected)
-
-gilligan_profit_data_slim <- gilligan_profit_data %>% 
-  select(trap_type, month, survey_id, KSHpertrap) %>% distinct()
-
-biomass_df_forprofit_slim <- biomass_df_forprofit %>%
-  select(trap_type, survey_id, yield_calc_kg_trap) %>% distinct()
-
-gilligan_profit_data_means <- summarySE(data=gilligan_profit_data_slim, measurevar = c("KSHpertrap"), 
-                               groupvars = c("trap_type", "month"), na.rm = TRUE)
-
-gilligan_profit_data_slim %>% 
-  ggplot(., aes(x=month, y=KSHpertrap, color=trap_type)) +  
-  scale_color_manual(values = c( "#387780", "#FF8C61")) +
-  scale_fill_manual(values = c( "#387780", "#FF8C61")) +
-  theme_bw() + xlab("Month") + ylab("Revenue (KSH trap-1)") +
-  geom_line(data=gilligan_profit_data_means, aes(group = trap_type), size=0.5) +
-  geom_point(data = gilligan_profit_data_means, aes(x=month, y=KSHpertrap), size=1) +
-  geom_errorbar(data = gilligan_profit_data_means, aes(ymin=KSHpertrap-se, ymax=KSHpertrap+se), size=0.5, width=.2)
-
-### 
-KSHplot <- ggbetweenstats(data=gilligan_profit_data_slim, x = trap_type, y = KSHpertrap, 
-               type = "np", plot.type = "boxviolin", sample.size.label = TRUE,
-               mean.point.args = list(size = 2, color = "gray"),
-               mean.label.args = list(size = 2),
-               point.args = list(position = ggplot2::position_jitterdodge(dodge.width = 0.5), 
-                                 alpha= 0.2, size = 1.5, stroke = 0)) +
-  scale_color_manual(values = c( "#387780", "#FF8C61")) +
-  labs(x = "Trap Type", y = "KSH per trap") 
-
-Wkgplot <- ggbetweenstats(data=biomass_df_forprofit_slim, x = trap_type, y = yield_calc_kg_trap, 
-               type = "np", plot.type = "boxviolin", sample.size.label = TRUE,
-               mean.point.args = list(size = 2, color = "gray"),
-               mean.label.args = list(size = 2),
-               point.args = list(position = ggplot2::position_jitterdodge(dodge.width = 0.5), 
-                                 alpha= 0.2, size = 1.5, stroke = 0)) +
-  scale_color_manual(values = c( "#387780", "#FF8C61")) +
-  labs(x = "Trap Type", y = "Yield (kg) per trap")
-
-ggsave(file="output/Value_calculated.png", KSHplot, width = 4.5, height = 5, units = c("in"))
-ggsave(file="output/Yield_calculated.png", Wkgplot, width = 4.5, height = 5, units = c("in"))
-```
-
-Profit data from Kenya team. 
-
-```{r}
-# profit <- read_excel("output/statistics_v2.xlsx", sheet = "Profit sheet for R", skip=3) %>%
-#   gather("key", "rev_KES", 2:21) %>% rename(scientific_name = Species) %>%
-#   mutate(key = case_when(
-#     key == "<16 cm...2" ~ "MAYUNGU Kaskazi cm<16",
-#     key == ">16 cm...3" ~ "MAYUNGU Kaskazi cm>16",
-#     key == "<16 cm...4" ~ "MAYUNGU Kusi cm<16",
-#     key == ">16 cm...5" ~ "MAYUNGU Kusi cm>16",
-#     key == "<10 cm...6" ~ "UYOMBO Kaskazi cm<10",
-#     key == ">16 cm...7" ~ "UYOMBO Kaskazi cm>10",
-#     key == "<10 cm...8" ~ "UYOMBO Kusi cm<10",
-#     key == ">10 cm...9" ~ "UYOMBO Kusi cm>10",
-#     key == "<10 cm...10" ~ "KURUWITU Kaskazi cm<10",
-#     key == ">10 cm...11" ~ "KURUWITU Kaskazi cm>10",
-#     key == "<10 cm...12" ~ "KURUWITU Kusi cm<10",
-#     key == ">10 cm...13" ~ "KURUWITU Kusi cm>10",
-#     key == "<15 cm...14" ~ "TAKAUNGU Kaskazi cm<15",
-#     key == ">15 cm...15" ~ "TAKAUNGU Kaskazi cm>15",
-#     key == "<15 cm...16" ~ "TAKAUNGU Kusi cm<15",
-#     key == ">15 cm...17" ~ "TAKAUNGU Kusi cm>15",
-#     key == "<10 cm...18" ~ "KANAMI Kaskazi cm<10",
-#     key == ">10 cm...19" ~ "KANAMI Kaskazi cm>10",
-#     key == "<10 cm...20" ~ "KANAMI Kusi cm<10",
-#     key == ">10 cm...21" ~ "KANAMI Kusi cm>10")) %>%
-#   separate(key, c("BMU", "Season", "Length_category"), sep = " ")
-
-profit_data <- species_df %>%
-  #full_join(species_df, profit, by = "scientific_name") %>%
-  mutate(Season = case_when(
-    month == "Apr" | month == "May" | month == "Jun" |
-      month == "Jul" | month == "Aug" | month == "Sep" |
-      month == "Oct" ~ "Kusi",
-    month == "Nov" | month == "Dec" | month == "Jan" |
-      month == "Feb" | month == "Mar" ~ "Kaskazi")) %>%
-  mutate(Length_category = case_when(
-    BMU == "MAYUNGU" & median_length <= 16 ~ "cm<16",
-    BMU == "MAYUNGU" & median_length > 16 ~ "cm>16",
-    BMU == "UYOMBO" & median_length <= 10 ~ "cm<10",
-    BMU == "UYOMBO" & median_length > 10 ~ "cm>10",
-    BMU == "KURUWITU" & median_length <= 10 ~ "cm<10",
-    BMU == "KURUWITU" & median_length > 10 ~ "cm>10",
-    BMU == "TAKAUNGU" & median_length <= 15 ~ "cm<15",
-    BMU == "TAKAUNGU" & median_length > 15 ~ "cm>15",
-    BMU == "KANAMI" & median_length <= 10 ~ "cm<10",
-    BMU == "KANAMI" & median_length > 10 ~ "cm>10")) %>%
-  left_join(., profit, by = c("scientific_name", "BMU", "Season", "Length_category")) %>%
-  mutate(number_of_fish = if_else(is.na(number_of_fish), 1, number_of_fish)) %>% # replacing NAs with the value of 1
-  mutate(total_sppvalue = number_of_fish*rev_KES) %>%
-  group_by(survey_id) %>%
-  mutate(totalrev = sum(total_sppvalue),
-         rev_pertrap = totalrev/total_traps_collected,
-         rev_perman = rev_pertrap/`No. of fishers in crew`) %>% ungroup()
-
-profit_data_slim <- profit_data %>% 
-  select(survey_id, rev_pertrap, trap_type, month, Season, BMU, rev_perman) %>% distinct()
-profit_data_means <- summarySE(data=profit_data_slim, measurevar = c("rev_pertrap"), 
-                               groupvars = c("trap_type", "month"), na.rm = TRUE)
-profit_data_means <- profit_data_means %>% filter(!is.na(se)) %>%
-  rename(revT_se = se)
-profit_data_means2 <- summarySE(data=profit_data_slim, measurevar = c("rev_perman"), 
-                               groupvars = c("trap_type", "month"), na.rm = TRUE)
-profit_data_means2 <- profit_data_means2 %>% filter(!is.na(se)) %>%
-  rename(revTF_se = se)
-
-profit_together <- full_join(profit_data_means2, profit_data_means, by=c("trap_type", "month"))
-
-profit_data_slim %>% 
-  ggplot(., aes(x=month, y=rev_pertrap, color=trap_type)) +  
-  scale_color_manual(values = c( "#387780", "#FF8C61")) +
-  scale_fill_manual(values = c( "#387780", "#FF8C61")) +
-  theme_bw() + xlab("Month") + ylab("Revenue (KES trap-1)") +
-  #geom_boxplot()
-  geom_line(data=profit_data_means, aes(group = trap_type), size=0.5) +
-  geom_point(data = profit_data_means, aes(x=month, y=rev_pertrap), size=1) +
-  geom_errorbar(data = profit_data_means, aes(ymin=rev_pertrap-revT_se, ymax=rev_pertrap+revT_se), size=0.5, width=.2)
-
-profit_data_slim %>% 
-  ggplot(., aes(x=month, y=rev_perman, color=trap_type)) +  
-  scale_color_manual(values = c( "#387780", "#FF8C61")) +
-  scale_fill_manual(values = c( "#387780", "#FF8C61")) +
-  theme_bw() + xlab("Month") + ylab("Revenue (KES trap-1 fisher-1)") +
-  #geom_boxplot()
-  geom_line(data=profit_data_means2, aes(group = trap_type), size=0.5) +
-  geom_point(data = profit_data_means2, aes(x=month, y=rev_perman), size=1) +
-  geom_errorbar(data = profit_data_means2, aes(ymin=rev_perman-revTF_se, ymax=rev_perman+revTF_se), size=0.5, width=.2)
-
-ggplot(profit_together, aes(x=month, color=trap_type)) +
-  geom_line(aes(y=rev_pertrap, group = trap_type), size=1) +
-  geom_line(aes(y=rev_perman, group = trap_type), size=1, lty = "dotted") +
-  theme_bw() +
-  scale_color_manual(values = c( "#387780", "#FF8C61")) +
-  geom_point(aes(x=month, y=rev_perman), size=1) +
-  geom_errorbar(aes(ymin=rev_perman-revTF_se, ymax=rev_perman+revTF_se), size=0.75, width=.2) +
-  geom_point(aes(x=month, y=rev_pertrap), size=1) +
-  geom_errorbar(aes(ymin=rev_pertrap-revT_se, ymax=rev_pertrap+revT_se), size=0.75, width=.2)
-
-
-profit_stats <- summarySE(profit_data, measurevar = c("catch_per_trap"), 
-                               groupvars = c("`value (KES)`", "trap_type"))
-
-## value (KES), catch_per_trap 
-profit_data %>% 
-  ggplot(aes(x=`value (KES)`, y=catch_per_trap)) +
-  theme_classic() + 
-  geom_jitter(alpha=0.05, aes(color=trap_type)) + 
-  geom_point(data = profit_stats, aes(x=`value (KES)`, y=catch_per_trap), size=3) +
-  geom_errorbar(data = profit_stats, aes(ymin=catch_per_trap-se, ymax=catch_per_trap+se), size=0.5, width=.1) 
-
-profit_fig <- profit_stats %>% subset(`value (KES)` == "350") %>%
-  ggplot(aes(x=`value (KES)`, y=catch_per_trap)) +
-  theme_classic() + 
-  theme(legend.position = "none") +
-  geom_point(aes(color=trap_type), size=1) +
-  ylab("CPUE (n trap-1)") +
-  geom_errorbar(aes(ymin=catch_per_trap-se, ymax=catch_per_trap+se), size=.5, width=0) 
-
-ggsave(file="output/Profit-350.png", profit_fig, width = 2, height = 4, units = c("in"))
-
-profit_fig <- profit_stats %>% ggplot(aes(x=trap_type, y=catch_per_trap)) +
-  theme_classic() + 
-  facet_wrap(~`value (KES)`, scales = "free", nrow=1, ncol=4) +
-  geom_point(size=2, alpha=0.2) +
-  xlab("") + ylab("CPUE (n trap-1)") +
-  geom_errorbar(data = profit_stats, aes(ymin=catch_per_trap-se, ymax=catch_per_trap+se), size=.5, width=0) 
-
-#ggsave(file="output/Profit.png", profit_fig, width = 7, height = 4, units = c("in"))
-```
 
 
 
@@ -1127,7 +926,7 @@ Left off at FishBase R having SSL certificate problems. Download a and b from fi
 
 ```{r}
 #remotes::install_github("ropensci/rfishbase")
-library("rfishbase")
+#library("rfishbase")
 #library(curl)
 #install.packages("curl", type = "source")
 ```
@@ -1256,6 +1055,204 @@ biomass_df %>%
   write.csv("data/full_species_list.csv")
 ```
 
+## Economic Data
+
+Profit data from Gilligan's sheet. 
+
+```{r}
+gilligan_profit <- read.csv("data/SpeciesData_GatedTraps_Galligan.csv", header=TRUE, sep = ",") %>%
+  dplyr::select(Species, Price_KSHPerkg) %>% dplyr::rename(scientific_name = Species)
+
+## species df for profit analysis 
+species_df_forprofit <- species_df %>% select(survey_id, month, scientific_name, trap_type) %>% distinct()
+
+## adding gilligan to the species df above
+## need to also add the calculated biomass  values 
+## run the biomass_df chunk at the bottom of this script 
+biomass_df_forprofit <- biomass_df %>% 
+  dplyr::select(survey_id, scientific_name, trap_type, total_traps_collected, W_kg, length_corrected) %>% 
+  filter(!is.na(W_kg)) %>%
+  group_by(survey_id) %>% mutate(yield_calc_kg = sum(W_kg), 
+                                 yield_calc_kg_trap = yield_calc_kg/total_traps_collected) %>% 
+  ungroup() %>% distinct()
+
+gilligan_profit_data <- left_join(species_df_forprofit, gilligan_profit, by = "scientific_name") %>%
+  left_join(., biomass_df_forprofit, by = c("scientific_name", "survey_id", "trap_type")) %>% distinct() %>%
+  mutate(KSHperspp = Price_KSHPerkg*W_kg) %>% group_by(survey_id) %>%
+  mutate(KSHpersurvey = sum(KSHperspp)) %>% ungroup() %>%
+  mutate(KSHpertrap = KSHpersurvey/total_traps_collected)
+
+gilligan_profit_data_slim <- gilligan_profit_data %>% 
+  select(trap_type, month, survey_id, KSHpertrap) %>% distinct()
+
+biomass_df_forprofit_slim <- biomass_df_forprofit %>%
+  select(trap_type, survey_id, yield_calc_kg_trap) %>% distinct()
+
+gilligan_profit_data_means <- summarySE(data=gilligan_profit_data_slim, measurevar = c("KSHpertrap"), 
+                               groupvars = c("trap_type", "month"), na.rm = TRUE)
+
+gilligan_profit_data_slim %>% 
+  ggplot(., aes(x=month, y=KSHpertrap, color=trap_type)) +  
+  scale_color_manual(values = c( "#387780", "#FF8C61")) +
+  scale_fill_manual(values = c( "#387780", "#FF8C61")) +
+  theme_bw() + xlab("Month") + ylab("Revenue (KSH trap-1)") +
+  geom_line(data=gilligan_profit_data_means, aes(group = trap_type), size=0.5) +
+  geom_point(data = gilligan_profit_data_means, aes(x=month, y=KSHpertrap), size=1) +
+  geom_errorbar(data = gilligan_profit_data_means, aes(ymin=KSHpertrap-se, ymax=KSHpertrap+se), size=0.5, width=.2)
+
+### 
+KSHplot <- ggbetweenstats(data=gilligan_profit_data_slim, x = trap_type, y = KSHpertrap, 
+               type = "np", plot.type = "boxviolin", sample.size.label = TRUE,
+               mean.point.args = list(size = 2, color = "gray"),
+               mean.label.args = list(size = 2),
+               point.args = list(position = ggplot2::position_jitterdodge(dodge.width = 0.5), 
+                                 alpha= 0.2, size = 1.5, stroke = 0)) +
+  scale_color_manual(values = c( "#387780", "#FF8C61")) +
+  labs(x = "Trap Type", y = "KSH per trap") 
+
+Wkgplot <- ggbetweenstats(data=biomass_df_forprofit_slim, x = trap_type, y = yield_calc_kg_trap, 
+               type = "np", plot.type = "boxviolin", sample.size.label = TRUE,
+               mean.point.args = list(size = 2, color = "gray"),
+               mean.label.args = list(size = 2),
+               point.args = list(position = ggplot2::position_jitterdodge(dodge.width = 0.5), 
+                                 alpha= 0.2, size = 1.5, stroke = 0)) +
+  scale_color_manual(values = c( "#387780", "#FF8C61")) +
+  labs(x = "Trap Type", y = "Yield (kg) per trap")
+
+ggsave(file="output/Value_calculated.png", KSHplot, width = 4.5, height = 5, units = c("in"))
+ggsave(file="output/Yield_calculated.png", Wkgplot, width = 4.5, height = 5, units = c("in"))
+```
+
+Profit data from Kenya team. 
+
+```{r}
+# profit <- read_excel("output/statistics_v2.xlsx", sheet = "Profit sheet for R", skip=3) %>%
+#   gather("key", "rev_KES", 2:21) %>% rename(scientific_name = Species) %>%
+#   mutate(key = case_when(
+#     key == "<16 cm...2" ~ "MAYUNGU Kaskazi cm<16",
+#     key == ">16 cm...3" ~ "MAYUNGU Kaskazi cm>16",
+#     key == "<16 cm...4" ~ "MAYUNGU Kusi cm<16",
+#     key == ">16 cm...5" ~ "MAYUNGU Kusi cm>16",
+#     key == "<10 cm...6" ~ "UYOMBO Kaskazi cm<10",
+#     key == ">16 cm...7" ~ "UYOMBO Kaskazi cm>10",
+#     key == "<10 cm...8" ~ "UYOMBO Kusi cm<10",
+#     key == ">10 cm...9" ~ "UYOMBO Kusi cm>10",
+#     key == "<10 cm...10" ~ "KURUWITU Kaskazi cm<10",
+#     key == ">10 cm...11" ~ "KURUWITU Kaskazi cm>10",
+#     key == "<10 cm...12" ~ "KURUWITU Kusi cm<10",
+#     key == ">10 cm...13" ~ "KURUWITU Kusi cm>10",
+#     key == "<15 cm...14" ~ "TAKAUNGU Kaskazi cm<15",
+#     key == ">15 cm...15" ~ "TAKAUNGU Kaskazi cm>15",
+#     key == "<15 cm...16" ~ "TAKAUNGU Kusi cm<15",
+#     key == ">15 cm...17" ~ "TAKAUNGU Kusi cm>15",
+#     key == "<10 cm...18" ~ "KANAMI Kaskazi cm<10",
+#     key == ">10 cm...19" ~ "KANAMI Kaskazi cm>10",
+#     key == "<10 cm...20" ~ "KANAMI Kusi cm<10",
+#     key == ">10 cm...21" ~ "KANAMI Kusi cm>10")) %>%
+#   separate(key, c("BMU", "Season", "Length_category"), sep = " ")
+# 
+# profit_data <- species_df %>%
+#   #full_join(species_df, profit, by = "scientific_name") %>%
+#   mutate(Season = case_when(
+#     month == "Apr" | month == "May" | month == "Jun" |
+#       month == "Jul" | month == "Aug" | month == "Sep" |
+#       month == "Oct" ~ "Kusi",
+#     month == "Nov" | month == "Dec" | month == "Jan" |
+#       month == "Feb" | month == "Mar" ~ "Kaskazi")) %>%
+#   mutate(Length_category = case_when(
+#     BMU == "MAYUNGU" & median_length <= 16 ~ "cm<16",
+#     BMU == "MAYUNGU" & median_length > 16 ~ "cm>16",
+#     BMU == "UYOMBO" & median_length <= 10 ~ "cm<10",
+#     BMU == "UYOMBO" & median_length > 10 ~ "cm>10",
+#     BMU == "KURUWITU" & median_length <= 10 ~ "cm<10",
+#     BMU == "KURUWITU" & median_length > 10 ~ "cm>10",
+#     BMU == "TAKAUNGU" & median_length <= 15 ~ "cm<15",
+#     BMU == "TAKAUNGU" & median_length > 15 ~ "cm>15",
+#     BMU == "KANAMI" & median_length <= 10 ~ "cm<10",
+#     BMU == "KANAMI" & median_length > 10 ~ "cm>10")) %>%
+#   left_join(., profit, by = c("scientific_name", "BMU", "Season", "Length_category")) %>%
+#   mutate(number_of_fish = if_else(is.na(number_of_fish), 1, number_of_fish)) %>% # replacing NAs with the value of 1
+#   mutate(total_sppvalue = number_of_fish*rev_KES) %>%
+#   group_by(survey_id) %>%
+#   mutate(totalrev = sum(total_sppvalue),
+#          rev_pertrap = totalrev/total_traps_collected,
+#          rev_perman = rev_pertrap/`No. of fishers in crew`) %>% ungroup()
+# 
+# profit_data_slim <- profit_data %>% 
+#   select(survey_id, rev_pertrap, trap_type, month, Season, BMU, rev_perman) %>% distinct()
+# profit_data_means <- summarySE(data=profit_data_slim, measurevar = c("rev_pertrap"), 
+#                                groupvars = c("trap_type", "month"), na.rm = TRUE)
+# profit_data_means <- profit_data_means %>% filter(!is.na(se)) %>%
+#   rename(revT_se = se)
+# profit_data_means2 <- summarySE(data=profit_data_slim, measurevar = c("rev_perman"), 
+#                                groupvars = c("trap_type", "month"), na.rm = TRUE)
+# profit_data_means2 <- profit_data_means2 %>% filter(!is.na(se)) %>%
+#   rename(revTF_se = se)
+# 
+# profit_together <- full_join(profit_data_means2, profit_data_means, by=c("trap_type", "month"))
+# 
+# profit_data_slim %>% 
+#   ggplot(., aes(x=month, y=rev_pertrap, color=trap_type)) +  
+#   scale_color_manual(values = c( "#387780", "#FF8C61")) +
+#   scale_fill_manual(values = c( "#387780", "#FF8C61")) +
+#   theme_bw() + xlab("Month") + ylab("Revenue (KES trap-1)") +
+#   #geom_boxplot()
+#   geom_line(data=profit_data_means, aes(group = trap_type), size=0.5) +
+#   geom_point(data = profit_data_means, aes(x=month, y=rev_pertrap), size=1) +
+#   geom_errorbar(data = profit_data_means, aes(ymin=rev_pertrap-revT_se, ymax=rev_pertrap+revT_se), size=0.5, width=.2)
+# 
+# profit_data_slim %>% 
+#   ggplot(., aes(x=month, y=rev_perman, color=trap_type)) +  
+#   scale_color_manual(values = c( "#387780", "#FF8C61")) +
+#   scale_fill_manual(values = c( "#387780", "#FF8C61")) +
+#   theme_bw() + xlab("Month") + ylab("Revenue (KES trap-1 fisher-1)") +
+#   #geom_boxplot()
+#   geom_line(data=profit_data_means2, aes(group = trap_type), size=0.5) +
+#   geom_point(data = profit_data_means2, aes(x=month, y=rev_perman), size=1) +
+#   geom_errorbar(data = profit_data_means2, aes(ymin=rev_perman-revTF_se, ymax=rev_perman+revTF_se), size=0.5, width=.2)
+# 
+# ggplot(profit_together, aes(x=month, color=trap_type)) +
+#   geom_line(aes(y=rev_pertrap, group = trap_type), size=1) +
+#   geom_line(aes(y=rev_perman, group = trap_type), size=1, lty = "dotted") +
+#   theme_bw() +
+#   scale_color_manual(values = c( "#387780", "#FF8C61")) +
+#   geom_point(aes(x=month, y=rev_perman), size=1) +
+#   geom_errorbar(aes(ymin=rev_perman-revTF_se, ymax=rev_perman+revTF_se), size=0.75, width=.2) +
+#   geom_point(aes(x=month, y=rev_pertrap), size=1) +
+#   geom_errorbar(aes(ymin=rev_pertrap-revT_se, ymax=rev_pertrap+revT_se), size=0.75, width=.2)
+# 
+# 
+# profit_stats <- summarySE(profit_data, measurevar = c("catch_per_trap"), 
+#                                groupvars = c("`value (KES)`", "trap_type"))
+# 
+# ## value (KES), catch_per_trap 
+# profit_data %>% 
+#   ggplot(aes(x=`value (KES)`, y=catch_per_trap)) +
+#   theme_classic() + 
+#   geom_jitter(alpha=0.05, aes(color=trap_type)) + 
+#   geom_point(data = profit_stats, aes(x=`value (KES)`, y=catch_per_trap), size=3) +
+#   geom_errorbar(data = profit_stats, aes(ymin=catch_per_trap-se, ymax=catch_per_trap+se), size=0.5, width=.1) 
+# 
+# profit_fig <- profit_stats %>% subset(`value (KES)` == "350") %>%
+#   ggplot(aes(x=`value (KES)`, y=catch_per_trap)) +
+#   theme_classic() + 
+#   theme(legend.position = "none") +
+#   geom_point(aes(color=trap_type), size=1) +
+#   ylab("CPUE (n trap-1)") +
+#   geom_errorbar(aes(ymin=catch_per_trap-se, ymax=catch_per_trap+se), size=.5, width=0) 
+# 
+# ggsave(file="output/Profit-350.png", profit_fig, width = 2, height = 4, units = c("in"))
+# 
+# profit_fig <- profit_stats %>% ggplot(aes(x=trap_type, y=catch_per_trap)) +
+#   theme_classic() + 
+#   facet_wrap(~`value (KES)`, scales = "free", nrow=1, ncol=4) +
+#   geom_point(size=2, alpha=0.2) +
+#   xlab("") + ylab("CPUE (n trap-1)") +
+#   geom_errorbar(data = profit_stats, aes(ymin=catch_per_trap-se, ymax=catch_per_trap+se), size=.5, width=0) 
+# 
+# #ggsave(file="output/Profit.png", profit_fig, width = 7, height = 4, units = c("in"))
+```
+
 ## Nutrient info 
 
 ```{r}
@@ -1288,8 +1285,8 @@ nut_biomassdf <- nut_biomassdf %>%
          pertrap_Zinc = sum(spp_Zinc)/total_traps_collected) %>% ungroup()
 
 nutrient_plot <- nut_biomassdf %>%
-  dplyr::select(survey_id, trap_type, total_Calcium, total_Iron, total_Omega3, total_Protein, total_VitaminA, 
-                total_Selenium, total_Zinc) %>%
+  dplyr::select(survey_id, trap_type, spp_Calcium, spp_Iron, spp_Omega3, spp_Protein, spp_VitaminA, 
+                spp_Selenium, spp_Zinc) %>%
   gather(., "measurement", "value", 3:9) %>% distinct() %>%
   filter(!is.na(trap_type)) %>%
   ggplot(., aes(x=trap_type, y=value, color = trap_type)) + 
@@ -1308,8 +1305,8 @@ Individual plots
 
 ```{r}
 nut_biomassdf_individual<- nut_biomassdf %>% 
-  select(survey_id, total_Zinc, trap_type) %>% distinct() %>%
-  ggbetweenstats(., x = trap_type, y = total_Zinc, 
+  select(survey_id, spp_Zinc, trap_type) %>% distinct() %>%
+  ggbetweenstats(., x = trap_type, y = spp_Zinc, 
                type = "np", plot.type = "boxviolin", sample.size.label = TRUE,
                mean.point.args = list(size = 2, color = "gray"),
                mean.label.args = list(size = 2),
@@ -1323,13 +1320,45 @@ ggsave(file="output/Nutrient_Zinc_calculated.png", nut_biomassdf_individual, wid
 
 ### Creating dataframe for collaborators
 
+Metadata (collabdf1)
+
+Per household category metrics:
+
+- Number of fish per home/fish dealer/etc per survey 
+- Calculated value (KSHperspp) 
+- Calculated biomass (W_kg) 
+- Calculated calcium (spp_Calcium)
+- Calculated iron (spp_Iron)
+- Calculated Omega3 (spp_Omega3)
+- Calculated Protein (spp_Protein)
+- Calculated Vitamin A (spp_VitaminA)
+- Calculated Selenium (spp_Selenium)
+- Calculated Zinc (spp_Zinc)
+
+Per trap metrics (collabdf2 & collabdf3) [not household level]: 
+
+- reported biomass (reported_kg_trap)
+- reported value (reported_KES_trap)
+- catch per unit effort (CPUE) 
+- Calculated value (KSHpersurvey & KSHpertrap) [collabdf3]
+- Calculated biomass kg (calculated_biomass_pertrap)
+- Calculated calcium (pertrap_Calcium)
+- Calculated iron (pertrap_Iron)
+- Calculated Omega3 (pertrap_Omega3)
+- Calculated Protein (pertrap_Protein)
+- Calculated Vitamin A (pertrap_VitaminA)
+- Calculated Selenium (pertrap_Selenium)
+- Calculated Zinc (pertrap_Zinc)
+
 ```{r}
 collabdf1 <- data %>% dplyr::select(survey_id, Operation_date, year, month, day, enumerator, landing_site, 
                                     BMU, fisher_id, household_id) %>% distinct()
 
 collabdf2 <- modified_trap_df %>% 
-  dplyr::select(survey_id, trap_type, total_traps_collected, kg_per_trap, catch_per_trap, value_per_trap) %>%
-  dplyr::rename(reported_kg_trap = kg_per_trap) %>% dplyr::rename(CPUE = catch_per_trap) %>%
+  dplyr::select(survey_id, trap_type, total_traps_collected, 
+                kg_per_trap, catch_per_trap, value_per_trap) %>%
+  dplyr::rename(reported_kg_trap = kg_per_trap) %>% 
+  dplyr::rename(CPUE = catch_per_trap) %>%
   dplyr::rename(reported_KES_trap = value_per_trap) %>% distinct()
 
 collabdf3 <- nut_biomassdf %>% dplyr::select(-Operation_date, -year, -month, -day, -enumerator, -trap_type,
@@ -1344,29 +1373,47 @@ collabdf <- left_join(collabdf1, collabdf2, by = "survey_id") %>%
   full_join(., collabdf3, by = "survey_id") %>%
   full_join(., collabdf4, by = c("survey_id", "scientific_name")) %>% distinct()
 
+
+precollab5 <- gilligan_profit_data %>% 
+  dplyr::select(survey_id, scientific_name, length_corrected, KSHperspp) %>% distinct()
+precollab5_2 <- nut_biomassdf %>% 
+  dplyr::select(survey_id, scientific_name, length_corrected, W_kg, spp_Zinc, spp_Selenium, spp_VitaminA, 
+                spp_Protein, spp_Omega3, spp_Iron, spp_Calcium) %>% distinct()
+
+collabdf5 <- data %>% 
+  dplyr::select(survey_id, Operation_date, year, month, day, enumerator, landing_site, 
+                BMU, fisher_id, household_id, scientific_name, 
+                destination, trap_type, number_of_fish, length_corrected) %>%
+  distinct() %>% 
+  mutate(number_of_fish = if_else(is.na(number_of_fish), 1, number_of_fish)) %>%
+  dplyr::full_join(., precollab5, by = c("survey_id","scientific_name", "length_corrected")) %>%
+  dplyr::full_join(., precollab5_2, by = c("survey_id","scientific_name", "length_corrected")) %>% 
+  distinct() %>% filter(!is.na(trap_type))
+
 # collabdf1 %>% write.csv("output/survey_metainfo.csv")
 # collabdf2 %>% write.csv("output/survey_reported_pertrap_metrics.csv")
 # collabdf3 %>% write.csv("output/survey_biomass_nutrient.csv")
 # collabdf4 %>% write.csv("output/survey_revenue.csv")
+collab5 %>% write.csv("output/takehome_metrics.csv")
 ```
 
 Editing dataframe for collaborators 
 
 ```{r}
-collabdf1 <- read.csv("output/survey_metainfo.csv") %>% dplyr::select(-X)
-collabdf2 <- read.csv("output/survey_reported_pertrap_metrics.csv") %>% dplyr::select(-X)
-collabdf3 <- read.csv("output/survey_biomass_nutrient.csv") %>% dplyr::select(-X) %>%
-  dplyr::select(survey_id, calculated_total_biomass, calculated_biomass_pertrap, 
-                pertrap_Calcium, pertrap_Iron, pertrap_Omega3, pertrap_Protein, 
-                pertrap_VitaminA, pertrap_Selenium, pertrap_Zinc) %>%
-  dplyr::rename(calculated_biomass_persurvey = calculated_total_biomass) %>% distinct()
-collabdf4 <- read.csv("output/survey_revenue.csv") %>% dplyr::select(-X) %>%
-  dplyr::select(survey_id, KSHpersurvey, KSHpertrap) %>% distinct()
-
-collabdf1 %>% write.csv("output/survey_metainfo.csv")
-collabdf2 %>% write.csv("output/survey_reported_pertrap_metrics.csv")
-collabdf3 %>% write.csv("output/survey_biomass_nutrient.csv")
-collabdf4 %>% write.csv("output/survey_revenue.csv")
+# collabdf1 <- read.csv("output/survey_metainfo.csv") %>% dplyr::select(-X)
+# collabdf2 <- read.csv("output/survey_reported_pertrap_metrics.csv") %>% dplyr::select(-X)
+# collabdf3 <- read.csv("output/survey_biomass_nutrient.csv") %>% dplyr::select(-X) #%>%
+#   # dplyr::select(survey_id, calculated_total_biomass, calculated_biomass_pertrap, 
+#   #               pertrap_Calcium, pertrap_Iron, pertrap_Omega3, pertrap_Protein, 
+#   #               pertrap_VitaminA, pertrap_Selenium, pertrap_Zinc) %>%
+#   # dplyr::rename(calculated_biomass_persurvey = calculated_total_biomass) %>% distinct()
+# collabdf4 <- read.csv("output/survey_revenue.csv") %>% dplyr::select(-X) #%>%
+#   #dplyr::select(survey_id, KSHpersurvey, KSHpertrap) %>% distinct()
+# 
+# collabdf1 %>% write.csv("output/survey_metainfo.csv")
+# collabdf2 %>% write.csv("output/survey_reported_pertrap_metrics.csv")
+# collabdf3 %>% write.csv("output/survey_biomass_nutrient.csv")
+# collabdf4 %>% write.csv("output/survey_revenue.csv")
 ```
 
 
