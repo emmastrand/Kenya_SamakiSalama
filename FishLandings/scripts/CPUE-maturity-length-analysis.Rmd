@@ -1388,13 +1388,37 @@ collabdf5 <- data %>%
   mutate(number_of_fish = if_else(is.na(number_of_fish), 1, number_of_fish)) %>%
   dplyr::full_join(., precollab5, by = c("survey_id","scientific_name", "length_corrected")) %>%
   dplyr::full_join(., precollab5_2, by = c("survey_id","scientific_name", "length_corrected")) %>% 
-  distinct() %>% filter(!is.na(trap_type))
+  distinct() %>% filter(!is.na(trap_type)) 
 
 # collabdf1 %>% write.csv("output/survey_metainfo.csv")
 # collabdf2 %>% write.csv("output/survey_reported_pertrap_metrics.csv")
 # collabdf3 %>% write.csv("output/survey_biomass_nutrient.csv")
 # collabdf4 %>% write.csv("output/survey_revenue.csv")
-collab5 %>% write.csv("output/takehome_metrics.csv")
+
+collabdf6 <- collabdf5 %>% dplyr::group_by(survey_id, destination) %>%
+  filter(!is.na(KSHperspp)) %>%
+  dplyr::mutate(fish_perdestination = sum(number_of_fish),
+         KSH_perdestination = sum(KSHperspp),
+         calculated_Kg_perdestination = sum(W_kg),
+         Zinc_perdestination = sum(spp_Zinc),
+         Selenium_perdestination = sum(spp_Selenium),
+         VitaminA_perdestination = sum(spp_VitaminA),
+         Protein_perdestination = sum(spp_Protein),
+         Omega3_perdestination = sum(spp_Omega3),
+         Iron_perdestination = sum(spp_Iron),
+         Calcium_perdestination = sum(spp_Calcium)) %>%
+  dplyr::select(-length_corrected, -number_of_fish, -scientific_name,
+                -KSHperspp, -W_kg, -spp_Zinc, -spp_Selenium, -spp_VitaminA,
+                -spp_Protein, -spp_Omega3, -spp_Iron, -spp_Calcium) %>%
+  distinct()
+
+home_df <- collabdf6 %>% subset(destination == "HOME")
+fishdealer_df <- collabdf6 %>% subset(destination == "FISH DEALER")
+mamakaranga_df <- collabdf6 %>% subset(destination == "MAMA KARANGA")
+
+home_df %>% write.csv("output/desintation_home.csv")
+fishdealer_df %>% write.csv("output/desintation_fishdealer.csv")
+mamakaranga_df %>% write.csv("output/desintation_mamakaranga.csv")
 ```
 
 Editing dataframe for collaborators 
