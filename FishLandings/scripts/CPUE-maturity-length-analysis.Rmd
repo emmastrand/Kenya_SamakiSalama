@@ -266,8 +266,10 @@ df_spp <- data %>% filter(!is.na(value_per_trap)) %>%
 exp <- df_spp %>% subset(trap_type == "Experimental") 
 con <- df_spp %>% subset(trap_type == "Control") 
 
+hist(modified_trap_df$value_per_trap)
+
 var.test(exp$value_per_trap, con$value_per_trap)
-t.test((kg_per_trap)~trap_type, data = df_spp, var.equal = FALSE)
+t.test((value_per_trap)~trap_type, data = modified_trap_df, var.equal = FALSE)
 wilcox.test(log10(kg_per_trap)~trap_type, data = df_spp, var.equal = FALSE)
 summarySE(df_spp, measurevar = c("value_per_trap"), groupvars = c("trap_type"))
 
@@ -312,7 +314,7 @@ Abundance = Catch per trap
 ```{r}
 ## 
 hist(log10(modified_trap_df$catch_per_trap))
-t.test((catch_per_trap)~trap_type, data = df_spp, var.equal = FALSE, na.rm=TRUE)
+t.test((catch_per_trap)~trap_type, data = modified_trap_df, var.equal = FALSE, na.rm=TRUE)
 wilcox.test(log10(catch_per_trap)~trap_type, data = df_spp, var.equal = FALSE)
 
 # basic total catch per trap with no other variables 
@@ -1091,7 +1093,7 @@ biomass_df_forprofit_slim <- biomass_df_forprofit %>%
 gilligan_profit_data_means <- summarySE(data=gilligan_profit_data_slim, measurevar = c("KSHpertrap"), 
                                groupvars = c("trap_type", "month"), na.rm = TRUE)
 
-gilligan_profit_data_slim %>% 
+profitplot1 <- gilligan_profit_data_slim %>% 
   ggplot(., aes(x=month, y=KSHpertrap, color=trap_type)) +  
   scale_color_manual(values = c( "#387780", "#FF8C61")) +
   scale_fill_manual(values = c( "#387780", "#FF8C61")) +
@@ -1099,6 +1101,8 @@ gilligan_profit_data_slim %>%
   geom_line(data=gilligan_profit_data_means, aes(group = trap_type), size=0.5) +
   geom_point(data = gilligan_profit_data_means, aes(x=month, y=KSHpertrap), size=1) +
   geom_errorbar(data = gilligan_profit_data_means, aes(ymin=KSHpertrap-se, ymax=KSHpertrap+se), size=0.5, width=.2)
+
+ggsave(file="output/Profit_calculated.png", profitplot1, width = 5.5, height = 3.5, units = c("in"))
 
 ### 
 KSHplot <- ggbetweenstats(data=gilligan_profit_data_slim, x = trap_type, y = KSHpertrap, 
@@ -1121,6 +1125,14 @@ Wkgplot <- ggbetweenstats(data=biomass_df_forprofit_slim, x = trap_type, y = yie
 
 ggsave(file="output/Value_calculated.png", KSHplot, width = 4.5, height = 5, units = c("in"))
 ggsave(file="output/Yield_calculated.png", Wkgplot, width = 4.5, height = 5, units = c("in"))
+
+t.test(KSHpertrap~trap_type, data = gilligan_profit_data_slim, var.equal = FALSE)
+
+KSHpertrap_trap_stats <- gilligan_profit_data_slim %>% 
+  filter(!is.na(KSHpertrap)) %>% filter_at(vars(KSHpertrap), all_vars(!is.infinite(.)))
+
+KSHpertrap_trap_stats <- summarySE(KSHpertrap_trap_stats, measurevar = c("KSHpertrap"), 
+                             groupvars = c("trap_type"))
 ```
 
 Profit data from Kenya team. 
@@ -1178,21 +1190,21 @@ Profit data from Kenya team.
 #          rev_pertrap = totalrev/total_traps_collected,
 #          rev_perman = rev_pertrap/`No. of fishers in crew`) %>% ungroup()
 # 
-# profit_data_slim <- profit_data %>% 
+# profit_data_slim <- profit_data %>%
 #   select(survey_id, rev_pertrap, trap_type, month, Season, BMU, rev_perman) %>% distinct()
-# profit_data_means <- summarySE(data=profit_data_slim, measurevar = c("rev_pertrap"), 
+# profit_data_means <- summarySE(data=profit_data_slim, measurevar = c("rev_pertrap"),
 #                                groupvars = c("trap_type", "month"), na.rm = TRUE)
 # profit_data_means <- profit_data_means %>% filter(!is.na(se)) %>%
 #   rename(revT_se = se)
-# profit_data_means2 <- summarySE(data=profit_data_slim, measurevar = c("rev_perman"), 
+# profit_data_means2 <- summarySE(data=profit_data_slim, measurevar = c("rev_perman"),
 #                                groupvars = c("trap_type", "month"), na.rm = TRUE)
 # profit_data_means2 <- profit_data_means2 %>% filter(!is.na(se)) %>%
 #   rename(revTF_se = se)
 # 
 # profit_together <- full_join(profit_data_means2, profit_data_means, by=c("trap_type", "month"))
 # 
-# profit_data_slim %>% 
-#   ggplot(., aes(x=month, y=rev_pertrap, color=trap_type)) +  
+# profitplot2 <- profit_data_slim %>%
+#   ggplot(., aes(x=month, y=rev_pertrap, color=trap_type)) +
 #   scale_color_manual(values = c( "#387780", "#FF8C61")) +
 #   scale_fill_manual(values = c( "#387780", "#FF8C61")) +
 #   theme_bw() + xlab("Month") + ylab("Revenue (KES trap-1)") +
@@ -1201,8 +1213,10 @@ Profit data from Kenya team.
 #   geom_point(data = profit_data_means, aes(x=month, y=rev_pertrap), size=1) +
 #   geom_errorbar(data = profit_data_means, aes(ymin=rev_pertrap-revT_se, ymax=rev_pertrap+revT_se), size=0.5, width=.2)
 # 
-# profit_data_slim %>% 
-#   ggplot(., aes(x=month, y=rev_perman, color=trap_type)) +  
+# ggsave(file="output/Profit_reported.png", profitplot2, width = 5.5, height = 3.5, units = c("in"))
+# 
+# profit_data_slim %>%
+#   ggplot(., aes(x=month, y=rev_perman, color=trap_type)) +
 #   scale_color_manual(values = c( "#387780", "#FF8C61")) +
 #   scale_fill_manual(values = c( "#387780", "#FF8C61")) +
 #   theme_bw() + xlab("Month") + ylab("Revenue (KES trap-1 fisher-1)") +
@@ -1222,33 +1236,33 @@ Profit data from Kenya team.
 #   geom_errorbar(aes(ymin=rev_pertrap-revT_se, ymax=rev_pertrap+revT_se), size=0.75, width=.2)
 # 
 # 
-# profit_stats <- summarySE(profit_data, measurevar = c("catch_per_trap"), 
+# profit_stats <- summarySE(profit_data, measurevar = c("catch_per_trap"),
 #                                groupvars = c("`value (KES)`", "trap_type"))
 # 
-# ## value (KES), catch_per_trap 
-# profit_data %>% 
+# ## value (KES), catch_per_trap
+# profit_data %>%
 #   ggplot(aes(x=`value (KES)`, y=catch_per_trap)) +
-#   theme_classic() + 
-#   geom_jitter(alpha=0.05, aes(color=trap_type)) + 
+#   theme_classic() +
+#   geom_jitter(alpha=0.05, aes(color=trap_type)) +
 #   geom_point(data = profit_stats, aes(x=`value (KES)`, y=catch_per_trap), size=3) +
-#   geom_errorbar(data = profit_stats, aes(ymin=catch_per_trap-se, ymax=catch_per_trap+se), size=0.5, width=.1) 
+#   geom_errorbar(data = profit_stats, aes(ymin=catch_per_trap-se, ymax=catch_per_trap+se), size=0.5, width=.1)
 # 
 # profit_fig <- profit_stats %>% subset(`value (KES)` == "350") %>%
 #   ggplot(aes(x=`value (KES)`, y=catch_per_trap)) +
-#   theme_classic() + 
+#   theme_classic() +
 #   theme(legend.position = "none") +
 #   geom_point(aes(color=trap_type), size=1) +
 #   ylab("CPUE (n trap-1)") +
-#   geom_errorbar(aes(ymin=catch_per_trap-se, ymax=catch_per_trap+se), size=.5, width=0) 
+#   geom_errorbar(aes(ymin=catch_per_trap-se, ymax=catch_per_trap+se), size=.5, width=0)
 # 
 # ggsave(file="output/Profit-350.png", profit_fig, width = 2, height = 4, units = c("in"))
 # 
 # profit_fig <- profit_stats %>% ggplot(aes(x=trap_type, y=catch_per_trap)) +
-#   theme_classic() + 
+#   theme_classic() +
 #   facet_wrap(~`value (KES)`, scales = "free", nrow=1, ncol=4) +
 #   geom_point(size=2, alpha=0.2) +
 #   xlab("") + ylab("CPUE (n trap-1)") +
-#   geom_errorbar(data = profit_stats, aes(ymin=catch_per_trap-se, ymax=catch_per_trap+se), size=.5, width=0) 
+#   geom_errorbar(data = profit_stats, aes(ymin=catch_per_trap-se, ymax=catch_per_trap+se), size=.5, width=0)
 # 
 # #ggsave(file="output/Profit.png", profit_fig, width = 7, height = 4, units = c("in"))
 ```
@@ -1285,7 +1299,7 @@ nut_biomassdf <- nut_biomassdf %>%
          pertrap_Zinc = sum(spp_Zinc)/total_traps_collected) %>% ungroup()
 
 nutrient_plot <- nut_biomassdf %>%
-  dplyr::select(survey_id, trap_type, spp_Calcium, spp_Iron, spp_Omega3, spp_Protein, spp_VitaminA, 
+  dplyr::select(survey_id, trap_type, pertrap_Calcium, pertrap_Iron, pertrap_Omega3, spp_Protein, spp_VitaminA, 
                 spp_Selenium, spp_Zinc) %>%
   gather(., "measurement", "value", 3:9) %>% distinct() %>%
   filter(!is.na(trap_type)) %>%
@@ -1305,17 +1319,27 @@ Individual plots
 
 ```{r}
 nut_biomassdf_individual<- nut_biomassdf %>% 
-  select(survey_id, spp_Zinc, trap_type) %>% distinct() %>%
-  ggbetweenstats(., x = trap_type, y = spp_Zinc, 
+  select(survey_id, pertrap_Zinc, trap_type) %>% distinct() %>%
+  ggbetweenstats(., x = trap_type, y = pertrap_Zinc, 
                type = "np", plot.type = "boxviolin", sample.size.label = TRUE,
                mean.point.args = list(size = 2, color = "gray"),
                mean.label.args = list(size = 2),
                point.args = list(position = ggplot2::position_jitterdodge(dodge.width = 0.5), 
                                  alpha= 0.2, size = 1.5, stroke = 0)) +
   scale_color_manual(values = c( "#387780", "#FF8C61")) +
-  labs(x = "Trap Type", y = "Zinc (mg per trap)")
+  labs(x = "Trap Type", y = "Zinc (per trap)")
 
 ggsave(file="output/Nutrient_Zinc_calculated.png", nut_biomassdf_individual, width = 4.5, height = 5, units = c("in"))
+
+nutrient_stats <- nut_biomassdf %>% 
+  select(survey_id, pertrap_Zinc, trap_type) %>% 
+  distinct() %>% filter(!is.na(pertrap_Zinc))
+
+nutrient_stats2 <- summarySE(nutrient_stats, measurevar = c("pertrap_Zinc"), 
+                             groupvars = c("trap_type"))
+
+t.test(pertrap_Zinc~trap_type, data = nutrient_stats, var.equal = FALSE)
+nutrient_stats2
 ```
 
 ### Creating dataframe for collaborators
@@ -1440,6 +1464,70 @@ Editing dataframe for collaborators
 # collabdf4 %>% write.csv("output/survey_revenue.csv")
 ```
 
+Calculate % take home 
+
+```{r}
+percent_takehome <- collabdf6 %>% ungroup() %>%
+  dplyr::select(survey_id, trap_type, destination, fish_perdestination) %>% distinct() %>%
+  group_by(survey_id) %>%
+  tidyr::spread(destination, fish_perdestination) %>%
+  replace(., is.na(.), 0) %>%
+  mutate(sum = rowSums(across(c(`FISH DEALER`, GIFT, HOME, `MAMA KARANGA`, OTHER))),
+         percent_home = (HOME/sum)*100) %>%
+  filter(HOME < 50)
+
+hist(percent_takehome$HOME)
+
+### % HOME
+percent_takehome_plot <-  percent_takehome %>% 
+  filter(percent_home > 0.00) %>%
+  ggbetweenstats(., x = trap_type, y = percent_home, 
+               type = "np", plot.type = "boxviolin", sample.size.label = TRUE,
+               mean.point.args = list(size = 2, color = "gray"),
+               mean.label.args = list(size = 2),
+               point.args = list(position = ggplot2::position_jitterdodge(dodge.width = 0.5), 
+                                 alpha= 0.2, size = 1.5, stroke = 0)) +
+  scale_color_manual(values = c( "#387780", "#FF8C61")) +
+  labs(x = "Trap Type", y = "% take home")
+
+ggsave(file="output/Takehome.png", percent_takehome_plot, width = 4.5, height = 5, units = c("in"))
+
+takehome_stats <- percent_takehome %>% 
+  filter(percent_home > 0.00)
+
+takehome_stats2 <- summarySE(takehome_stats, measurevar = c("percent_home"), 
+                             groupvars = c("trap_type"))
+
+t.test(percent_home~trap_type, data = takehome_stats, var.equal = FALSE)
+takehome_stats2
+
+### NO. HOME
+takehome_plot <-  percent_takehome %>% ungroup() %>%
+  filter(HOME > 0.00) %>%
+  ggbetweenstats(., x = trap_type, y = HOME, 
+               type = "np", plot.type = "boxviolin", sample.size.label = TRUE,
+               mean.point.args = list(size = 2, color = "gray"),
+               mean.label.args = list(size = 2),
+               point.args = list(position = ggplot2::position_jitterdodge(dodge.width = 0.05), 
+                                 alpha= 0.2, size = 1.5, stroke = 0)) +
+  scale_color_manual(values = c( "#387780", "#FF8C61")) +
+  labs(x = "Trap Type", y = "No. take home")
+
+ggsave(file="output/Takehome2.png", takehome_plot, width = 4.5, height = 5, units = c("in"))
+
+takehome_no_stats <- percent_takehome %>% 
+  filter(HOME > 0.00)
+
+percent_takehome %>% ungroup() %>% count(HOME)
+### 1,666/3,830
+
+takehome_no_stats2 <- summarySE(takehome_no_stats, measurevar = c("HOME"), 
+                             groupvars = c("trap_type"))
+
+t.test(HOME~trap_type, data = takehome_no_stats, var.equal = FALSE)
+takehome_no_stats2
+
+```
 
 
 
