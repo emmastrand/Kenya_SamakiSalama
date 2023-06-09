@@ -129,6 +129,12 @@ df <- full_join(fishing_operation, catch_composition, by = c("fisher_id", "Opera
   rename(total_biomass_kg = total_weight_kg) 
 ```
 
+    ## Warning in full_join(fishing_operation, catch_composition, by = c("fisher_id", : Detected an unexpected many-to-many relationship between `x` and `y`.
+    ## ℹ Row 1 of `x` matches multiple rows in `y`.
+    ## ℹ Row 5 of `y` matches multiple rows in `x`.
+    ## ℹ If a many-to-many relationship is expected, set `relationship =
+    ##   "many-to-many"` to silence this warning.
+
 ## Quality Control
 
 ### Operation_date
@@ -563,25 +569,25 @@ df %>% filter(`No. of fishers in crew` > 7)
 ```
 
     ## # A tibble: 482 × 28
-    ##    Operation_date      enumerator  landi…¹ BMU   fishe…² fishe…³ house…⁴ trap_…⁵
-    ##    <dttm>              <chr>       <chr>   <chr> <chr>   <chr>   <chr>   <chr>  
-    ##  1 2021-05-18 00:00:00 CELESTINE … MAYUNGU MAYU… SS/MAY… 706822… SS/MAY… UNMODI…
-    ##  2 2021-05-18 00:00:00 CELESTINE … MAYUNGU MAYU… SS/MAY… 706822… SS/MAY… UNMODI…
-    ##  3 2021-05-18 00:00:00 CELESTINE … MAYUNGU MAYU… SS/MAY… 706822… SS/MAY… UNMODI…
-    ##  4 2021-05-18 00:00:00 CELESTINE … MAYUNGU MAYU… SS/MAY… 706822… SS/MAY… UNMODI…
-    ##  5 2021-05-18 00:00:00 CELESTINE … MAYUNGU MAYU… SS/MAY… 706822… SS/MAY… UNMODI…
-    ##  6 2021-05-18 00:00:00 CELESTINE … MAYUNGU MAYU… SS/MAY… 706822… SS/MAY… UNMODI…
-    ##  7 2021-05-18 00:00:00 CELESTINE … MAYUNGU MAYU… SS/MAY… 706822… SS/MAY… UNMODI…
-    ##  8 2021-05-18 00:00:00 CELESTINE … MAYUNGU MAYU… SS/MAY… 706822… SS/MAY… UNMODI…
-    ##  9 2021-11-15 00:00:00 SAIDI MKALI KIVUKO… TAKA… SS/TAK… <NA>    SS/TAK… MONOFI…
-    ## 10 2021-11-26 00:00:00 KITSAO KAR… VUMA    TAKA… SS/TAK… 791377… SS/TAK… MONOFI…
-    ## # … with 472 more rows, 20 more variables: total_traps_collected <dbl>,
-    ## #   date_set_dd_mm_yyyy <dttm>, `time_set_24hh:mm` <chr>,
-    ## #   date_collected_dd_mm_yyyy <dttm>, `time_collected_24hh:mm` <chr>,
-    ## #   total_biomass_kg <dbl>, take_home_weight_kg <dbl>, total_value_KES <dbl>,
-    ## #   take_home_value_KES <dbl>, `No. of fishers in crew` <dbl>,
-    ## #   fishing_operation_notes <chr>, Kiswahili_name <chr>, scientific_name <chr>,
-    ## #   length_cm <chr>, `gear type` <chr>, number_of_fish <dbl>, …
+    ##    Operation_date      enumerator      landing_site BMU   fisher_id fisher_phone
+    ##    <dttm>              <chr>           <chr>        <chr> <chr>     <chr>       
+    ##  1 2021-05-18 00:00:00 CELESTINE N. A… MAYUNGU      MAYU… SS/MAY/S… 706822197   
+    ##  2 2021-05-18 00:00:00 CELESTINE N. A… MAYUNGU      MAYU… SS/MAY/S… 706822197   
+    ##  3 2021-05-18 00:00:00 CELESTINE N. A… MAYUNGU      MAYU… SS/MAY/S… 706822197   
+    ##  4 2021-05-18 00:00:00 CELESTINE N. A… MAYUNGU      MAYU… SS/MAY/S… 706822197   
+    ##  5 2021-05-18 00:00:00 CELESTINE N. A… MAYUNGU      MAYU… SS/MAY/S… 706822197   
+    ##  6 2021-05-18 00:00:00 CELESTINE N. A… MAYUNGU      MAYU… SS/MAY/S… 706822197   
+    ##  7 2021-05-18 00:00:00 CELESTINE N. A… MAYUNGU      MAYU… SS/MAY/S… 706822197   
+    ##  8 2021-05-18 00:00:00 CELESTINE N. A… MAYUNGU      MAYU… SS/MAY/S… 706822197   
+    ##  9 2021-11-15 00:00:00 SAIDI MKALI     KIVUKONI     TAKA… SS/TAK/C… <NA>        
+    ## 10 2021-11-26 00:00:00 KITSAO KARISA   VUMA         TAKA… SS/TAK/C… 791377013   
+    ## # ℹ 472 more rows
+    ## # ℹ 22 more variables: household_id <chr>, trap_type <chr>,
+    ## #   total_traps_collected <dbl>, date_set_dd_mm_yyyy <dttm>,
+    ## #   `time_set_24hh:mm` <chr>, date_collected_dd_mm_yyyy <dttm>,
+    ## #   `time_collected_24hh:mm` <chr>, total_biomass_kg <dbl>,
+    ## #   take_home_weight_kg <dbl>, total_value_KES <dbl>,
+    ## #   take_home_value_KES <dbl>, `No. of fishers in crew` <dbl>, …
 
 ``` r
 # df <- df %>%
@@ -1101,7 +1107,7 @@ filter(df, scientific_name == "Scylla serrata") %>%
 ```
 
     ## # A tibble: 0 × 3
-    ## # … with 3 variables: number_of_fish <dbl>, count <int>, sum <dbl>
+    ## # ℹ 3 variables: number_of_fish <dbl>, count <int>, sum <dbl>
 
 1.) In catch composition and in fishbase but not on validation list.
 **Suggested fix: address if these are reasonable to find in Ghana and if
@@ -1551,25 +1557,24 @@ length_check <- full_join(df, fishbase, by = "scientific_name") %>%
 
     ## # A tibble: 16 × 6
     ## # Groups:   length_corrected, scientific_name [16]
-    ##    scientific_name         Lmax length_corrected median_length length_ch…¹ count
-    ##    <chr>                  <dbl> <chr>                    <dbl> <chr>       <int>
-    ##  1 Acanthurus nigrofuscus  21   31-35                     33   over           37
-    ##  2 Parupeneus macronemus   40   41-45                     43   over            3
-    ##  3 Acanthurus nigrofuscus  21   41-45                     43   over            8
-    ##  4 Chaetodon selene        16   21-25                     23   over            8
-    ##  5 Acanthurus nigrofuscus  21   21-25                     23   over          118
-    ##  6 Cephalopholis argus     60   81-90                     85.5 over            2
-    ##  7 Acanthurus nigrofuscus  21   36-40                     38   over           32
-    ##  8 Leptoscarus vaigiensis  35.2 41-45                     43   over            1
-    ##  9 Leptoscarus vaigiensis  35.2 36-40                     38   over           21
-    ## 10 Chaetodon selene        16   16-20                     18   over           86
-    ## 11 Acanthurus nigrofuscus  21   26-30                     28   over           72
-    ## 12 Siganus stellatus       40   41-45                     43   over            4
-    ## 13 Gerres oyena            30   31-35                     33   over           32
-    ## 14 Leptoscarus vaigiensis  35.2 51-60                     55.5 over            6
-    ## 15 Gerres oyena            30   36-40                     38   over            2
-    ## 16 Acanthurus triostegus   27   31-35                     33   over            4
-    ## # … with abbreviated variable name ¹​length_check
+    ##    scientific_name        Lmax length_corrected median_length length_check count
+    ##    <chr>                 <dbl> <chr>                    <dbl> <chr>        <int>
+    ##  1 Acanthurus nigrofusc…  21   31-35                     33   over            37
+    ##  2 Parupeneus macronemus  40   41-45                     43   over             3
+    ##  3 Acanthurus nigrofusc…  21   41-45                     43   over             8
+    ##  4 Chaetodon selene       16   21-25                     23   over             8
+    ##  5 Acanthurus nigrofusc…  21   21-25                     23   over           118
+    ##  6 Cephalopholis argus    60   81-90                     85.5 over             2
+    ##  7 Acanthurus nigrofusc…  21   36-40                     38   over            32
+    ##  8 Leptoscarus vaigiens…  35.2 41-45                     43   over             1
+    ##  9 Leptoscarus vaigiens…  35.2 36-40                     38   over            21
+    ## 10 Chaetodon selene       16   16-20                     18   over            86
+    ## 11 Acanthurus nigrofusc…  21   26-30                     28   over            72
+    ## 12 Siganus stellatus      40   41-45                     43   over             4
+    ## 13 Gerres oyena           30   31-35                     33   over            32
+    ## 14 Leptoscarus vaigiens…  35.2 51-60                     55.5 over             6
+    ## 15 Gerres oyena           30   36-40                     38   over             2
+    ## 16 Acanthurus triostegus  27   31-35                     33   over             4
 
 #### Correcting those size bin lengths that are over Lmax
 
@@ -1848,21 +1853,21 @@ head(df)
 ```
 
     ## # A tibble: 6 × 31
-    ##   Operation_date      enumerator   landi…¹ BMU   fishe…² fishe…³ house…⁴ trap_…⁵
-    ##   <dttm>              <chr>        <chr>   <chr> <chr>   <chr>   <chr>   <chr>  
-    ## 1 2021-05-18 00:00:00 CLAPERTON K… UYOMBO  UYOM… SS/UYO… 799198… SS/UYO… UNMODI…
-    ## 2 2021-05-18 00:00:00 CLAPERTON K… UYOMBO  UYOM… SS/UYO… 799198… SS/UYO… UNMODI…
-    ## 3 2021-05-18 00:00:00 CLAPERTON K… UYOMBO  UYOM… SS/UYO… 799198… SS/UYO… UNMODI…
-    ## 4 2021-05-18 00:00:00 CLAPERTON K… UYOMBO  UYOM… SS/UYO… 799198… SS/UYO… UNMODI…
-    ## 5 2021-05-18 00:00:00 CLAPERTON K… UYOMBO  UYOM… SS/UYO… 769642… SS/UYO… UNMODI…
-    ## 6 2021-05-18 00:00:00 CLAPERTON K… UYOMBO  UYOM… SS/UYO… 769642… SS/UYO… UNMODI…
-    ## # … with 23 more variables: total_traps_collected <dbl>,
-    ## #   date_set_dd_mm_yyyy <dttm>, `time_set_24hh:mm` <chr>,
-    ## #   date_collected_dd_mm_yyyy <dttm>, `time_collected_24hh:mm` <chr>,
-    ## #   total_biomass_kg <dbl>, take_home_weight_kg <dbl>, total_value_KES <dbl>,
+    ##   Operation_date      enumerator       landing_site BMU   fisher_id fisher_phone
+    ##   <dttm>              <chr>            <chr>        <chr> <chr>     <chr>       
+    ## 1 2021-05-18 00:00:00 CLAPERTON KAZUN… UYOMBO       UYOM… SS/UYO/S… 799198738   
+    ## 2 2021-05-18 00:00:00 CLAPERTON KAZUN… UYOMBO       UYOM… SS/UYO/S… 799198738   
+    ## 3 2021-05-18 00:00:00 CLAPERTON KAZUN… UYOMBO       UYOM… SS/UYO/S… 799198738   
+    ## 4 2021-05-18 00:00:00 CLAPERTON KAZUN… UYOMBO       UYOM… SS/UYO/S… 799198738   
+    ## 5 2021-05-18 00:00:00 CLAPERTON KAZUN… UYOMBO       UYOM… SS/UYO/S… 769642401   
+    ## 6 2021-05-18 00:00:00 CLAPERTON KAZUN… UYOMBO       UYOM… SS/UYO/S… 769642401   
+    ## # ℹ 25 more variables: household_id <chr>, trap_type <chr>,
+    ## #   total_traps_collected <dbl>, date_set_dd_mm_yyyy <dttm>,
+    ## #   `time_set_24hh:mm` <chr>, date_collected_dd_mm_yyyy <dttm>,
+    ## #   `time_collected_24hh:mm` <chr>, total_biomass_kg <dbl>,
+    ## #   take_home_weight_kg <dbl>, total_value_KES <dbl>,
     ## #   take_home_value_KES <dbl>, `No. of fishers in crew` <dbl>,
-    ## #   fishing_operation_notes <chr>, Kiswahili_name <chr>, scientific_name <chr>,
-    ## #   length_cm <chr>, `gear type` <chr>, number_of_fish <dbl>, …
+    ## #   fishing_operation_notes <chr>, Kiswahili_name <chr>, …
 
 ``` r
 nrow(df)
