@@ -200,16 +200,18 @@ Legnth_persurvey2 <- length_df_stats %>%
   ylab("Length (cm)") + #xlab("Type of trap") +
   theme(axis.text.x = element_text(vjust = 1.1)) #Set the text angle
 
-ggsave(file="output/Length_persurvey.png", Legnth_persurvey, width = 4, height = 4, units = c("in"))
-ggsave(file="output/Length_persurvey2.png", Legnth_persurvey2, width = 2, height = 3, units = c("in"))
+# ggsave(file="output/Length_persurvey.png", Legnth_persurvey, width = 4, height = 4, units = c("in"))
+# ggsave(file="output/Length_persurvey2.png", Legnth_persurvey2, width = 2, height = 3, units = c("in"))
 
 Legnth_persurvey3 <- ggbetweenstats(data=length_df, x = trap_type, y = mean_length_persurvey, 
                type = "p", plot.type = "boxviolin", sample.size.label = TRUE,
-               mean.point.args = list(size = 2, color = "gray"),
+               mean.point.args = list(size = 2, color = 'black'),
                mean.label.args = list(size = 2),
                point.args = list(position = ggplot2::position_jitterdodge(dodge.width = 0.5), 
-                                 alpha= 0.2, size = 1.5, stroke = 0)) +
-  scale_color_manual(values = c( "#387780", "#FF8C61")) +
+                                 alpha = 0.1, size = 1, stroke = 0)) +
+ # ggplot2::scale_shape_manual(values=c(21,21)) +
+  ggplot2::scale_color_manual(values = c( "black", "black")) +
+  #ggplot2::scale_fill_manual(values = c( "gray74", "white")) +
   labs(x = "Trap Type", y = "Length (cm)") 
 
 ggsave(file="output/Length_persurvey3.png", Legnth_persurvey3, width = 4.5, height = 5, units = c("in"))
@@ -251,6 +253,16 @@ t.test(mean_length_persurvey~trap_type, data = length_df, var.equal = FALSE)
 
 Grouping by fisher_id but this might be effective to group by enumerator once I have correct list of names. There are 3 boat trips recorded with the exact same fish data that are under 3 different fisher ID names but all the same enumerator.. come back to this in QC.
 
+#### Calculating % composition to use in nutrient and value  
+
+```{r}
+data <- data %>% 
+  mutate(number_of_fish = if_else(is.na(number_of_fish), 1, number_of_fish)) %>% group_by(survey_id) %>%
+  mutate(total_catch = sum(number_of_fish),
+         percent_composition = number_of_fish/total_catch)
+```
+
+
 Goal: kilograms captured per trap set.
 
 ```{r}
@@ -269,7 +281,7 @@ con <- df_spp %>% subset(trap_type == "Control")
 hist(modified_trap_df$value_per_trap)
 
 var.test(exp$value_per_trap, con$value_per_trap)
-t.test((value_per_trap)~trap_type, data = modified_trap_df, var.equal = FALSE)
+t.test((kg_per_trap)~trap_type, data = modified_trap_df, var.equal = FALSE)
 wilcox.test(log10(kg_per_trap)~trap_type, data = df_spp, var.equal = FALSE)
 summarySE(df_spp, measurevar = c("value_per_trap"), groupvars = c("trap_type"))
 
@@ -335,8 +347,8 @@ CPUE_n2 <- catch_per_trap_stats %>%
   ylab("CPUE (n trap-1)") + #xlab("Type of trap") +
   theme(axis.text.x = element_text(vjust = 1.1)) #Set the text angle
 
-ggsave(file="output/CPUE.png", CPUE_n, width = 4, height = 4, units = c("in"))
-ggsave(file="output/CPUE2.png", CPUE_n2, width = 2, height = 3, units = c("in"))
+# ggsave(file="output/CPUE.png", CPUE_n, width = 4, height = 4, units = c("in"))
+# ggsave(file="output/CPUE2.png", CPUE_n2, width = 2, height = 3, units = c("in"))
 
 CPUE_n3 <- ggbetweenstats(data=modified_trap_df, x = trap_type, y = catch_per_trap, 
                type = "np", plot.type = "boxviolin", sample.size.label = TRUE,
@@ -347,7 +359,7 @@ CPUE_n3 <- ggbetweenstats(data=modified_trap_df, x = trap_type, y = catch_per_tr
   scale_color_manual(values = c( "#387780", "#FF8C61")) +
   labs(x = "Trap Type", y = "Abundance (# of individuals per trap collected)") 
 
-ggsave(file="output/CPUE3.png", CPUE_n3, width = 4.5, height = 5, units = c("in"))
+#ggsave(file="output/CPUE3.png", CPUE_n3, width = 4.5, height = 5, units = c("in"))
 
 # by fisherman 
 modified_trap_df %>% 
@@ -403,16 +415,16 @@ Yield_reported2 <- kg_per_trap_stats %>%
   ylab("Biomass (kg per trap collected)") + xlab("Type of trap") +
   theme(axis.text.x = element_text(vjust = 1.1)) #Set the text angle
 
-ggsave(file="output/Yield_reported.png", Yield_reported, width = 4, height = 4, units = c("in"))
-ggsave(file="output/Yield_reported2.png", Yield_reported2, width = 2, height = 3, units = c("in"))
+#ggsave(file="output/Yield_reported.png", Yield_reported, width = 4, height = 4, units = c("in"))
+#ggsave(file="output/Yield_reported2.png", Yield_reported2, width = 2, height = 3, units = c("in"))
 
 Yield_reported3 <- ggbetweenstats(data=modified_trap_df, x = trap_type, y = kg_per_trap, 
                type = "np", plot.type = "boxviolin", sample.size.label = TRUE,
                mean.point.args = list(size = 2, color = "gray"),
                mean.label.args = list(size = 2),
                point.args = list(position = ggplot2::position_jitterdodge(dodge.width = 0.5), 
-                                 alpha= 0.2, size = 1.5, stroke = 0)) +
-  scale_color_manual(values = c( "#387780", "#FF8C61")) +
+                                 alpha= 0.1, size = 1, stroke = 0)) +
+  scale_color_manual(values = c( "black", "black")) +
   labs(x = "Trap Type", y = "Biomass (kg per trap collected)") 
 
 ggsave(file="output/Yield_reported3.png", Yield_reported3, width = 4.5, height = 5, units = c("in"))
@@ -469,16 +481,16 @@ Value_reported2 <- value_per_trap_stats %>%
   ylab("Value (KES per trap collected)") + xlab("Type of trap") +
   theme(axis.text.x = element_text(vjust = 1.1)) #Set the text angle
 
-ggsave(file="output/Value_reported.png", Value_reported, width = 4, height = 4, units = c("in"))
-ggsave(file="output/Value_reported2.png", Value_reported2, width = 2, height = 3, units = c("in"))
+# ggsave(file="output/Value_reported.png", Value_reported, width = 4, height = 4, units = c("in"))
+# ggsave(file="output/Value_reported2.png", Value_reported2, width = 2, height = 3, units = c("in"))
 
 Value_reported3 <- ggbetweenstats(data=modified_trap_df, x = trap_type, y = value_per_trap, 
                type = "np", plot.type = "boxviolin", sample.size.label = TRUE,
                mean.point.args = list(size = 2, color = "gray"),
                mean.label.args = list(size = 2),
                point.args = list(position = ggplot2::position_jitterdodge(dodge.width = 0.5), 
-                                 alpha= 0.2, size = 1.5, stroke = 0)) +
-  scale_color_manual(values = c( "#387780", "#FF8C61")) +
+                                 alpha= 0.1, size = 1, stroke = 0)) +
+  scale_color_manual(values = c( "black", "black")) +
   labs(x = "Trap Type", y = "Value per trap") 
 
 ggsave(file="output/Value_reported3.png", Value_reported3, width = 4.5, height = 5, units = c("in"))
@@ -530,6 +542,41 @@ data %>%
   ggplot(., aes(x = richness, fill = trap_type)) +                       # Draw overlaying histogram
     geom_histogram(position = "identity", alpha = 0.4, bins = 10) + theme_bw() +
   scale_fill_manual(values = c( "#387780", "#FF8C61")) 
+
+### Species richness plot 
+
+species_rich_plot <- data %>%
+  select(survey_id, month, BMU, trap_type, catch_per_trap, 
+         scientific_name, total_traps_collected) %>% distinct() %>%
+  group_by(survey_id) %>%
+  mutate(richness = n_distinct(scientific_name),
+         richness_trap = richness/total_traps_collected) %>% 
+  select(-scientific_name) %>%
+  ungroup() %>% distinct() %>%
+  ggbetweenstats(., x = trap_type, y = richness, 
+               type = "np", plot.type = "box", sample.size.label = TRUE,
+               mean.point.args = list(size = 2, color = "gray"),
+               mean.label.args = list(size = 2),
+               point.args = list(position = ggplot2::position_jitterdodge(dodge.width = 0.1), 
+                                 alpha= 0.1, size = 1, stroke = 0)) +
+  scale_color_manual(values = c( "black", "black")) +
+  labs(x = "Trap Type", y = "Richness (# of unique species per fishing trip)") 
+
+ggsave(file="output/Species_richness.png", species_rich_plot, width = 4.5, height = 5, units = c("in"))
+
+spprich <- data %>%
+  select(survey_id, month, BMU, trap_type, catch_per_trap, 
+         scientific_name, total_traps_collected) %>% distinct() %>%
+  group_by(survey_id) %>%
+  mutate(richness = n_distinct(scientific_name),
+         richness_trap = richness/total_traps_collected) %>% 
+  select(-scientific_name) %>%
+  ungroup() %>% distinct() 
+
+spprich_means <- summarySE(data=spprich, measurevar = c("richness"), 
+                               groupvars = c("trap_type"), na.rm = TRUE)
+
+t.test(richness~trap_type, data = spprich, var.equal = FALSE)
 ```
 
 ## correlation plot 
@@ -596,21 +643,21 @@ Grams per trap is log transformed.
 I'm not sure yet if this is the best way to do this... 
 
 ```{r}
-# unmodified
-un_catch_model <- lmer(log(kg_per_trap) ~ catch_per_trap + (1|enumerator) + (1|landing_site), na.action=na.omit, data=UN)
-qqPlot(residuals(un_catch_model)) 
-hist(residuals(un_catch_model))
-
-# modified
-mod_catch_model <- lmer(log(kg_per_trap) ~ catch_per_trap + (1|enumerator) + (1|landing_site), na.action=na.omit, data=MOD)
-qqPlot(residuals(mod_catch_model)) 
-hist(residuals(mod_catch_model))
-
-summary(un_catch_model)
-summary(mod_catch_model)
-
-Anova(un_catch_model, ddf="lme4", type='III')
-Anova(mod_catch_model, ddf="lme4", type='III')
+# # unmodified
+# un_catch_model <- lmer(log(kg_per_trap) ~ catch_per_trap + (1|enumerator) + (1|landing_site), na.action=na.omit, data=UN)
+# qqPlot(residuals(un_catch_model)) 
+# hist(residuals(un_catch_model))
+# 
+# # modified
+# mod_catch_model <- lmer(log(kg_per_trap) ~ catch_per_trap + (1|enumerator) + (1|landing_site), na.action=na.omit, data=MOD)
+# qqPlot(residuals(mod_catch_model)) 
+# hist(residuals(mod_catch_model))
+# 
+# summary(un_catch_model)
+# summary(mod_catch_model)
+# 
+# Anova(un_catch_model, ddf="lme4", type='III')
+# Anova(mod_catch_model, ddf="lme4", type='III')
 ```
 
 ## <a name="species"></a> **Calculate top species caught**
@@ -793,7 +840,7 @@ maturity_dist_plot <- maturity_dist %>%
   ungroup() %>%
   ggplot(., aes(x=scientific_name, y=avg_length_dist, fill=trap_type)) + 
   coord_flip() +
-  scale_fill_manual(values = c("#387780", "#FF8C61")) +
+  scale_fill_manual(values = c("black", "white")) +
   geom_hline(yintercept = 0, lty = "dotted") +
   theme(axis.text.y = element_text(face = "italic")) +
   geom_line(aes(group = scientific_name), color="grey14") +
@@ -905,7 +952,7 @@ maturity_figs %>%
 ```{r}
 length_freq <- a +
   geom_bar(position = position_dodge(), alpha=0.5) +
-  scale_fill_manual(values = c("#387780", "#FF8C61")) +
+  scale_fill_manual(values = c("gray60", "white")) +
   scale_color_manual(values = c("black", "black"))
 
 ggsave(file="output/Length_freq.png", length_freq, width = 6, height = 8, units = c("in"))
@@ -984,7 +1031,7 @@ biomass_survey_data <- data %>% filter(!is.na(number_of_fish)) %>%
   subset(trap_type == "Experimental" | trap_type == "Control") %>%
   select(survey_id, Operation_date, year, month, day, enumerator, trap_type, total_traps_collected,
          total_biomass_kg, take_home_weight_kg, total_value_KES, take_home_value_KES, scientific_name, 
-         length_cm, number_of_fish, crew_size_corrected, length_corrected) 
+         length_cm, number_of_fish, crew_size_corrected, length_corrected, percent_composition) 
 
 biomass_df <- full_join(biomass_survey_data, biomass_fishbase, by = "scientific_name") 
 
@@ -1008,7 +1055,8 @@ biomass_df <- biomass_df %>%
     length_corrected == ">90" ~ 100 ### circle back to what value to use here
   )) %>%
   mutate(W_g = (a*(median_length^b))*number_of_fish,
-         W_kg = W_g/1000) %>% # calculating biomass from W=aL^b 
+         W_kg = W_g/1000, # calculating biomass from W=aL^b 
+         biomasscomp = total_biomass_kg*percent_composition) %>% 
   group_by(survey_id) %>%
   filter(!is.na(W_kg)) %>%
   mutate(calculated_total_biomass = sum(W_kg),
@@ -1052,9 +1100,9 @@ biomass_df %>% filter(!is.na(calculated_biomass_pertrap)) %>%
 List of species to ask Fishbase for a and b. 
 
 ```{r}
-biomass_df %>% 
-  select(scientific_name) %>% distinct() %>%
-  write.csv("data/full_species_list.csv")
+# biomass_df %>% 
+#   select(scientific_name) %>% distinct() %>%
+#   write.csv("data/full_species_list.csv")
 ```
 
 ## Economic Data
@@ -1062,7 +1110,7 @@ biomass_df %>%
 Profit data from Gilligan's sheet. 
 
 ```{r}
-gilligan_profit <- read.csv("data/SpeciesData_GatedTraps_Galligan.csv", header=TRUE, sep = ",") %>%
+gilligan_profit <- read.csv("data/SpeciesData_GatedTraps_Galligan_edited.csv", header=TRUE, sep = ",") %>%
   dplyr::select(Species, Price_KSHPerkg) %>% dplyr::rename(scientific_name = Species)
 
 ## species df for profit analysis 
@@ -1072,15 +1120,16 @@ species_df_forprofit <- species_df %>% select(survey_id, month, scientific_name,
 ## need to also add the calculated biomass  values 
 ## run the biomass_df chunk at the bottom of this script 
 biomass_df_forprofit <- biomass_df %>% 
-  dplyr::select(survey_id, scientific_name, trap_type, total_traps_collected, W_kg, length_corrected) %>% 
+  dplyr::select(survey_id, scientific_name, trap_type, total_traps_collected, biomasscomp, W_kg, length_corrected) %>% 
   filter(!is.na(W_kg)) %>%
   group_by(survey_id) %>% mutate(yield_calc_kg = sum(W_kg), 
                                  yield_calc_kg_trap = yield_calc_kg/total_traps_collected) %>% 
   ungroup() %>% distinct()
 
+### using biomasscomp(kg) that is composition of reported biomass 
 gilligan_profit_data <- left_join(species_df_forprofit, gilligan_profit, by = "scientific_name") %>%
   left_join(., biomass_df_forprofit, by = c("scientific_name", "survey_id", "trap_type")) %>% distinct() %>%
-  mutate(KSHperspp = Price_KSHPerkg*W_kg) %>% group_by(survey_id) %>%
+  mutate(KSHperspp = Price_KSHPerkg*biomasscomp) %>% group_by(survey_id) %>%
   mutate(KSHpersurvey = sum(KSHperspp)) %>% ungroup() %>%
   mutate(KSHpertrap = KSHpersurvey/total_traps_collected)
 
@@ -1094,9 +1143,9 @@ gilligan_profit_data_means <- summarySE(data=gilligan_profit_data_slim, measurev
                                groupvars = c("trap_type", "month"), na.rm = TRUE)
 
 profitplot1 <- gilligan_profit_data_slim %>% 
-  ggplot(., aes(x=month, y=KSHpertrap, color=trap_type)) +  
-  scale_color_manual(values = c( "#387780", "#FF8C61")) +
-  scale_fill_manual(values = c( "#387780", "#FF8C61")) +
+  ggplot(., aes(x=month, y=KSHpertrap, lty=trap_type)) +  
+  #scale_color_manual(values = c( "#387780", "#FF8C61")) +
+  #scale_fill_manual(values = c( "#387780", "#FF8C61")) +
   theme_bw() + xlab("Month") + ylab("Revenue (KSH trap-1)") +
   geom_line(data=gilligan_profit_data_means, aes(group = trap_type), size=0.5) +
   geom_point(data = gilligan_profit_data_means, aes(x=month, y=KSHpertrap), size=1) +
@@ -1123,8 +1172,8 @@ Wkgplot <- ggbetweenstats(data=biomass_df_forprofit_slim, x = trap_type, y = yie
   scale_color_manual(values = c( "#387780", "#FF8C61")) +
   labs(x = "Trap Type", y = "Yield (kg) per trap")
 
-ggsave(file="output/Value_calculated.png", KSHplot, width = 4.5, height = 5, units = c("in"))
-ggsave(file="output/Yield_calculated.png", Wkgplot, width = 4.5, height = 5, units = c("in"))
+# ggsave(file="output/Value_calculated.png", KSHplot, width = 4.5, height = 5, units = c("in"))
+# ggsave(file="output/Yield_calculated.png", Wkgplot, width = 4.5, height = 5, units = c("in"))
 
 t.test(KSHpertrap~trap_type, data = gilligan_profit_data_slim, var.equal = FALSE)
 
@@ -1270,7 +1319,7 @@ Profit data from Kenya team.
 ## Nutrient info 
 
 ```{r}
-nutrient_raw <- read.csv("data/SpeciesData_GatedTraps_Galligan.csv", sep = ",", header=TRUE) %>%
+nutrient_raw <- read.csv("data/SpeciesData_GatedTraps_Galligan_edited.csv", sep = ",", header=TRUE) %>%
   dplyr::rename(scientific_name = Species)
 
 nut_biomassdf <- left_join(biomass_df, nutrient_raw, by = "scientific_name")
@@ -1279,15 +1328,17 @@ nut_biomassdf <- left_join(biomass_df, nutrient_raw, by = "scientific_name")
 ## W_g = calculated biomass (g)
 ## Nutrient_mgPer100g 
 ## (W_g/100)*Nutrient_mgPer100g = nutrientmg for that group of fish in that survey 
+## use biomasscomp (kg) x 1000 = biomasscomp_g for the below 
 nut_biomassdf <- nut_biomassdf %>%
+  mutate(biomasscomp_g = biomasscomp*1000) %>%
   # calculating nutrient for each scientific name within a survey 
-  mutate(spp_Calcium = (W_g/100)*Calcium_mgPer100g,
-         spp_Iron = (W_g/100)*Iron_mgPer100g,
-         spp_Omega3 = (W_g/100)*Omega3_gPer100g,
-         spp_Protein = (W_g/100)*Protein_gPer100g,
-         spp_VitaminA = (W_g/100)*VitaminA_ugPer100g,
-         spp_Selenium = (W_g/100)*Selenium_ugPer100g,
-         spp_Zinc = (W_g/100)*Zinc_mgPer100g) %>% 
+  mutate(spp_Calcium = (biomasscomp_g/100)*Calcium_mgPer100g,
+         spp_Iron = (biomasscomp_g/100)*Iron_mgPer100g,
+         spp_Omega3 = (biomasscomp_g/100)*Omega3_gPer100g,
+         spp_Protein = (biomasscomp_g/100)*Protein_gPer100g,
+         spp_VitaminA = (biomasscomp_g/100)*VitaminA_ugPer100g,
+         spp_Selenium = (biomasscomp_g/100)*Selenium_ugPer100g,
+         spp_Zinc = (biomasscomp_g/100)*Zinc_mgPer100g) %>% 
   # calculating total nutrient for each survey 
   group_by(survey_id) %>%
   mutate(pertrap_Calcium = sum(spp_Calcium)/total_traps_collected,
@@ -1298,7 +1349,7 @@ nut_biomassdf <- nut_biomassdf %>%
          pertrap_Selenium = sum(spp_Selenium)/total_traps_collected,
          pertrap_Zinc = sum(spp_Zinc)/total_traps_collected) %>% ungroup()
 
-nutrient_plot <- nut_biomassdf %>%
+nut_biomassdf %>%
   dplyr::select(survey_id, trap_type, pertrap_Calcium, pertrap_Iron, pertrap_Omega3, spp_Protein, spp_VitaminA, 
                 spp_Selenium, spp_Zinc) %>%
   gather(., "measurement", "value", 3:9) %>% distinct() %>%
@@ -1312,7 +1363,7 @@ nutrient_plot <- nut_biomassdf %>%
   theme(strip.background = element_rect(color="black", fill="white", linewidth=0.5, linetype="solid")) +
   ylab("nutritional content (mg survey-1)")
 
-ggsave(file="output/Nutrient.png", nutrient_plot, width = 10, height = 8, units = c("in"))
+#ggsave(file="output/Nutrient.png", nutrient_plot, width = 10, height = 8, units = c("in"))
 ```
 
 Individual plots 
@@ -1325,8 +1376,8 @@ nut_biomassdf_individual<- nut_biomassdf %>%
                mean.point.args = list(size = 2, color = "gray"),
                mean.label.args = list(size = 2),
                point.args = list(position = ggplot2::position_jitterdodge(dodge.width = 0.5), 
-                                 alpha= 0.2, size = 1.5, stroke = 0)) +
-  scale_color_manual(values = c( "#387780", "#FF8C61")) +
+                                 alpha= 0.1, size = 1, stroke = 0)) +
+  scale_color_manual(values = c( "black", "black")) +
   labs(x = "Trap Type", y = "Zinc (per trap)")
 
 ggsave(file="output/Nutrient_Zinc_calculated.png", nut_biomassdf_individual, width = 4.5, height = 5, units = c("in"))
@@ -1401,7 +1452,7 @@ collabdf <- left_join(collabdf1, collabdf2, by = "survey_id") %>%
 precollab5 <- gilligan_profit_data %>% 
   dplyr::select(survey_id, scientific_name, length_corrected, KSHperspp) %>% distinct()
 precollab5_2 <- nut_biomassdf %>% 
-  dplyr::select(survey_id, scientific_name, length_corrected, W_kg, spp_Zinc, spp_Selenium, spp_VitaminA, 
+  dplyr::select(survey_id, scientific_name, length_corrected, biomasscomp, W_kg, spp_Zinc, spp_Selenium, spp_VitaminA, 
                 spp_Protein, spp_Omega3, spp_Iron, spp_Calcium) %>% distinct()
 
 collabdf5 <- data %>% 
@@ -1422,6 +1473,7 @@ collabdf5 <- data %>%
 collabdf6 <- collabdf5 %>% dplyr::group_by(survey_id, destination) %>%
   filter(!is.na(KSHperspp)) %>%
   dplyr::mutate(fish_perdestination = sum(number_of_fish),
+                biomass_perdestination = sum(biomasscomp),
          KSH_perdestination = sum(KSHperspp),
          calculated_Kg_perdestination = sum(W_kg),
          Zinc_perdestination = sum(spp_Zinc),
@@ -1433,7 +1485,7 @@ collabdf6 <- collabdf5 %>% dplyr::group_by(survey_id, destination) %>%
          Calcium_perdestination = sum(spp_Calcium)) %>%
   dplyr::select(-length_corrected, -number_of_fish, -scientific_name,
                 -KSHperspp, -W_kg, -spp_Zinc, -spp_Selenium, -spp_VitaminA,
-                -spp_Protein, -spp_Omega3, -spp_Iron, -spp_Calcium) %>%
+                -spp_Protein, -spp_Omega3, -spp_Iron, -spp_Calcium, -biomasscomp) %>% ungroup() %>%
   distinct()
 
 home_df <- collabdf6 %>% subset(destination == "HOME")
@@ -1468,9 +1520,9 @@ Calculate % take home
 
 ```{r}
 percent_takehome <- collabdf6 %>% ungroup() %>%
-  dplyr::select(survey_id, trap_type, destination, fish_perdestination) %>% distinct() %>%
+  dplyr::select(survey_id, trap_type, destination, biomass_perdestination) %>% distinct() %>%
   group_by(survey_id) %>%
-  tidyr::spread(destination, fish_perdestination) %>%
+  tidyr::spread(destination, biomass_perdestination) %>%
   replace(., is.na(.), 0) %>%
   mutate(sum = rowSums(across(c(`FISH DEALER`, GIFT, HOME, `MAMA KARANGA`, OTHER))),
          percent_home = (HOME/sum)*100) %>%
@@ -1486,11 +1538,11 @@ percent_takehome_plot <-  percent_takehome %>%
                mean.point.args = list(size = 2, color = "gray"),
                mean.label.args = list(size = 2),
                point.args = list(position = ggplot2::position_jitterdodge(dodge.width = 0.5), 
-                                 alpha= 0.2, size = 1.5, stroke = 0)) +
-  scale_color_manual(values = c( "#387780", "#FF8C61")) +
+                                 alpha= 0.1, size = 1, stroke = 0)) +
+  scale_color_manual(values = c( "black", "black")) +
   labs(x = "Trap Type", y = "% take home")
 
-ggsave(file="output/Takehome.png", percent_takehome_plot, width = 4.5, height = 5, units = c("in"))
+#ggsave(file="output/Takehome.png", percent_takehome_plot, width = 4.5, height = 5, units = c("in"))
 
 takehome_stats <- percent_takehome %>% 
   filter(percent_home > 0.00)
@@ -1501,7 +1553,7 @@ takehome_stats2 <- summarySE(takehome_stats, measurevar = c("percent_home"),
 t.test(percent_home~trap_type, data = takehome_stats, var.equal = FALSE)
 takehome_stats2
 
-### NO. HOME
+### BIOMASS HOME
 takehome_plot <-  percent_takehome %>% ungroup() %>%
   filter(HOME > 0.00) %>%
   ggbetweenstats(., x = trap_type, y = HOME, 
@@ -1509,17 +1561,17 @@ takehome_plot <-  percent_takehome %>% ungroup() %>%
                mean.point.args = list(size = 2, color = "gray"),
                mean.label.args = list(size = 2),
                point.args = list(position = ggplot2::position_jitterdodge(dodge.width = 0.05), 
-                                 alpha= 0.2, size = 1.5, stroke = 0)) +
-  scale_color_manual(values = c( "#387780", "#FF8C61")) +
-  labs(x = "Trap Type", y = "No. take home")
+                                 alpha= 0.15, size = 1, stroke = 0)) +
+  scale_color_manual(values = c( "black", "black")) +
+  labs(x = "Trap Type", y = "Biomass kg take home")
 
-ggsave(file="output/Takehome2.png", takehome_plot, width = 4.5, height = 5, units = c("in"))
+ggsave(file="output/Biomass_takenhome.png", takehome_plot, width = 4.5, height = 5, units = c("in"))
 
 takehome_no_stats <- percent_takehome %>% 
   filter(HOME > 0.00)
 
 percent_takehome %>% ungroup() %>% count(HOME)
-### 1,666/3,830
+### 1,666/3,974 not taken home 
 
 takehome_no_stats2 <- summarySE(takehome_no_stats, measurevar = c("HOME"), 
                              groupvars = c("trap_type"))

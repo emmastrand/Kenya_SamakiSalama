@@ -237,23 +237,18 @@ Legnth_persurvey2 <- length_df_stats %>%
   ylab("Length (cm)") + #xlab("Type of trap") +
   theme(axis.text.x = element_text(vjust = 1.1)) #Set the text angle
 
-ggsave(file="output/Length_persurvey.png", Legnth_persurvey, width = 4, height = 4, units = c("in"))
-```
-
-    ## Warning: Removed 46 rows containing non-finite values (`stat_boxplot()`).
-
-    ## Warning: Removed 46 rows containing missing values (`geom_point()`).
-
-``` r
-ggsave(file="output/Length_persurvey2.png", Legnth_persurvey2, width = 2, height = 3, units = c("in"))
+# ggsave(file="output/Length_persurvey.png", Legnth_persurvey, width = 4, height = 4, units = c("in"))
+# ggsave(file="output/Length_persurvey2.png", Legnth_persurvey2, width = 2, height = 3, units = c("in"))
 
 Legnth_persurvey3 <- ggbetweenstats(data=length_df, x = trap_type, y = mean_length_persurvey, 
                type = "p", plot.type = "boxviolin", sample.size.label = TRUE,
-               mean.point.args = list(size = 2, color = "gray"),
+               mean.point.args = list(size = 2, color = 'black'),
                mean.label.args = list(size = 2),
                point.args = list(position = ggplot2::position_jitterdodge(dodge.width = 0.5), 
-                                 alpha= 0.2, size = 1.5, stroke = 0)) +
-  scale_color_manual(values = c( "#387780", "#FF8C61")) +
+                                 alpha = 0.1, size = 1, stroke = 0)) +
+ # ggplot2::scale_shape_manual(values=c(21,21)) +
+  ggplot2::scale_color_manual(values = c( "black", "black")) +
+  #ggplot2::scale_fill_manual(values = c( "gray74", "white")) +
   labs(x = "Trap Type", y = "Length (cm)") 
 ```
 
@@ -327,6 +322,15 @@ once I have correct list of names. There are 3 boat trips recorded with
 the exact same fish data that are under 3 different fisher ID names but
 all the same enumerator.. come back to this in QC.
 
+#### Calculating % composition to use in nutrient and value
+
+``` r
+data <- data %>% 
+  mutate(number_of_fish = if_else(is.na(number_of_fish), 1, number_of_fish)) %>% group_by(survey_id) %>%
+  mutate(total_catch = sum(number_of_fish),
+         percent_composition = number_of_fish/total_catch)
+```
+
 Goal: kilograms captured per trap set.
 
 ``` r
@@ -345,7 +349,7 @@ con <- df_spp %>% subset(trap_type == "Control")
 hist(modified_trap_df$value_per_trap)
 ```
 
-![](CPUE-maturity-length-analysis_files/figure-gfm/unnamed-chunk-7-1.png)<!-- -->
+![](CPUE-maturity-length-analysis_files/figure-gfm/unnamed-chunk-8-1.png)<!-- -->
 
 ``` r
 var.test(exp$value_per_trap, con$value_per_trap)
@@ -364,20 +368,20 @@ var.test(exp$value_per_trap, con$value_per_trap)
     ##           1.102747
 
 ``` r
-t.test((value_per_trap)~trap_type, data = modified_trap_df, var.equal = FALSE)
+t.test((kg_per_trap)~trap_type, data = modified_trap_df, var.equal = FALSE)
 ```
 
     ## 
     ##  Welch Two Sample t-test
     ## 
-    ## data:  (value_per_trap) by trap_type
-    ## t = -2.7246, df = 2464.9, p-value = 0.006484
+    ## data:  (kg_per_trap) by trap_type
+    ## t = -0.89383, df = 2651.7, p-value = 0.3715
     ## alternative hypothesis: true difference in means between group Control and group Experimental is not equal to 0
     ## 95 percent confidence interval:
-    ##  -16.922346  -2.758005
+    ##  -0.05291771  0.01977971
     ## sample estimates:
     ##      mean in group Control mean in group Experimental 
-    ##                   159.1418                   168.9820
+    ##                  0.8265465                  0.8431155
 
 ``` r
 wilcox.test(log10(kg_per_trap)~trap_type, data = df_spp, var.equal = FALSE)
@@ -441,7 +445,7 @@ Abundance = Catch per trap
 hist(log10(modified_trap_df$catch_per_trap))
 ```
 
-![](CPUE-maturity-length-analysis_files/figure-gfm/unnamed-chunk-9-1.png)<!-- -->
+![](CPUE-maturity-length-analysis_files/figure-gfm/unnamed-chunk-10-1.png)<!-- -->
 
 ``` r
 t.test((catch_per_trap)~trap_type, data = modified_trap_df, var.equal = FALSE, na.rm=TRUE)
@@ -489,15 +493,8 @@ CPUE_n2 <- catch_per_trap_stats %>%
   ylab("CPUE (n trap-1)") + #xlab("Type of trap") +
   theme(axis.text.x = element_text(vjust = 1.1)) #Set the text angle
 
-ggsave(file="output/CPUE.png", CPUE_n, width = 4, height = 4, units = c("in"))
-```
-
-    ## Warning: Removed 1899 rows containing non-finite values (`stat_boxplot()`).
-
-    ## Warning: Removed 1899 rows containing missing values (`geom_point()`).
-
-``` r
-ggsave(file="output/CPUE2.png", CPUE_n2, width = 2, height = 3, units = c("in"))
+# ggsave(file="output/CPUE.png", CPUE_n, width = 4, height = 4, units = c("in"))
+# ggsave(file="output/CPUE2.png", CPUE_n2, width = 2, height = 3, units = c("in"))
 
 CPUE_n3 <- ggbetweenstats(data=modified_trap_df, x = trap_type, y = catch_per_trap, 
                type = "np", plot.type = "boxviolin", sample.size.label = TRUE,
@@ -509,11 +506,12 @@ CPUE_n3 <- ggbetweenstats(data=modified_trap_df, x = trap_type, y = catch_per_tr
   labs(x = "Trap Type", y = "Abundance (# of individuals per trap collected)") 
 ```
 
-    ## Scale for colour is already present.
-    ## Adding another scale for colour, which will replace the existing scale.
+    ## Adding missing grouping variables: `survey_id`
+    ## Scale for colour is already present. Adding another scale for colour, which
+    ## will replace the existing scale.
 
 ``` r
-ggsave(file="output/CPUE3.png", CPUE_n3, width = 4.5, height = 5, units = c("in"))
+#ggsave(file="output/CPUE3.png", CPUE_n3, width = 4.5, height = 5, units = c("in"))
 
 # by fisherman 
 modified_trap_df %>% 
@@ -527,9 +525,10 @@ modified_trap_df %>%
 ```
 
     ## Warning: Removed 1899 rows containing non-finite values (`stat_boxplot()`).
-    ## Removed 1899 rows containing missing values (`geom_point()`).
 
-![](CPUE-maturity-length-analysis_files/figure-gfm/unnamed-chunk-9-2.png)<!-- -->
+    ## Warning: Removed 1899 rows containing missing values (`geom_point()`).
+
+![](CPUE-maturity-length-analysis_files/figure-gfm/unnamed-chunk-10-2.png)<!-- -->
 
 ``` r
 # by landing site
@@ -546,7 +545,7 @@ modified_trap_df %>%
     ## Warning: Removed 1899 rows containing non-finite values (`stat_boxplot()`).
     ## Removed 1899 rows containing missing values (`geom_point()`).
 
-![](CPUE-maturity-length-analysis_files/figure-gfm/unnamed-chunk-9-3.png)<!-- -->
+![](CPUE-maturity-length-analysis_files/figure-gfm/unnamed-chunk-10-3.png)<!-- -->
 
 ``` r
 # by month and year 
@@ -560,7 +559,7 @@ modified_trap_df %>% unite(ym, year, month, sep = " ", remove = FALSE) %>% filte
   theme(axis.text.x = element_text(vjust = 1.1, hjust=1.1, angle=60)) #Set the text angle
 ```
 
-![](CPUE-maturity-length-analysis_files/figure-gfm/unnamed-chunk-9-4.png)<!-- -->
+![](CPUE-maturity-length-analysis_files/figure-gfm/unnamed-chunk-10-4.png)<!-- -->
 
 Biomass = Kilograms per trap
 
@@ -569,7 +568,7 @@ Biomass = Kilograms per trap
 hist(modified_trap_df$kg_per_trap)
 ```
 
-![](CPUE-maturity-length-analysis_files/figure-gfm/unnamed-chunk-10-1.png)<!-- -->
+![](CPUE-maturity-length-analysis_files/figure-gfm/unnamed-chunk-11-1.png)<!-- -->
 
 ``` r
 # basic grams per trap plot with no other variables 
@@ -589,28 +588,22 @@ Yield_reported2 <- kg_per_trap_stats %>%
   ylab("Biomass (kg per trap collected)") + xlab("Type of trap") +
   theme(axis.text.x = element_text(vjust = 1.1)) #Set the text angle
 
-ggsave(file="output/Yield_reported.png", Yield_reported, width = 4, height = 4, units = c("in"))
-```
-
-    ## Warning: Removed 808 rows containing non-finite values (`stat_boxplot()`).
-
-    ## Warning: Removed 808 rows containing missing values (`geom_point()`).
-
-``` r
-ggsave(file="output/Yield_reported2.png", Yield_reported2, width = 2, height = 3, units = c("in"))
+#ggsave(file="output/Yield_reported.png", Yield_reported, width = 4, height = 4, units = c("in"))
+#ggsave(file="output/Yield_reported2.png", Yield_reported2, width = 2, height = 3, units = c("in"))
 
 Yield_reported3 <- ggbetweenstats(data=modified_trap_df, x = trap_type, y = kg_per_trap, 
                type = "np", plot.type = "boxviolin", sample.size.label = TRUE,
                mean.point.args = list(size = 2, color = "gray"),
                mean.label.args = list(size = 2),
                point.args = list(position = ggplot2::position_jitterdodge(dodge.width = 0.5), 
-                                 alpha= 0.2, size = 1.5, stroke = 0)) +
-  scale_color_manual(values = c( "#387780", "#FF8C61")) +
+                                 alpha= 0.1, size = 1, stroke = 0)) +
+  scale_color_manual(values = c( "black", "black")) +
   labs(x = "Trap Type", y = "Biomass (kg per trap collected)") 
 ```
 
-    ## Scale for colour is already present.
-    ## Adding another scale for colour, which will replace the existing scale.
+    ## Adding missing grouping variables: `survey_id`
+    ## Scale for colour is already present. Adding another scale for colour, which
+    ## will replace the existing scale.
 
 ``` r
 ggsave(file="output/Yield_reported3.png", Yield_reported3, width = 4.5, height = 5, units = c("in"))
@@ -627,9 +620,10 @@ modified_trap_df %>%
 ```
 
     ## Warning: Removed 808 rows containing non-finite values (`stat_boxplot()`).
-    ## Removed 808 rows containing missing values (`geom_point()`).
 
-![](CPUE-maturity-length-analysis_files/figure-gfm/unnamed-chunk-10-2.png)<!-- -->
+    ## Warning: Removed 808 rows containing missing values (`geom_point()`).
+
+![](CPUE-maturity-length-analysis_files/figure-gfm/unnamed-chunk-11-2.png)<!-- -->
 
 ``` r
 # visually seeing if this differs by landing site 
@@ -646,7 +640,7 @@ modified_trap_df %>%
     ## Warning: Removed 808 rows containing non-finite values (`stat_boxplot()`).
     ## Removed 808 rows containing missing values (`geom_point()`).
 
-![](CPUE-maturity-length-analysis_files/figure-gfm/unnamed-chunk-10-3.png)<!-- -->
+![](CPUE-maturity-length-analysis_files/figure-gfm/unnamed-chunk-11-3.png)<!-- -->
 
 ``` r
 # by month and year 
@@ -662,7 +656,7 @@ modified_trap_df %>% unite(ym, year, month, sep = " ", remove = FALSE) %>% #filt
 
     ## Warning: Removed 808 rows containing non-finite values (`stat_boxplot()`).
 
-![](CPUE-maturity-length-analysis_files/figure-gfm/unnamed-chunk-10-4.png)<!-- -->
+![](CPUE-maturity-length-analysis_files/figure-gfm/unnamed-chunk-11-4.png)<!-- -->
 
 Value reported per trap
 
@@ -670,7 +664,7 @@ Value reported per trap
 hist(modified_trap_df$value_per_trap)
 ```
 
-![](CPUE-maturity-length-analysis_files/figure-gfm/unnamed-chunk-11-1.png)<!-- -->
+![](CPUE-maturity-length-analysis_files/figure-gfm/unnamed-chunk-12-1.png)<!-- -->
 
 ``` r
 Value_reported <- modified_trap_df %>% 
@@ -689,28 +683,22 @@ Value_reported2 <- value_per_trap_stats %>%
   ylab("Value (KES per trap collected)") + xlab("Type of trap") +
   theme(axis.text.x = element_text(vjust = 1.1)) #Set the text angle
 
-ggsave(file="output/Value_reported.png", Value_reported, width = 4, height = 4, units = c("in"))
-```
-
-    ## Warning: Removed 846 rows containing non-finite values (`stat_boxplot()`).
-
-    ## Warning: Removed 846 rows containing missing values (`geom_point()`).
-
-``` r
-ggsave(file="output/Value_reported2.png", Value_reported2, width = 2, height = 3, units = c("in"))
+# ggsave(file="output/Value_reported.png", Value_reported, width = 4, height = 4, units = c("in"))
+# ggsave(file="output/Value_reported2.png", Value_reported2, width = 2, height = 3, units = c("in"))
 
 Value_reported3 <- ggbetweenstats(data=modified_trap_df, x = trap_type, y = value_per_trap, 
                type = "np", plot.type = "boxviolin", sample.size.label = TRUE,
                mean.point.args = list(size = 2, color = "gray"),
                mean.label.args = list(size = 2),
                point.args = list(position = ggplot2::position_jitterdodge(dodge.width = 0.5), 
-                                 alpha= 0.2, size = 1.5, stroke = 0)) +
-  scale_color_manual(values = c( "#387780", "#FF8C61")) +
+                                 alpha= 0.1, size = 1, stroke = 0)) +
+  scale_color_manual(values = c( "black", "black")) +
   labs(x = "Trap Type", y = "Value per trap") 
 ```
 
-    ## Scale for colour is already present.
-    ## Adding another scale for colour, which will replace the existing scale.
+    ## Adding missing grouping variables: `survey_id`
+    ## Scale for colour is already present. Adding another scale for colour, which
+    ## will replace the existing scale.
 
 ``` r
 ggsave(file="output/Value_reported3.png", Value_reported3, width = 4.5, height = 5, units = c("in"))
@@ -756,7 +744,7 @@ ggMarginal(p, type="boxplot")
     ## Continuous x aesthetic
     ## ℹ did you forget `aes(group = ...)`?
 
-![](CPUE-maturity-length-analysis_files/figure-gfm/unnamed-chunk-12-1.png)<!-- -->
+![](CPUE-maturity-length-analysis_files/figure-gfm/unnamed-chunk-13-1.png)<!-- -->
 
 ``` r
 data %>%
@@ -773,7 +761,7 @@ data %>%
   geom_boxplot() + geom_jitter(size=0.5, alpha=0.1, width=0.2) 
 ```
 
-![](CPUE-maturity-length-analysis_files/figure-gfm/unnamed-chunk-12-2.png)<!-- -->
+![](CPUE-maturity-length-analysis_files/figure-gfm/unnamed-chunk-13-2.png)<!-- -->
 
 ``` r
   #geom_point(aes(fill=trap_type), pch = 21, size=1, alpha=0.2) 
@@ -789,7 +777,61 @@ data %>%
   scale_fill_manual(values = c( "#387780", "#FF8C61")) 
 ```
 
-![](CPUE-maturity-length-analysis_files/figure-gfm/unnamed-chunk-12-3.png)<!-- -->
+![](CPUE-maturity-length-analysis_files/figure-gfm/unnamed-chunk-13-3.png)<!-- -->
+
+``` r
+### Species richness plot 
+
+species_rich_plot <- data %>%
+  select(survey_id, month, BMU, trap_type, catch_per_trap, 
+         scientific_name, total_traps_collected) %>% distinct() %>%
+  group_by(survey_id) %>%
+  mutate(richness = n_distinct(scientific_name),
+         richness_trap = richness/total_traps_collected) %>% 
+  select(-scientific_name) %>%
+  ungroup() %>% distinct() %>%
+  ggbetweenstats(., x = trap_type, y = richness, 
+               type = "np", plot.type = "box", sample.size.label = TRUE,
+               mean.point.args = list(size = 2, color = "gray"),
+               mean.label.args = list(size = 2),
+               point.args = list(position = ggplot2::position_jitterdodge(dodge.width = 0.1), 
+                                 alpha= 0.1, size = 1, stroke = 0)) +
+  scale_color_manual(values = c( "black", "black")) +
+  labs(x = "Trap Type", y = "Richness (# of unique species per fishing trip)") 
+```
+
+    ## Scale for colour is already present.
+    ## Adding another scale for colour, which will replace the existing scale.
+
+``` r
+ggsave(file="output/Species_richness.png", species_rich_plot, width = 4.5, height = 5, units = c("in"))
+
+spprich <- data %>%
+  select(survey_id, month, BMU, trap_type, catch_per_trap, 
+         scientific_name, total_traps_collected) %>% distinct() %>%
+  group_by(survey_id) %>%
+  mutate(richness = n_distinct(scientific_name),
+         richness_trap = richness/total_traps_collected) %>% 
+  select(-scientific_name) %>%
+  ungroup() %>% distinct() 
+
+spprich_means <- summarySE(data=spprich, measurevar = c("richness"), 
+                               groupvars = c("trap_type"), na.rm = TRUE)
+
+t.test(richness~trap_type, data = spprich, var.equal = FALSE)
+```
+
+    ## 
+    ##  Welch Two Sample t-test
+    ## 
+    ## data:  richness by trap_type
+    ## t = -5.209, df = 2084.9, p-value = 2.086e-07
+    ## alternative hypothesis: true difference in means between group Control and group Experimental is not equal to 0
+    ## 95 percent confidence interval:
+    ##  -0.4579806 -0.2074543
+    ## sample estimates:
+    ##      mean in group Control mean in group Experimental 
+    ##                   4.555667                   4.888385
 
 ## correlation plot
 
@@ -950,138 +992,22 @@ Grams per trap is log transformed.
 I’m not sure yet if this is the best way to do this…
 
 ``` r
-# unmodified
-un_catch_model <- lmer(log(kg_per_trap) ~ catch_per_trap + (1|enumerator) + (1|landing_site), na.action=na.omit, data=UN)
+# # unmodified
+# un_catch_model <- lmer(log(kg_per_trap) ~ catch_per_trap + (1|enumerator) + (1|landing_site), na.action=na.omit, data=UN)
+# qqPlot(residuals(un_catch_model)) 
+# hist(residuals(un_catch_model))
+# 
+# # modified
+# mod_catch_model <- lmer(log(kg_per_trap) ~ catch_per_trap + (1|enumerator) + (1|landing_site), na.action=na.omit, data=MOD)
+# qqPlot(residuals(mod_catch_model)) 
+# hist(residuals(mod_catch_model))
+# 
+# summary(un_catch_model)
+# summary(mod_catch_model)
+# 
+# Anova(un_catch_model, ddf="lme4", type='III')
+# Anova(mod_catch_model, ddf="lme4", type='III')
 ```
-
-    ## boundary (singular) fit: see help('isSingular')
-
-``` r
-qqPlot(residuals(un_catch_model)) 
-```
-
-![](CPUE-maturity-length-analysis_files/figure-gfm/unnamed-chunk-18-1.png)<!-- -->
-
-    ## [1] 204 563
-
-``` r
-hist(residuals(un_catch_model))
-```
-
-![](CPUE-maturity-length-analysis_files/figure-gfm/unnamed-chunk-18-2.png)<!-- -->
-
-``` r
-# modified
-mod_catch_model <- lmer(log(kg_per_trap) ~ catch_per_trap + (1|enumerator) + (1|landing_site), na.action=na.omit, data=MOD)
-```
-
-    ## boundary (singular) fit: see help('isSingular')
-
-``` r
-qqPlot(residuals(mod_catch_model)) 
-```
-
-![](CPUE-maturity-length-analysis_files/figure-gfm/unnamed-chunk-18-3.png)<!-- -->
-
-    ## [1] 360 340
-
-``` r
-hist(residuals(mod_catch_model))
-```
-
-![](CPUE-maturity-length-analysis_files/figure-gfm/unnamed-chunk-18-4.png)<!-- -->
-
-``` r
-summary(un_catch_model)
-```
-
-    ## Linear mixed model fit by REML ['lmerMod']
-    ## Formula: 
-    ## log(kg_per_trap) ~ catch_per_trap + (1 | enumerator) + (1 | landing_site)
-    ##    Data: UN
-    ## 
-    ## REML criterion at convergence: 2947.2
-    ## 
-    ## Scaled residuals: 
-    ##     Min      1Q  Median      3Q     Max 
-    ## -3.5102 -0.6520  0.0659  0.6761  3.0709 
-    ## 
-    ## Random effects:
-    ##  Groups       Name        Variance  Std.Dev. 
-    ##  landing_site (Intercept) 4.105e-02 2.026e-01
-    ##  enumerator   (Intercept) 8.149e-18 2.855e-09
-    ##  Residual                 3.021e-01 5.496e-01
-    ## Number of obs: 1781, groups:  landing_site, 4; enumerator, 3
-    ## 
-    ## Fixed effects:
-    ##                 Estimate Std. Error t value
-    ## (Intercept)    -0.739506   0.104839  -7.054
-    ## catch_per_trap  0.054150   0.002756  19.651
-    ## 
-    ## Correlation of Fixed Effects:
-    ##             (Intr)
-    ## ctch_pr_trp -0.134
-    ## optimizer (nloptwrap) convergence code: 0 (OK)
-    ## boundary (singular) fit: see help('isSingular')
-
-``` r
-summary(mod_catch_model)
-```
-
-    ## Linear mixed model fit by REML ['lmerMod']
-    ## Formula: 
-    ## log(kg_per_trap) ~ catch_per_trap + (1 | enumerator) + (1 | landing_site)
-    ##    Data: MOD
-    ## 
-    ## REML criterion at convergence: 770.1
-    ## 
-    ## Scaled residuals: 
-    ##     Min      1Q  Median      3Q     Max 
-    ## -3.3378 -0.7464 -0.0322  0.5721  3.0691 
-    ## 
-    ## Random effects:
-    ##  Groups       Name        Variance  Std.Dev. 
-    ##  landing_site (Intercept) 4.944e-02 2.223e-01
-    ##  enumerator   (Intercept) 9.755e-11 9.876e-06
-    ##  Residual                 3.046e-01 5.519e-01
-    ## Number of obs: 455, groups:  landing_site, 4; enumerator, 3
-    ## 
-    ## Fixed effects:
-    ##                 Estimate Std. Error t value
-    ## (Intercept)    -0.615365   0.130690  -4.709
-    ## catch_per_trap  0.014574   0.004164   3.500
-    ## 
-    ## Correlation of Fixed Effects:
-    ##             (Intr)
-    ## ctch_pr_trp -0.410
-    ## optimizer (nloptwrap) convergence code: 0 (OK)
-    ## boundary (singular) fit: see help('isSingular')
-
-``` r
-Anova(un_catch_model, ddf="lme4", type='III')
-```
-
-    ## Analysis of Deviance Table (Type III Wald chisquare tests)
-    ## 
-    ## Response: log(kg_per_trap)
-    ##                  Chisq Df Pr(>Chisq)    
-    ## (Intercept)     49.755  1  1.742e-12 ***
-    ## catch_per_trap 386.144  1  < 2.2e-16 ***
-    ## ---
-    ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
-
-``` r
-Anova(mod_catch_model, ddf="lme4", type='III')
-```
-
-    ## Analysis of Deviance Table (Type III Wald chisquare tests)
-    ## 
-    ## Response: log(kg_per_trap)
-    ##                 Chisq Df Pr(>Chisq)    
-    ## (Intercept)    22.171  1  2.494e-06 ***
-    ## catch_per_trap 12.250  1  0.0004654 ***
-    ## ---
-    ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 
 ## <a name="species"></a> **Calculate top species caught**
 
@@ -1108,7 +1034,7 @@ species_list %>% filter(species_catch > 250) %>%
   geom_point() + theme_bw() + theme(axis.text.x = element_text(angle = 60, hjust=1)) #Set the text angle
 ```
 
-![](CPUE-maturity-length-analysis_files/figure-gfm/unnamed-chunk-19-1.png)<!-- -->
+![](CPUE-maturity-length-analysis_files/figure-gfm/unnamed-chunk-20-1.png)<!-- -->
 
 ## <a name="species_pertrap"></a> **Top species stats per trap**
 
@@ -1165,11 +1091,11 @@ species_df %>%
   theme(axis.text.x = element_text()) #Set the text angle
 ```
 
-    ## Warning: Removed 7211 rows containing non-finite values (`stat_boxplot()`).
+    ## Warning: Removed 8218 rows containing non-finite values (`stat_boxplot()`).
 
-    ## Warning: Removed 7211 rows containing missing values (`geom_point()`).
+    ## Warning: Removed 8218 rows containing missing values (`geom_point()`).
 
-![](CPUE-maturity-length-analysis_files/figure-gfm/unnamed-chunk-21-1.png)<!-- -->
+![](CPUE-maturity-length-analysis_files/figure-gfm/unnamed-chunk-22-1.png)<!-- -->
 
 ### Statistics for the top ten species
 
@@ -1193,13 +1119,13 @@ var.test(Topspp_MOD$catch_per_trap, MOD$catch_per_trap) # output is significant 
     ##  F test to compare two variances
     ## 
     ## data:  Topspp_MOD$catch_per_trap and MOD$catch_per_trap
-    ## F = 5.2987, num df = 12040, denom df = 454, p-value < 2.2e-16
+    ## F = 5.3656, num df = 13145, denom df = 454, p-value < 2.2e-16
     ## alternative hypothesis: true ratio of variances is not equal to 1
     ## 95 percent confidence interval:
-    ##  4.621260 6.025391
+    ##  4.680499 6.100158
     ## sample estimates:
     ## ratio of variances 
-    ##           5.298674
+    ##           5.365582
 
 ``` r
 #t.test(catch_per_trap~trap_type, data = species_df, var.equal = FALSE)
@@ -1245,7 +1171,9 @@ maturity %>% select(number_of_fish, trap_type, maturity, scientific_name,
   ylab("Abundance (number of individuals per trap collected)")
 ```
 
-![](CPUE-maturity-length-analysis_files/figure-gfm/unnamed-chunk-24-1.png)<!-- -->
+    ## Adding missing grouping variables: `survey_id`
+
+![](CPUE-maturity-length-analysis_files/figure-gfm/unnamed-chunk-25-1.png)<!-- -->
 
 ``` r
 maturity %>% select(number_of_fish, trap_type, maturity, scientific_name, total_traps_collected, nofish_pertrap) %>% 
@@ -1258,7 +1186,9 @@ maturity %>% select(number_of_fish, trap_type, maturity, scientific_name, total_
   ylab("Abundance (number of individuals per trap collected)")
 ```
 
-![](CPUE-maturity-length-analysis_files/figure-gfm/unnamed-chunk-24-2.png)<!-- -->
+    ## Adding missing grouping variables: `survey_id`
+
+![](CPUE-maturity-length-analysis_files/figure-gfm/unnamed-chunk-25-2.png)<!-- -->
 
 Statistics on the above…
 
@@ -1271,34 +1201,33 @@ nofish_maturity_aov <- aov(number_of_fish ~ trap_type*maturity, data = maturity)
 summary(nofish_maturity_aov)
 ```
 
-    ##                       Df Sum Sq Mean Sq F value  Pr(>F)    
-    ## trap_type              1   2730  2730.2 126.845 < 2e-16 ***
-    ## maturity               1     99    99.5   4.621 0.03160 *  
-    ## trap_type:maturity     1    143   143.0   6.645 0.00995 ** 
-    ## Residuals          37642 810205    21.5                    
+    ##                       Df Sum Sq Mean Sq F value   Pr(>F)    
+    ## trap_type              1   1466  1465.7  67.979  < 2e-16 ***
+    ## maturity               1    370   369.8  17.152 3.46e-05 ***
+    ## trap_type:maturity     1     64    63.7   2.955   0.0856 .  
+    ## Residuals          40255 867929    21.6                     
     ## ---
     ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
-    ## 2613 observations deleted due to missingness
 
 ``` r
 nofish_maturity_tukey <- TukeyHSD(nofish_maturity_aov)
 nofish_maturity_tukey$`trap_type:maturity`
 ```
 
-    ##                                                  diff         lwr        upr
-    ## Experimental:immature-Control:immature     0.71295049  0.51678461  0.9091164
-    ## Control:mature-Control:immature            0.19006583  0.03935184  0.3407798
-    ## Experimental:mature-Control:immature       0.63953473  0.46179561  0.8172738
-    ## Control:mature-Experimental:immature      -0.52288466 -0.71616882 -0.3296005
-    ## Experimental:mature-Experimental:immature -0.07341576 -0.28843960  0.1416081
-    ## Experimental:mature-Control:mature         0.44946890  0.27491544  0.6240224
+    ##                                                  diff        lwr         upr
+    ## Experimental:immature-Control:immature     0.48702849  0.2994944  0.67456256
+    ## Control:mature-Control:immature            0.24925085  0.1027441  0.39575761
+    ## Experimental:mature-Control:immature       0.56728158  0.3955124  0.73905074
+    ## Control:mature-Experimental:immature      -0.23777764 -0.4229268 -0.05262849
+    ## Experimental:mature-Experimental:immature  0.08025309 -0.1254667  0.28597285
+    ## Experimental:mature-Control:mature         0.31803073  0.1488686  0.48719285
     ##                                                  p adj
-    ## Experimental:immature-Control:immature    3.963496e-14
-    ## Control:mature-Control:immature           6.566811e-03
-    ## Experimental:mature-Control:immature      4.385381e-14
-    ## Control:mature-Experimental:immature      2.195988e-11
-    ## Experimental:mature-Experimental:immature 8.167256e-01
-    ## Experimental:mature-Control:mature        2.226691e-10
+    ## Experimental:immature-Control:immature    1.516050e-10
+    ## Control:mature-Control:immature           7.307218e-05
+    ## Experimental:mature-Control:immature      3.874678e-14
+    ## Control:mature-Experimental:immature      5.357681e-03
+    ## Experimental:mature-Experimental:immature 7.481124e-01
+    ## Experimental:mature-Control:mature        8.134120e-06
 
 ## <a name="length"></a> **Catch and length data of mature fish**
 
@@ -1340,7 +1269,7 @@ maturity_dist_plot <- maturity_dist %>%
   ungroup() %>%
   ggplot(., aes(x=scientific_name, y=avg_length_dist, fill=trap_type)) + 
   coord_flip() +
-  scale_fill_manual(values = c("#387780", "#FF8C61")) +
+  scale_fill_manual(values = c("black", "white")) +
   geom_hline(yintercept = 0, lty = "dotted") +
   theme(axis.text.y = element_text(face = "italic")) +
   geom_line(aes(group = scientific_name), color="grey14") +
@@ -1455,7 +1384,7 @@ maturity_figs %>%
 ``` r
 length_freq <- a +
   geom_bar(position = position_dodge(), alpha=0.5) +
-  scale_fill_manual(values = c("#387780", "#FF8C61")) +
+  scale_fill_manual(values = c("gray60", "white")) +
   scale_color_manual(values = c("black", "black"))
 
 ggsave(file="output/Length_freq.png", length_freq, width = 6, height = 8, units = c("in"))
@@ -1481,7 +1410,7 @@ a + geom_histogram(aes(y = ..count.., colour = trap_type, fill = trap_type),
     ## Call `lifecycle::last_lifecycle_warnings()` to see where this warning was
     ## generated.
 
-![](CPUE-maturity-length-analysis_files/figure-gfm/unnamed-chunk-29-1.png)<!-- -->
+![](CPUE-maturity-length-analysis_files/figure-gfm/unnamed-chunk-30-1.png)<!-- -->
 
 <https://rstudio-pubs-static.s3.amazonaws.com/595950_6dc36259819541e5869f9fff162a8a41.html#histogram>
 
@@ -1551,13 +1480,13 @@ biomass_survey_data <- data %>% filter(!is.na(number_of_fish)) %>%
   subset(trap_type == "Experimental" | trap_type == "Control") %>%
   select(survey_id, Operation_date, year, month, day, enumerator, trap_type, total_traps_collected,
          total_biomass_kg, take_home_weight_kg, total_value_KES, take_home_value_KES, scientific_name, 
-         length_cm, number_of_fish, crew_size_corrected, length_corrected) 
+         length_cm, number_of_fish, crew_size_corrected, length_corrected, percent_composition) 
 
 biomass_df <- full_join(biomass_survey_data, biomass_fishbase, by = "scientific_name") 
 ```
 
     ## Warning in full_join(biomass_survey_data, biomass_fishbase, by = "scientific_name"): Detected an unexpected many-to-many relationship between `x` and `y`.
-    ## ℹ Row 76 of `x` matches multiple rows in `y`.
+    ## ℹ Row 80 of `x` matches multiple rows in `y`.
     ## ℹ Row 26 of `y` matches multiple rows in `x`.
     ## ℹ If a many-to-many relationship is expected, set `relationship =
     ##   "many-to-many"` to silence this warning.
@@ -1583,7 +1512,8 @@ biomass_df <- biomass_df %>%
     length_corrected == ">90" ~ 100 ### circle back to what value to use here
   )) %>%
   mutate(W_g = (a*(median_length^b))*number_of_fish,
-         W_kg = W_g/1000) %>% # calculating biomass from W=aL^b 
+         W_kg = W_g/1000, # calculating biomass from W=aL^b 
+         biomasscomp = total_biomass_kg*percent_composition) %>% 
   group_by(survey_id) %>%
   filter(!is.na(W_kg)) %>%
   mutate(calculated_total_biomass = sum(W_kg),
@@ -1600,7 +1530,7 @@ biomass_comparison %>%
   geom_point(aes(color=comparison), size=1) + xlab("") + ylab("difference in value")
 ```
 
-![](CPUE-maturity-length-analysis_files/figure-gfm/unnamed-chunk-32-1.png)<!-- -->
+![](CPUE-maturity-length-analysis_files/figure-gfm/unnamed-chunk-33-1.png)<!-- -->
 
 Calculated biomass per trap figures.
 
@@ -1615,7 +1545,7 @@ biomass_df %>% filter(!is.na(calculated_biomass_pertrap)) %>%
   theme(axis.text.x = element_text(vjust = 1.1)) #Set the text angle
 ```
 
-![](CPUE-maturity-length-analysis_files/figure-gfm/unnamed-chunk-33-1.png)<!-- -->
+![](CPUE-maturity-length-analysis_files/figure-gfm/unnamed-chunk-34-1.png)<!-- -->
 
 ``` r
 # visually seeing if this differs by fisherman 
@@ -1629,14 +1559,14 @@ biomass_df %>% filter(!is.na(calculated_biomass_pertrap)) %>%
   theme(axis.text.x = element_text(vjust = 1.1)) #Set the text angle
 ```
 
-![](CPUE-maturity-length-analysis_files/figure-gfm/unnamed-chunk-33-2.png)<!-- -->
+![](CPUE-maturity-length-analysis_files/figure-gfm/unnamed-chunk-34-2.png)<!-- -->
 
 List of species to ask Fishbase for a and b.
 
 ``` r
-biomass_df %>% 
-  select(scientific_name) %>% distinct() %>%
-  write.csv("data/full_species_list.csv")
+# biomass_df %>% 
+#   select(scientific_name) %>% distinct() %>%
+#   write.csv("data/full_species_list.csv")
 ```
 
 ## Economic Data
@@ -1644,7 +1574,7 @@ biomass_df %>%
 Profit data from Gilligan’s sheet.
 
 ``` r
-gilligan_profit <- read.csv("data/SpeciesData_GatedTraps_Galligan.csv", header=TRUE, sep = ",") %>%
+gilligan_profit <- read.csv("data/SpeciesData_GatedTraps_Galligan_edited.csv", header=TRUE, sep = ",") %>%
   dplyr::select(Species, Price_KSHPerkg) %>% dplyr::rename(scientific_name = Species)
 
 ## species df for profit analysis 
@@ -1654,15 +1584,16 @@ species_df_forprofit <- species_df %>% select(survey_id, month, scientific_name,
 ## need to also add the calculated biomass  values 
 ## run the biomass_df chunk at the bottom of this script 
 biomass_df_forprofit <- biomass_df %>% 
-  dplyr::select(survey_id, scientific_name, trap_type, total_traps_collected, W_kg, length_corrected) %>% 
+  dplyr::select(survey_id, scientific_name, trap_type, total_traps_collected, biomasscomp, W_kg, length_corrected) %>% 
   filter(!is.na(W_kg)) %>%
   group_by(survey_id) %>% mutate(yield_calc_kg = sum(W_kg), 
                                  yield_calc_kg_trap = yield_calc_kg/total_traps_collected) %>% 
   ungroup() %>% distinct()
 
+### using biomasscomp(kg) that is composition of reported biomass 
 gilligan_profit_data <- left_join(species_df_forprofit, gilligan_profit, by = "scientific_name") %>%
   left_join(., biomass_df_forprofit, by = c("scientific_name", "survey_id", "trap_type")) %>% distinct() %>%
-  mutate(KSHperspp = Price_KSHPerkg*W_kg) %>% group_by(survey_id) %>%
+  mutate(KSHperspp = Price_KSHPerkg*biomasscomp) %>% group_by(survey_id) %>%
   mutate(KSHpersurvey = sum(KSHperspp)) %>% ungroup() %>%
   mutate(KSHpertrap = KSHpersurvey/total_traps_collected)
 
@@ -1680,9 +1611,9 @@ gilligan_profit_data_means <- summarySE(data=gilligan_profit_data_slim, measurev
 
 ``` r
 profitplot1 <- gilligan_profit_data_slim %>% 
-  ggplot(., aes(x=month, y=KSHpertrap, color=trap_type)) +  
-  scale_color_manual(values = c( "#387780", "#FF8C61")) +
-  scale_fill_manual(values = c( "#387780", "#FF8C61")) +
+  ggplot(., aes(x=month, y=KSHpertrap, lty=trap_type)) +  
+  #scale_color_manual(values = c( "#387780", "#FF8C61")) +
+  #scale_fill_manual(values = c( "#387780", "#FF8C61")) +
   theme_bw() + xlab("Month") + ylab("Revenue (KSH trap-1)") +
   geom_line(data=gilligan_profit_data_means, aes(group = trap_type), size=0.5) +
   geom_point(data = gilligan_profit_data_means, aes(x=month, y=KSHpertrap), size=1) +
@@ -1719,8 +1650,8 @@ Wkgplot <- ggbetweenstats(data=biomass_df_forprofit_slim, x = trap_type, y = yie
     ## Adding another scale for colour, which will replace the existing scale.
 
 ``` r
-ggsave(file="output/Value_calculated.png", KSHplot, width = 4.5, height = 5, units = c("in"))
-ggsave(file="output/Yield_calculated.png", Wkgplot, width = 4.5, height = 5, units = c("in"))
+# ggsave(file="output/Value_calculated.png", KSHplot, width = 4.5, height = 5, units = c("in"))
+# ggsave(file="output/Yield_calculated.png", Wkgplot, width = 4.5, height = 5, units = c("in"))
 
 t.test(KSHpertrap~trap_type, data = gilligan_profit_data_slim, var.equal = FALSE)
 ```
@@ -1729,13 +1660,13 @@ t.test(KSHpertrap~trap_type, data = gilligan_profit_data_slim, var.equal = FALSE
     ##  Welch Two Sample t-test
     ## 
     ## data:  KSHpertrap by trap_type
-    ## t = -19.538, df = 859.09, p-value < 2.2e-16
+    ## t = -19.672, df = 909.13, p-value < 2.2e-16
     ## alternative hypothesis: true difference in means between group Control and group Experimental is not equal to 0
     ## 95 percent confidence interval:
-    ##  -982.9165 -803.4601
+    ##  -143.7238 -117.6475
     ## sample estimates:
     ##      mean in group Control mean in group Experimental 
-    ##                   313.1836                  1206.3719
+    ##                   122.0486                   252.7342
 
 ``` r
 KSHpertrap_trap_stats <- gilligan_profit_data_slim %>% 
@@ -1880,7 +1811,7 @@ Profit data from Kenya team.
 ## Nutrient info
 
 ``` r
-nutrient_raw <- read.csv("data/SpeciesData_GatedTraps_Galligan.csv", sep = ",", header=TRUE) %>%
+nutrient_raw <- read.csv("data/SpeciesData_GatedTraps_Galligan_edited.csv", sep = ",", header=TRUE) %>%
   dplyr::rename(scientific_name = Species)
 
 nut_biomassdf <- left_join(biomass_df, nutrient_raw, by = "scientific_name")
@@ -1889,15 +1820,17 @@ nut_biomassdf <- left_join(biomass_df, nutrient_raw, by = "scientific_name")
 ## W_g = calculated biomass (g)
 ## Nutrient_mgPer100g 
 ## (W_g/100)*Nutrient_mgPer100g = nutrientmg for that group of fish in that survey 
+## use biomasscomp (kg) x 1000 = biomasscomp_g for the below 
 nut_biomassdf <- nut_biomassdf %>%
+  mutate(biomasscomp_g = biomasscomp*1000) %>%
   # calculating nutrient for each scientific name within a survey 
-  mutate(spp_Calcium = (W_g/100)*Calcium_mgPer100g,
-         spp_Iron = (W_g/100)*Iron_mgPer100g,
-         spp_Omega3 = (W_g/100)*Omega3_gPer100g,
-         spp_Protein = (W_g/100)*Protein_gPer100g,
-         spp_VitaminA = (W_g/100)*VitaminA_ugPer100g,
-         spp_Selenium = (W_g/100)*Selenium_ugPer100g,
-         spp_Zinc = (W_g/100)*Zinc_mgPer100g) %>% 
+  mutate(spp_Calcium = (biomasscomp_g/100)*Calcium_mgPer100g,
+         spp_Iron = (biomasscomp_g/100)*Iron_mgPer100g,
+         spp_Omega3 = (biomasscomp_g/100)*Omega3_gPer100g,
+         spp_Protein = (biomasscomp_g/100)*Protein_gPer100g,
+         spp_VitaminA = (biomasscomp_g/100)*VitaminA_ugPer100g,
+         spp_Selenium = (biomasscomp_g/100)*Selenium_ugPer100g,
+         spp_Zinc = (biomasscomp_g/100)*Zinc_mgPer100g) %>% 
   # calculating total nutrient for each survey 
   group_by(survey_id) %>%
   mutate(pertrap_Calcium = sum(spp_Calcium)/total_traps_collected,
@@ -1908,7 +1841,7 @@ nut_biomassdf <- nut_biomassdf %>%
          pertrap_Selenium = sum(spp_Selenium)/total_traps_collected,
          pertrap_Zinc = sum(spp_Zinc)/total_traps_collected) %>% ungroup()
 
-nutrient_plot <- nut_biomassdf %>%
+nut_biomassdf %>%
   dplyr::select(survey_id, trap_type, pertrap_Calcium, pertrap_Iron, pertrap_Omega3, spp_Protein, spp_VitaminA, 
                 spp_Selenium, spp_Zinc) %>%
   gather(., "measurement", "value", 3:9) %>% distinct() %>%
@@ -1921,13 +1854,17 @@ nutrient_plot <- nut_biomassdf %>%
   strip.text.y = element_text(size = 12, color = "black", face = "bold")) +
   theme(strip.background = element_rect(color="black", fill="white", linewidth=0.5, linetype="solid")) +
   ylab("nutritional content (mg survey-1)")
-
-ggsave(file="output/Nutrient.png", nutrient_plot, width = 10, height = 8, units = c("in"))
 ```
 
-    ## Warning: Removed 2415 rows containing non-finite values (`stat_boxplot()`).
+    ## Warning: Removed 2423 rows containing non-finite values (`stat_boxplot()`).
 
-    ## Warning: Removed 2415 rows containing missing values (`geom_point()`).
+    ## Warning: Removed 2423 rows containing missing values (`geom_point()`).
+
+![](CPUE-maturity-length-analysis_files/figure-gfm/unnamed-chunk-38-1.png)<!-- -->
+
+``` r
+#ggsave(file="output/Nutrient.png", nutrient_plot, width = 10, height = 8, units = c("in"))
+```
 
 Individual plots
 
@@ -1939,8 +1876,8 @@ nut_biomassdf_individual<- nut_biomassdf %>%
                mean.point.args = list(size = 2, color = "gray"),
                mean.label.args = list(size = 2),
                point.args = list(position = ggplot2::position_jitterdodge(dodge.width = 0.5), 
-                                 alpha= 0.2, size = 1.5, stroke = 0)) +
-  scale_color_manual(values = c( "#387780", "#FF8C61")) +
+                                 alpha= 0.1, size = 1, stroke = 0)) +
+  scale_color_manual(values = c( "black", "black")) +
   labs(x = "Trap Type", y = "Zinc (per trap)")
 ```
 
@@ -1964,21 +1901,21 @@ t.test(pertrap_Zinc~trap_type, data = nutrient_stats, var.equal = FALSE)
     ##  Welch Two Sample t-test
     ## 
     ## data:  pertrap_Zinc by trap_type
-    ## t = -15.175, df = 1229.2, p-value < 2.2e-16
+    ## t = -23.809, df = 1450.5, p-value < 2.2e-16
     ## alternative hypothesis: true difference in means between group Control and group Experimental is not equal to 0
     ## 95 percent confidence interval:
-    ##  -138.3614 -106.6810
+    ##  -13.46605 -11.41606
     ## sample estimates:
     ##      mean in group Control mean in group Experimental 
-    ##                   45.90279                  168.42402
+    ##                   12.99021                   25.43126
 
 ``` r
 nutrient_stats2
 ```
 
-    ##      trap_type    N pertrap_Zinc        sd       se        ci
-    ## 1      Control 2152     45.90279  92.55923 1.995256  3.912831
-    ## 2 Experimental 1087    168.42402 257.93820 7.823496 15.350880
+    ##      trap_type    N pertrap_Zinc        sd        se        ci
+    ## 1      Control 2152     12.99021  9.086436 0.1958720 0.3841183
+    ## 2 Experimental 1087     25.43126 15.971444 0.4844282 0.9505212
 
 ### Creating dataframe for collaborators
 
@@ -2044,13 +1981,13 @@ collabdf <- left_join(collabdf1, collabdf2, by = "survey_id") %>%
 
     ## Warning in full_join(., collabdf3, by = "survey_id"): Detected an unexpected many-to-many relationship between `x` and `y`.
     ## ℹ Row 1 of `x` matches multiple rows in `y`.
-    ## ℹ Row 2215 of `y` matches multiple rows in `x`.
+    ## ℹ Row 2248 of `y` matches multiple rows in `x`.
     ## ℹ If a many-to-many relationship is expected, set `relationship =
     ##   "many-to-many"` to silence this warning.
 
     ## Warning in full_join(., collabdf4, by = c("survey_id", "scientific_name")): Detected an unexpected many-to-many relationship between `x` and `y`.
-    ## ℹ Row 4 of `x` matches multiple rows in `y`.
-    ## ℹ Row 8 of `y` matches multiple rows in `x`.
+    ## ℹ Row 5 of `x` matches multiple rows in `y`.
+    ## ℹ Row 9 of `y` matches multiple rows in `x`.
     ## ℹ If a many-to-many relationship is expected, set `relationship =
     ##   "many-to-many"` to silence this warning.
 
@@ -2058,7 +1995,7 @@ collabdf <- left_join(collabdf1, collabdf2, by = "survey_id") %>%
 precollab5 <- gilligan_profit_data %>% 
   dplyr::select(survey_id, scientific_name, length_corrected, KSHperspp) %>% distinct()
 precollab5_2 <- nut_biomassdf %>% 
-  dplyr::select(survey_id, scientific_name, length_corrected, W_kg, spp_Zinc, spp_Selenium, spp_VitaminA, 
+  dplyr::select(survey_id, scientific_name, length_corrected, biomasscomp, W_kg, spp_Zinc, spp_Selenium, spp_VitaminA, 
                 spp_Protein, spp_Omega3, spp_Iron, spp_Calcium) %>% distinct()
 
 collabdf5 <- data %>% 
@@ -2074,13 +2011,13 @@ collabdf5 <- data %>%
 
     ## Warning in dplyr::full_join(., precollab5, by = c("survey_id", "scientific_name", : Detected an unexpected many-to-many relationship between `x` and `y`.
     ## ℹ Row 5 of `x` matches multiple rows in `y`.
-    ## ℹ Row 5 of `y` matches multiple rows in `x`.
+    ## ℹ Row 6 of `y` matches multiple rows in `x`.
     ## ℹ If a many-to-many relationship is expected, set `relationship =
     ##   "many-to-many"` to silence this warning.
 
     ## Warning in dplyr::full_join(., precollab5_2, by = c("survey_id", "scientific_name", : Detected an unexpected many-to-many relationship between `x` and `y`.
     ## ℹ Row 5 of `x` matches multiple rows in `y`.
-    ## ℹ Row 4 of `y` matches multiple rows in `x`.
+    ## ℹ Row 5 of `y` matches multiple rows in `x`.
     ## ℹ If a many-to-many relationship is expected, set `relationship =
     ##   "many-to-many"` to silence this warning.
 
@@ -2093,6 +2030,7 @@ collabdf5 <- data %>%
 collabdf6 <- collabdf5 %>% dplyr::group_by(survey_id, destination) %>%
   filter(!is.na(KSHperspp)) %>%
   dplyr::mutate(fish_perdestination = sum(number_of_fish),
+                biomass_perdestination = sum(biomasscomp),
          KSH_perdestination = sum(KSHperspp),
          calculated_Kg_perdestination = sum(W_kg),
          Zinc_perdestination = sum(spp_Zinc),
@@ -2104,7 +2042,7 @@ collabdf6 <- collabdf5 %>% dplyr::group_by(survey_id, destination) %>%
          Calcium_perdestination = sum(spp_Calcium)) %>%
   dplyr::select(-length_corrected, -number_of_fish, -scientific_name,
                 -KSHperspp, -W_kg, -spp_Zinc, -spp_Selenium, -spp_VitaminA,
-                -spp_Protein, -spp_Omega3, -spp_Iron, -spp_Calcium) %>%
+                -spp_Protein, -spp_Omega3, -spp_Iron, -spp_Calcium, -biomasscomp) %>% ungroup() %>%
   distinct()
 
 home_df <- collabdf6 %>% subset(destination == "HOME")
@@ -2139,9 +2077,9 @@ Calculate % take home
 
 ``` r
 percent_takehome <- collabdf6 %>% ungroup() %>%
-  dplyr::select(survey_id, trap_type, destination, fish_perdestination) %>% distinct() %>%
+  dplyr::select(survey_id, trap_type, destination, biomass_perdestination) %>% distinct() %>%
   group_by(survey_id) %>%
-  tidyr::spread(destination, fish_perdestination) %>%
+  tidyr::spread(destination, biomass_perdestination) %>%
   replace(., is.na(.), 0) %>%
   mutate(sum = rowSums(across(c(`FISH DEALER`, GIFT, HOME, `MAMA KARANGA`, OTHER))),
          percent_home = (HOME/sum)*100) %>%
@@ -2150,7 +2088,7 @@ percent_takehome <- collabdf6 %>% ungroup() %>%
 hist(percent_takehome$HOME)
 ```
 
-![](CPUE-maturity-length-analysis_files/figure-gfm/unnamed-chunk-41-1.png)<!-- -->
+![](CPUE-maturity-length-analysis_files/figure-gfm/unnamed-chunk-42-1.png)<!-- -->
 
 ``` r
 ### % HOME
@@ -2161,8 +2099,8 @@ percent_takehome_plot <-  percent_takehome %>%
                mean.point.args = list(size = 2, color = "gray"),
                mean.label.args = list(size = 2),
                point.args = list(position = ggplot2::position_jitterdodge(dodge.width = 0.5), 
-                                 alpha= 0.2, size = 1.5, stroke = 0)) +
-  scale_color_manual(values = c( "#387780", "#FF8C61")) +
+                                 alpha= 0.1, size = 1, stroke = 0)) +
+  scale_color_manual(values = c( "black", "black")) +
   labs(x = "Trap Type", y = "% take home")
 ```
 
@@ -2171,7 +2109,7 @@ percent_takehome_plot <-  percent_takehome %>%
     ## will replace the existing scale.
 
 ``` r
-ggsave(file="output/Takehome.png", percent_takehome_plot, width = 4.5, height = 5, units = c("in"))
+#ggsave(file="output/Takehome.png", percent_takehome_plot, width = 4.5, height = 5, units = c("in"))
 
 takehome_stats <- percent_takehome %>% 
   filter(percent_home > 0.00)
@@ -2186,24 +2124,24 @@ t.test(percent_home~trap_type, data = takehome_stats, var.equal = FALSE)
     ##  Welch Two Sample t-test
     ## 
     ## data:  percent_home by trap_type
-    ## t = 8.6407, df = 1295.2, p-value < 2.2e-16
+    ## t = 6.241, df = 1331.7, p-value = 5.833e-10
     ## alternative hypothesis: true difference in means between group Control and group Experimental is not equal to 0
     ## 95 percent confidence interval:
-    ##  3.927896 6.235396
+    ##  2.518151 4.826967
     ## sample estimates:
     ##      mean in group Control mean in group Experimental 
-    ##                  12.734978                   7.653332
+    ##                   13.72696                   10.05440
 
 ``` r
 takehome_stats2
 ```
 
     ##      trap_type    N percent_home       sd        se        ci
-    ## 1      Control 1561    12.734978 13.84151 0.3503337 0.6871746
-    ## 2 Experimental  603     7.653332 11.59967 0.4723749 0.9277029
+    ## 1      Control 1638     13.72696 13.46886 0.3327927 0.6527444
+    ## 2 Experimental  673     10.05440 12.59023 0.4853177 0.9529214
 
 ``` r
-### NO. HOME
+### BIOMASS HOME
 takehome_plot <-  percent_takehome %>% ungroup() %>%
   filter(HOME > 0.00) %>%
   ggbetweenstats(., x = trap_type, y = HOME, 
@@ -2211,16 +2149,16 @@ takehome_plot <-  percent_takehome %>% ungroup() %>%
                mean.point.args = list(size = 2, color = "gray"),
                mean.label.args = list(size = 2),
                point.args = list(position = ggplot2::position_jitterdodge(dodge.width = 0.05), 
-                                 alpha= 0.2, size = 1.5, stroke = 0)) +
-  scale_color_manual(values = c( "#387780", "#FF8C61")) +
-  labs(x = "Trap Type", y = "No. take home")
+                                 alpha= 0.15, size = 1, stroke = 0)) +
+  scale_color_manual(values = c( "black", "black")) +
+  labs(x = "Trap Type", y = "Biomass kg take home")
 ```
 
     ## Scale for colour is already present.
     ## Adding another scale for colour, which will replace the existing scale.
 
 ``` r
-ggsave(file="output/Takehome2.png", takehome_plot, width = 4.5, height = 5, units = c("in"))
+ggsave(file="output/Biomass_takenhome.png", takehome_plot, width = 4.5, height = 5, units = c("in"))
 
 takehome_no_stats <- percent_takehome %>% 
   filter(HOME > 0.00)
@@ -2228,23 +2166,23 @@ takehome_no_stats <- percent_takehome %>%
 percent_takehome %>% ungroup() %>% count(HOME)
 ```
 
-    ## # A tibble: 36 × 2
-    ##     HOME     n
-    ##    <dbl> <int>
-    ##  1     0  1666
-    ##  2     1   198
-    ##  3     2   355
-    ##  4     3   120
-    ##  5     4   416
-    ##  6     5    36
-    ##  7     6   324
-    ##  8     7    16
-    ##  9     8   147
-    ## 10     9     8
-    ## # ℹ 26 more rows
+    ## # A tibble: 1,137 × 2
+    ##      HOME     n
+    ##     <dbl> <int>
+    ##  1 0       1663
+    ##  2 0.0373     1
+    ##  3 0.0588     1
+    ##  4 0.0714     1
+    ##  5 0.0731     4
+    ##  6 0.0806     1
+    ##  7 0.0930     1
+    ##  8 0.1        2
+    ##  9 0.106      3
+    ## 10 0.109      1
+    ## # ℹ 1,127 more rows
 
 ``` r
-### 1,666/3,830
+### 1,666/3,974 not taken home 
 
 takehome_no_stats2 <- summarySE(takehome_no_stats, measurevar = c("HOME"), 
                              groupvars = c("trap_type"))
@@ -2256,18 +2194,18 @@ t.test(HOME~trap_type, data = takehome_no_stats, var.equal = FALSE)
     ##  Welch Two Sample t-test
     ## 
     ## data:  HOME by trap_type
-    ## t = -5.0576, df = 980.23, p-value = 5.066e-07
+    ## t = -7.0563, df = 987.66, p-value = 3.215e-12
     ## alternative hypothesis: true difference in means between group Control and group Experimental is not equal to 0
     ## 95 percent confidence interval:
-    ##  -4.034174 -1.778730
+    ##  -3.528466 -1.992953
     ## sample estimates:
     ##      mean in group Control mean in group Experimental 
-    ##                   8.597694                  11.504146
+    ##                   3.988846                   6.749555
 
 ``` r
 takehome_no_stats2
 ```
 
-    ##      trap_type    N      HOME       sd        se        ci
-    ## 1      Control 1561  8.597694 10.87450 0.2752376 0.5398747
-    ## 2 Experimental  603 11.504146 12.38775 0.5044682 0.9907314
+    ##      trap_type    N     HOME       sd        se        ci
+    ## 1      Control 1638 3.988846 6.784192 0.1676259 0.3287839
+    ## 2 Experimental  673 6.749555 9.170871 0.3535111 0.6941192
