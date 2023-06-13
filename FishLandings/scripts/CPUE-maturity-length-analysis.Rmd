@@ -109,6 +109,8 @@ data <- data %>%
   dplyr::group_by(survey_id) %>% # group by survey id
   mutate(total_catch = sum(number_of_fish)) # count the number of fish caught for each survey id
 
+data_summary <- data %>% select(survey_id, trap_type) %>% distinct()
+
 ## filtering total catch 
 unique(sort(data$total_catch))
 hist(data$total_catch)
@@ -270,7 +272,12 @@ modified_trap_df <- data %>%
   select(survey_id, enumerator, trap_type, total_traps_collected, 
          `No. of fishers in crew`, landing_site, total_catch, month, 
          year, kg_per_trap, catch_per_trap, value_per_trap) %>%
-  distinct()
+  distinct() %>% ungroup()
+
+# modified_trap_df_summary <- modified_trap_df %>% select(survey_id, trap_type) %>% 
+#   distinct() %>% subset(trap_type == "Control")
+# 
+# control_no <- modified_trap_df %>% subset(trap_type == "Experimental")
 
 #### 
 df_spp <- data %>% filter(!is.na(value_per_trap)) %>%
@@ -1111,7 +1118,7 @@ Profit data from Gilligan's sheet.
 
 ```{r}
 gilligan_profit <- read.csv("data/SpeciesData_GatedTraps_Galligan_edited.csv", header=TRUE, sep = ",") %>%
-  dplyr::select(Species, Price_KSHPerkg) %>% dplyr::rename(scientific_name = Species)
+  dplyr::select(Species, Bycatch, Price_KSHPerkg) %>% dplyr::rename(scientific_name = Species)
 
 ## species df for profit analysis 
 species_df_forprofit <- species_df %>% select(survey_id, month, scientific_name, trap_type) %>% distinct()
@@ -1183,6 +1190,7 @@ KSHpertrap_trap_stats <- gilligan_profit_data_slim %>%
 KSHpertrap_trap_stats <- summarySE(KSHpertrap_trap_stats, measurevar = c("KSHpertrap"), 
                              groupvars = c("trap_type"))
 ```
+
 
 Profit data from Kenya team. 
 
@@ -1392,6 +1400,35 @@ nutrient_stats2 <- summarySE(nutrient_stats, measurevar = c("pertrap_Zinc"),
 t.test(pertrap_Zinc~trap_type, data = nutrient_stats, var.equal = FALSE)
 nutrient_stats2
 ```
+
+Bycatch data 
+
+```{r}
+bycatch_raw <- read.csv("data/SpeciesData_GatedTraps_Galligan_edited.csv", sep = ",", header=TRUE) %>%
+  dplyr::rename(scientific_name = Species) %>% subset(Bycatch == "Yes")
+  
+bycatchdf <- nut_biomassdf %>% subset(Bycatch == "Yes") %>% 
+  select(survey_id, scientific_name, total_traps_collected, trap_type, biomasscomp) %>%
+  group_by(survey_id) %>%
+  mutate(bycatch_kg = sum(biomasscomp),
+         bycatch_kg_pertrap = bycatch_kg/total_traps_collected) %>% ungroup()
+
+bycatchdf2 <- bycatchdf %>% dplyr::select(survey_id, bycatch_kg_pertrap, trap_type) %>% distinct() 
+
+bycatchdf2%>%
+  ggplot(., aes(x=trap_type, y=bycatch_kg_pertrap)) + geom_boxplot() + geom_point()
+
+unique(bycatchdf$scientific_name)
+
+t.test(bycatch_kg_pertrap~trap_type, data = bycatchdf2, var.equal = FALSE)
+
+bycatchdf2_stats <- bycatchdf2 %>% 
+  filter(!is.na(bycatch_kg_pertrap)) %>% filter_at(vars(bycatch_kg_pertrap), all_vars(!is.infinite(.)))
+
+bycatchdf2_stats <- summarySE(bycatchdf2_stats, measurevar = c("bycatch_kg_pertrap"), 
+                             groupvars = c("trap_type"))
+```
+
 
 ### Creating dataframe for collaborators
 
