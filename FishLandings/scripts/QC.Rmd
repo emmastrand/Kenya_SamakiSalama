@@ -105,21 +105,34 @@ fishing_operation$fisher_id <- toupper(fishing_operation$fisher_id)
 catch_composition$fisher_id <- toupper(catch_composition$fisher_id)
 ```
 
-Creating a larger dataframe to work with for the rest of quality control. 
-```{r}
-df <- full_join(fishing_operation, catch_composition, by = c("fisher_id", "Operation_date")) %>%
-  select(-`time_in_water (effort)`) %>% # take this out if we start collecting time in water data
-  rename(fishing_operation_notes= general_notes) %>%
-  rename(catch_composition_notes = notes_picture) %>%
-  rename(scientific_name = SPECIES) %>%
-  rename(total_biomass_kg = total_weight_kg) 
-```
-
 ## Quality Control 
 
 ### Operation_date 
 
 In the above chunk, these dates are automatically read in as *dttm* format (date and time). 
+
+### <a name="Landing_site"></a> **Landing_site and BMU**
+
+### Landing site
+
+```{r}
+fishing_operation$landing_site <- toupper(fishing_operation$landing_site)
+enumerator_list$landing_site <- toupper(enumerator_list$landing_site)
+
+fishing_operation$landing_site <- gsub("KIRKLAND", "KARKLAND", fishing_operation$landing_site)
+fishing_operation$landing_site <- gsub("KITANGONI", "KITANGANI", fishing_operation$landing_site)
+fishing_operation$landing_site <- gsub("KIUKONI", "KIVUKONI", fishing_operation$landing_site)
+fishing_operation$landing_site <- gsub("KIVUKANI", "KIVUKONI", fishing_operation$landing_site)
+fishing_operation$landing_site <- gsub("KIVUKUNI", "KIVUKONI", fishing_operation$landing_site)
+
+# compare fishing_operation list to the enumerator list 
+# result is those that appear in the fishing_operation but not validated enumerator list
+setdiff(fishing_operation$landing_site, enumerator_list$landing_site)
+unique(sort(fishing_operation$landing_site))
+
+## Step #3 in protocol to double check this output list is all the correct site names 
+## (if the only output from setdiff() is NA then this list is correct)
+```
 
 ### <a name="Enumerator"></a> **Enumerator**
 
@@ -131,74 +144,51 @@ Kadzo Baya and Kadzo Kazungu refer to the same person.
 
 ```{r}
 # change all lower case to upper case
-df$enumerator <- toupper(df$enumerator)
+fishing_operation$enumerator <- toupper(fishing_operation$enumerator)
 enumerator_list$enumerator <- toupper(enumerator_list$enumerator)
 
 # replace incorrect spellings 
-df$enumerator <- gsub("CELESTINER N ALI", "CELESTINE N. ALI", df$enumerator)
-df$enumerator <- gsub("CELESTINAR.N.ALI", "CELESTINE N. ALI", df$enumerator)
-df$enumerator <- gsub("^CELESTINAR$", "CELESTINE N. ALI", df$enumerator)
-df$enumerator <- gsub("CELESTINAR NALI", "CELESTINE N. ALI", df$enumerator)
-df$enumerator <- gsub("CELESTINER NALI", "CELESTINE N. ALI", df$enumerator)
-df$enumerator <- gsub("^CLAPERTON$", "CLAPERTON KAZUNGU", df$enumerator)
-df$enumerator <- gsub("MACKSON KAZUNGU", "MAXSON KAZUNGU", df$enumerator)
-df$enumerator <- gsub("BIDALA RASHID", "BIDALLA RASHID", df$enumerator)
-df$enumerator <- gsub("GARAMA YERI", "GARAMA K. YERI", df$enumerator)
-df$enumerator <- gsub("GARAMA K YERI", "GARAMA K. YERI", df$enumerator)
-df$enumerator <- gsub("BRUNO MUYE", "BRUNO MOYE", df$enumerator)
-df$enumerator <- gsub("^ALI$", "CELESTINE N. ALI", df$enumerator) #^ and $ indicate start and end of phrase
-df$enumerator <- gsub("KADZO KAZUNGU", "KADZO BAYA", df$enumerator)
-df$enumerator <- gsub("KADZU BAYA", "KADZO BAYA", df$enumerator)
-df$enumerator <- gsub("ANTONY JUMA", "ANTHONY JUMA", df$enumerator)
-df$enumerator <- gsub("CLAPETRON", "CLAPERTON KAZUNGU", df$enumerator)
-df$enumerator <- gsub("KARIM NYINGE", "KARIMA NYINGE", df$enumerator)
-df$enumerator <- gsub("KARIMA NYINGEE", "KARIMA NYINGE", df$enumerator)
-df$enumerator <- gsub("^BRUNO$", "BRUNO MOYE", df$enumerator)
-df$enumerator <- gsub("MARKSON KAZUNGU", "MAXSON KAZUNGU", df$enumerator)
-df$enumerator <- gsub("BIDAKA RASHID", "BIDALLA RASHID", df$enumerator)
+fishing_operation$enumerator <- gsub("CELESTINER N ALI", "CELESTINE N. ALI", fishing_operation$enumerator)
+fishing_operation$enumerator <- gsub("CELESTINAR.N.ALI", "CELESTINE N. ALI", fishing_operation$enumerator)
+fishing_operation$enumerator <- gsub("^CELESTINAR$", "CELESTINE N. ALI", fishing_operation$enumerator)
+fishing_operation$enumerator <- gsub("CELESTINAR NALI", "CELESTINE N. ALI", fishing_operation$enumerator)
+fishing_operation$enumerator <- gsub("CELESTINER NALI", "CELESTINE N. ALI", fishing_operation$enumerator)
+fishing_operation$enumerator <- gsub("^CLAPERTON$", "CLAPERTON KAZUNGU", fishing_operation$enumerator)
+fishing_operation$enumerator <- gsub("MACKSON KAZUNGU", "MAXSON KAZUNGU", fishing_operation$enumerator)
+fishing_operation$enumerator <- gsub("BIDALA RASHID", "BIDALLA RASHID", fishing_operation$enumerator)
+fishing_operation$enumerator <- gsub("GARAMA YERI", "GARAMA K. YERI", fishing_operation$enumerator)
+fishing_operation$enumerator <- gsub("GARAMA K YERI", "GARAMA K. YERI", fishing_operation$enumerator)
+fishing_operation$enumerator <- gsub("BRUNO MUYE", "BRUNO MOYE", fishing_operation$enumerator)
+fishing_operation$enumerator <- gsub("^ALI$", "CELESTINE N. ALI", fishing_operation$enumerator) #^ and $ indicate start and end of phrase
+fishing_operation$enumerator <- gsub("KADZO KAZUNGU", "KADZO BAYA", fishing_operation$enumerator)
+fishing_operation$enumerator <- gsub("KADZU BAYA", "KADZO BAYA", fishing_operation$enumerator)
+fishing_operation$enumerator <- gsub("ANTONY JUMA", "ANTHONY JUMA", fishing_operation$enumerator)
+fishing_operation$enumerator <- gsub("CLAPETRON", "CLAPERTON KAZUNGU", fishing_operation$enumerator)
+fishing_operation$enumerator <- gsub("KARIM NYINGE", "KARIMA NYINGE", fishing_operation$enumerator)
+fishing_operation$enumerator <- gsub("KARIMA NYINGEE", "KARIMA NYINGE", fishing_operation$enumerator)
+fishing_operation$enumerator <- gsub("^BRUNO$", "BRUNO MOYE", fishing_operation$enumerator)
+fishing_operation$enumerator <- gsub("MARKSON KAZUNGU", "MAXSON KAZUNGU", fishing_operation$enumerator)
+fishing_operation$enumerator <- gsub("BIDAKA RASHID", "BIDALLA RASHID", fishing_operation$enumerator)
 
-# compare df list to the enumerator list 
-# result is those that appear in the df but not validated enumerator list
-setdiff(df$enumerator, enumerator_list$enumerator)
+# compare fishing_operation list to the enumerator list 
+# result is those that appear in the fishing_operation but not validated enumerator list
+setdiff(fishing_operation$enumerator, enumerator_list$enumerator)
 
 ## Step #2 in protocol at the top of this script 
-unique(sort(df$enumerator)) # at this point, double check that this list are all individual fishermen 
-```
-
-### <a name="Landing_site"></a> **Landing_site and BMU**
-
-### Landing site
-
-```{r}
-df$landing_site <- toupper(df$landing_site)
-enumerator_list$landing_site <- toupper(enumerator_list$landing_site)
-
-df$landing_site <- gsub("KIRKLAND", "KARKLAND", df$landing_site)
-df$landing_site <- gsub("KITANGONI", "KITANGANI", df$landing_site)
-df$landing_site <- gsub("KIUKONI", "KIVUKONI", df$landing_site)
-df$landing_site <- gsub("KIVUKANI", "KIVUKONI", df$landing_site)
-df$landing_site <- gsub("KIVUKUNI", "KIVUKONI", df$landing_site)
-
-# compare df list to the enumerator list 
-# result is those that appear in the df but not validated enumerator list
-setdiff(df$landing_site, enumerator_list$landing_site)
-unique(sort(df$landing_site))
-
-## Step #3 in protocol to double check this output list is all the correct site names 
-## (if the only output from setdiff() is NA then this list is correct)
+unique(sort(fishing_operation$enumerator)) # at this point, double check that this list are all individual fishermen 
 ```
 
 ### BMU 
 
 ```{r}
-df$BMU <- toupper(df$BMU)
+fishing_operation$BMU <- toupper(fishing_operation$BMU)
 enumerator_list$BMU <- toupper(enumerator_list$BMU)
 
-# compare df list to the enumerator list 
-# result is those that appear in the df but not validated enumerator list
-setdiff(df$BMU, enumerator_list$BMU)
+# compare fishing_operation list to the enumerator list 
+# result is those that appear in the fishing_operation but not validated enumerator list
+setdiff(fishing_operation$BMU, enumerator_list$BMU)
 
-unique(sort(df$BMU))
+unique(sort(fishing_operation$BMU))
 ## Step #4 in protocol to double check this output list is all the correct BMU names 
 ## (if the only output from setdiff() is NA then this list is correct)
 ```
@@ -216,11 +206,12 @@ It would be nice to have a list of expected household and fisher ID's.
 Some IDs only have 2 digits at the end - are these missing an zero in front of them? I.e. 90 vs 090?
 
 ```{r}
-df$household_id <- toupper(df$household_id)
-unique(df$household_id)
+fishing_operation$household_id <- toupper(fishing_operation$household_id)
+unique(fishing_operation$household_id)
 
-df$household_id <- gsub("/FF", "", df$household_id)
+fishing_operation$household_id <- gsub("/FF", "", fishing_operation$household_id)
 ```
+
 
 ### <a name="trap"></a> **Trap information**
 
@@ -229,23 +220,23 @@ df$household_id <- gsub("/FF", "", df$household_id)
 The only issue I can detect here is some lower case vs upper case. 
 
 ```{r}
-df$trap_type <- toupper(df$trap_type)
-unique(sort(df$trap_type))
+fishing_operation$trap_type <- toupper(fishing_operation$trap_type)
+unique(sort(fishing_operation$trap_type))
 ```
 
 ### total_traps_collected 
 
-View the values put in the df here to double check all values make sense. 
+View the values put in the fishing_operation here to double check all values make sense. 
 
 ```{r}
-total_traps_collected <- df %>% select(total_traps_collected) %>% na.omit()
+total_traps_collected <- fishing_operation %>% select(total_traps_collected) %>% na.omit()
 range(total_traps_collected)
 
 ## filtering traps to below 40
-df$total_traps_collected <- ifelse(df$total_traps_collected > 16, NA, df$total_traps_collected)
+fishing_operation$total_traps_collected <- ifelse(fishing_operation$total_traps_collected > 16, NA, fishing_operation$total_traps_collected)
 
-## Protocol with new df: double check the below range is expected 
-hist(df$total_traps_collected)
+## Protocol with new fishing_operation: double check the below range is expected 
+hist(fishing_operation$total_traps_collected)
 ```
 
 ### Date and time set; date and time collected
@@ -254,16 +245,16 @@ In the first chunk of code, these dates are automatically read in as *dttm* form
 
 ```{r, warning=FALSE}
 # making new columns for date and time 
-df$date_time_set <- paste(df$date_set_dd_mm_yyyy, df$`time_set_24hh:mm`, sep = " ")
-df$date_time_collected <- paste(df$date_collected_dd_mm_yyyy, df$`time_collected_24hh:mm`, sep = " ")
+fishing_operation$date_time_set <- paste(fishing_operation$date_set_dd_mm_yyyy, fishing_operation$`time_set_24hh:mm`, sep = " ")
+fishing_operation$date_time_collected <- paste(fishing_operation$date_collected_dd_mm_yyyy, fishing_operation$`time_collected_24hh:mm`, sep = " ")
 
 # removing the 'hrs' from observations in this column
-df$date_time_set <- gsub("hrs", "", df$date_time_set)
-df$date_time_collected <- gsub("hrs", "", df$date_time_collected)
+fishing_operation$date_time_set <- gsub("hrs", "", fishing_operation$date_time_set)
+fishing_operation$date_time_collected <- gsub("hrs", "", fishing_operation$date_time_collected)
 
 # converting to date and time format 
-df$date_time_set <- parse_date_time(df$date_time_set, orders = "ymdHM")
-df$date_time_collected <- parse_date_time(df$date_time_collected, orders = "ymdHM")
+fishing_operation$date_time_set <- parse_date_time(fishing_operation$date_time_set, orders = "ymdHM")
+fishing_operation$date_time_collected <- parse_date_time(fishing_operation$date_time_collected, orders = "ymdHM")
 
 ## any failed to parse error messages will be from rows that do not have a date and time
 ```
@@ -276,35 +267,73 @@ Step #4 from protocol: Double check the below values are in the correct ranges
 
 ```{r}
 ##### TOTAL BIOMASS 
-total_biomass_kg <- df %>% select(total_biomass_kg) %>% na.omit()
+### PRE FILTER = 8,851
+### POST FILTER = 8,800
+total_biomass_kg <- fishing_operation %>% select(total_weight_kg) %>% na.omit()
 range(total_biomass_kg)
+## 0.125 490.000
+
 # filtering biomass kg to under 100 kg 
-df$total_biomass_kg <- ifelse(df$total_biomass_kg > 100, NA, df$total_biomass_kg)
-hist(df$total_biomass_kg)
+#df$total_biomass_kg <- ifelse(df$total_biomass_kg > 100, NA, df$total_biomass_kg)
+fishing_operation <- fishing_operation %>%
+  filter(total_weight_kg < 100) %>%
+  dplyr::rename(total_biomass_kg = total_weight_kg)
 
+hist(fishing_operation$total_biomass_kg)
+```
+
+
+```{r}
 ##### TAKE HOME BIOMASS 
+### PRE FILTER = 8,800
+### POST FILTER = 8,793
+
 # filtering take home weight to be under 10kg 
-take_home_weight_kg <- df %>% select(take_home_weight_kg) %>% na.omit()
-df$take_home_weight_kg <- ifelse(df$take_home_weight_kg > 10, NA, df$take_home_weight_kg)
-
+take_home_weight_kg <- fishing_operation %>% select(take_home_weight_kg) %>% na.omit()
 range(take_home_weight_kg)
-hist(df$take_home_weight_kg)
-unique(sort(df$take_home_weight_kg))
+## 0 700
+#df$take_home_weight_kg <- ifelse(df$take_home_weight_kg > 10, NA, df$take_home_weight_kg)
 
+fishing_operation <- fishing_operation %>%
+  filter(take_home_weight_kg < 10 | is.na(take_home_weight_kg))
+
+hist(fishing_operation$take_home_weight_kg)
+```
+
+
+```{r}
 ##### TOTAL VALUE 
-total_value_KES <- df %>% select(total_value_KES) %>% na.omit()
+### PRE FILTER = 8,793
+### POST FILTER = 8,116
+
+total_value_KES <- fishing_operation %>% select(total_value_KES) %>% na.omit()
 range(total_value_KES)
+# 18 22400
+
 # filtering to below 5,000 
-df$total_value_KES <- ifelse(df$total_value_KES > 5000, NA, df$total_value_KES)
-hist(df$total_value_KES)
+#df$total_value_KES <- ifelse(df$total_value_KES > 5000, NA, df$total_value_KES)
+fishing_operation <- fishing_operation %>%
+  filter(total_value_KES < 5000)
 
+hist(fishing_operation$total_value_KES)
+```
+
+
+```{r}
 ##### TAKE HOME VALUE 
-take_home_value_KES <- df %>% select(take_home_value_KES) %>% na.omit()
-df$take_home_value_KES <- ifelse(df$take_home_value_KES > 5000, NA, df$take_home_value_KES)
+### PRE FILTER = 8,116
+### POST FILTER = 8,043
 
+take_home_value_KES <- fishing_operation %>% select(take_home_value_KES) %>% na.omit()
 range(take_home_value_KES)
-boxplot(df$take_home_value_KES)
-unique(sort(df$take_home_value_KES))
+# 0 1400
+
+#df$take_home_value_KES <- ifelse(df$take_home_value_KES > 5000, NA, df$take_home_value_KES)
+
+fishing_operation <- fishing_operation %>%
+  filter(take_home_value_KES < 1000 | is.na(take_home_weight_kg))
+
+hist(fishing_operation$take_home_value_KES)
 ```
 
 ### No. of fishers in crew
@@ -312,51 +341,62 @@ unique(sort(df$take_home_value_KES))
 Crews above 7 people are unrealistic. I'm changing that data to 'NA' for now. 
 
 ```{r}
-fishermen_no <- df %>% select(`No. of fishers in crew`) %>% na.omit()
-
-hist(fishermen_no)
+# fishermen_no <- fishing_operation %>% 
+#   dplyr::select(`No. of fishers in crew`) %>% na.omit()
+# 
+# hist(fishermen_no)
 
 ## Protocol: Double check the below values are in the correct ranges
-range(fishermen_no)
-unique(sort(fishermen_no$`No. of fishers in crew`))
+# range(fishermen_no)
+# unique(sort(fishermen_no$`No. of fishers in crew`))
 
-df %>% filter(`No. of fishers in crew` > 7)
+# df %>% filter(`No. of fishers in crew` > 7)
+# 
+# # df <- df %>%
+# #  mutate(crew_size = case_when(
+# #     `No. of fishers in crew` > 7 ~ "NA"))
+# 
+# df$crew_size_corrected <- df$`No. of fishers in crew`
+# 
+# # replacing values higher than 5 with NA
+# fishing_operation <- fishing_operation %>%
+#  replace_with_na_at(
+#     .vars = 'crew_size_corrected',
+#     condition = ~(.x > 7))
 
-# df <- df %>%
-#  mutate(crew_size = case_when(
-#     `No. of fishers in crew` > 7 ~ "NA"))
-
-df$crew_size_corrected <- df$`No. of fishers in crew`
-
-# replacing values higher than 5 with NA
-df <- df %>%
- replace_with_na_at(
-    .vars = 'crew_size_corrected',
-    condition = ~(.x > 7))
+fishing_operation <- fishing_operation %>%
+  dplyr::filter(`No. of fishers in crew` < 7)
 
 # double checking that the above worked
-unique(sort(df$crew_size_corrected))
+unique(sort(fishing_operation$`No. of fishers in crew`))
+
+## PRE FILTER = 8,043
+## POST FILTER = 7,813
 ```
+
+## Quality Control for Catch Composition sheet 
 
 ### Kiswahili_name
 
 ```{r}
-df$Kiswahili_name <- toupper(df$Kiswahili_name)
-unique(sort(df$Kiswahili_name))
+catch_composition$Kiswahili_name <- toupper(catch_composition$Kiswahili_name)
+unique(sort(catch_composition$Kiswahili_name))
 ```
 
 ### SPECIES / Scientific name 
 
 **This is a hard-coding way to do this.. ideally we could downloand a dataset from fishbase and create a compare function that could recognize a name that is a letter or 2 off from a name in fishbase and then create suggestions...** 
 
-We can pull in the validation_lists df to double check these spellings. 
+We can pull in the validation_lists catch_composition to double check these spellings. 
 
 ```{r}
+catch_composition <- catch_composition %>% dplyr::rename(scientific_name = SPECIES)
+
 # Taking out double spaces in between genus and species 
 validation_lists$scientific_name <- gsub("  ", " ", validation_lists$scientific_name)
 ```
 
-Sorting through df for errors. 
+Sorting through catch_composition for errors. 
 
 ```{r}
 # create capitalize function for upper case genus and lower case species 
@@ -366,310 +406,310 @@ capitalize_fxn <- function(x){
   paste0(first, rest)
 }
 
-df$scientific_name <- capitalize_fxn(df$scientific_name)
+catch_composition$scientific_name <- capitalize_fxn(catch_composition$scientific_name)
 validation_lists$scientific_name <- capitalize_fxn(validation_lists$scientific_name)
 
 # Taking out double spaces in between genus and species 
-df$scientific_name <- gsub("  ", " ", df$scientific_name)
+catch_composition$scientific_name <- gsub("  ", " ", catch_composition$scientific_name)
 
 # Correcting commonly misspelled genus names 
 
 # this chunk is for one genus. This is a data input issue that is difficult to catch and fix in R
-df$scientific_name <- gsub("Acanthrus", "Acanthurus", df$scientific_name)
-df$scientific_name <- gsub("Acantharus", "Acanthurus", df$scientific_name)
-df$scientific_name <- gsub("Acantrus", "Acanthurus", df$scientific_name)
-df$scientific_name <- gsub("Acantarus", "Acanthurus", df$scientific_name)
-df$scientific_name <- gsub("Acathurus", "Acanthurus", df$scientific_name)
-df$scientific_name <- gsub("Acronthurus", "Acanthurus", df$scientific_name)
-df$scientific_name <- gsub("Acanthrurus", "Acanthurus", df$scientific_name)
-df$scientific_name <- gsub("dossumieri", "dussumieri", df$scientific_name)
-df$scientific_name <- gsub("dusimieri", "dussumieri", df$scientific_name)
-df$scientific_name <- gsub("dusimii", "dussumieri", df$scientific_name)
-df$scientific_name <- gsub("dussimieri", "dussumieri", df$scientific_name)
-df$scientific_name <- gsub("Abdefduf", "Abudefduf", df$scientific_name)
-df$scientific_name <- gsub("Cheilo", "Cheilio", df$scientific_name)
-df$scientific_name <- gsub("inemis", "inermis", df$scientific_name)
-df$scientific_name <- gsub("argentmaculatus", "argentimaculatus", df$scientific_name)
-df$scientific_name <- gsub("Cheillinus", "Cheilinus", df$scientific_name)
-df$scientific_name <- gsub("candiculatus", "canaliculatus", df$scientific_name)
-df$scientific_name <- gsub("canaliculutus", "canaliculatus", df$scientific_name)
-df$scientific_name <- gsub("Cholurururs", "Chlorurus", df$scientific_name)
-df$scientific_name <- gsub("stronycephalus", "strongylocephalus", df$scientific_name)
-df$scientific_name <- gsub("Gymonthorax", "Gymnothorax", df$scientific_name)
-df$scientific_name <- gsub("Gymothorax", "Gymnothorax", df$scientific_name)
-df$scientific_name <- gsub("javanicus", "favagineus", df$scientific_name)
-df$scientific_name <- gsub("vaiginsis", "vaigiensis", df$scientific_name)
-df$scientific_name <- gsub("semicirculatus", "semicirculatus", df$scientific_name)
-df$scientific_name <- gsub("semisulcatus", "semicirculatus", df$scientific_name)
-df$scientific_name <- gsub("Pomacnathus", "Pomacanthus", df$scientific_name)
-df$scientific_name <- gsub("granoculis", "grandoculis", df$scientific_name)
-df$scientific_name <- gsub("malanostigma", "melanostigma", df$scientific_name)
-df$scientific_name <- gsub("hard", "harid", df$scientific_name)
-df$scientific_name <- gsub("sexfaciatus", "sexfasciatus", df$scientific_name)
-df$scientific_name <- gsub("dussumiera", "dussumieri", df$scientific_name)
-df$scientific_name <- gsub("caeruleopanctatus", "caeruleopunctatus", df$scientific_name)
-df$scientific_name <- gsub("hebei", "heberi", df$scientific_name)
-df$scientific_name <- gsub("kippos", "hippos", df$scientific_name)
-df$scientific_name <- gsub("Carnx", "Caranx", df$scientific_name)
-df$scientific_name <- gsub("coioidea", "coioides", df$scientific_name)
-df$scientific_name <- gsub("monochrou", "monochrous", df$scientific_name)
-df$scientific_name <- gsub("monochrouss", "monochrous", df$scientific_name)
-df$scientific_name <- gsub("Kyphasus", "Kyphosus", df$scientific_name)
-df$scientific_name <- gsub("Lenthrinus", "Lethrinus", df$scientific_name)
-df$scientific_name <- gsub("Leturinus", "Lethrinus", df$scientific_name)
-df$scientific_name <- gsub("vaiguensis", "vaigiensis", df$scientific_name)
-df$scientific_name <- gsub("bornonicus", "borbonicus", df$scientific_name)
-df$scientific_name <- gsub("nebulosis", "nebulosus", df$scientific_name)
-df$scientific_name <- gsub("nebulous", "nebulosus", df$scientific_name)
-df$scientific_name <- gsub("Leptoscaus", "Leptoscarus", df$scientific_name)
-df$scientific_name <- gsub("fluluiflamma", "fulviflamma", df$scientific_name)
-df$scientific_name <- gsub("flavlineathe", "flavolineatus", df$scientific_name)
-df$scientific_name <- gsub("taeniourous", "taeniorus", df$scientific_name)
-df$scientific_name <- gsub("Navaculichthys", "Novaculichthys", df$scientific_name)
-df$scientific_name <- gsub("taeniorus", "taeniourus", df$scientific_name)
-df$scientific_name <- gsub("Parupeneus sp nov.", "Parupeneus", df$scientific_name)
-df$scientific_name <- gsub("Platux", "Platax", df$scientific_name)
-df$scientific_name <- gsub("platyyuna", "platyura", df$scientific_name)
-df$scientific_name <- gsub("playfair", "playfairi", df$scientific_name)
-df$scientific_name <- gsub("Plectorhincus", "Plectorhinchus", df$scientific_name)
-df$scientific_name <- gsub("Plectorhnichus", "Plectorhinchus", df$scientific_name)
-df$scientific_name <- gsub("Plotasus", "Plotosus", df$scientific_name)
-df$scientific_name <- gsub("Pomatonus", "Pomatomus", df$scientific_name)
-df$scientific_name <- gsub("Rhinecanthurus", "Rhineacanthus", df$scientific_name)
-df$scientific_name <- gsub("vubroviolaceus", "rubroviolaceus", df$scientific_name)
-df$scientific_name <- gsub("sirubroviolaceus", "rubroviolaceus", df$scientific_name)
-df$scientific_name <- gsub("Scromberomorus", "Scomerommorus", df$scientific_name)
-df$scientific_name <- gsub("Sphraena", "Sphyraena", df$scientific_name)
-df$scientific_name <- gsub("meyeri", "meyeni", df$scientific_name)
-df$scientific_name <- gsub("triostregus", "triostegus", df$scientific_name)
-df$scientific_name <- gsub("Adudefduf", "Abudefduf", df$scientific_name)
-df$scientific_name <- gsub("scoplas", "scopas", df$scientific_name)
-df$scientific_name <- gsub("xanthonta", "xanthonota", df$scientific_name)
-df$scientific_name <- gsub("Carangoifes", "Carangoides", df$scientific_name)
-df$scientific_name <- gsub("vippos", "hippos", df$scientific_name)
-df$scientific_name <- gsub("Cephelopholu", "Cephalopholis", df$scientific_name)
-df$scientific_name <- gsub("Chaetadon", "Chaetodon", df$scientific_name)
-df$scientific_name <- gsub("auringa", "auriga", df$scientific_name)
-df$scientific_name <- gsub("selen$", "selene", df$scientific_name) # $ indicates end of phrase; didnt use ^ because this is species name is the 2nd word 
-df$scientific_name <- gsub("trilohatus", "trilobatus", df$scientific_name)
-df$scientific_name <- gsub("Cheiellinus", "Cheilinus", df$scientific_name)
-df$scientific_name <- gsub("Cheillnus", "Cheilinus", df$scientific_name)
-df$scientific_name <- gsub("inerms", "inermis", df$scientific_name)
-df$scientific_name <- gsub("piinnulatus", "pinnulatus", df$scientific_name)
-df$scientific_name <- gsub("pinnulatrus", "pinnulatus", df$scientific_name)
-df$scientific_name <- gsub("Cirrihitus", "Cirrhitus", df$scientific_name)
-df$scientific_name <- gsub("farmosa", "formosa", df$scientific_name)
-df$scientific_name <- gsub("Cymonthorax", "Gymnothorax", df$scientific_name)
-df$scientific_name <- gsub("Cynoglassus", "Cynoglossus", df$scientific_name)
-df$scientific_name <- gsub("lachnen", "lachneri", df$scientific_name)
-df$scientific_name <- gsub("luchneri", "lachneri", df$scientific_name)
-df$scientific_name <- gsub("Epimephelus", "Epinephelus", df$scientific_name)
-df$scientific_name <- gsub("colodes", "coioides", df$scientific_name)
-df$scientific_name <- gsub("coicoides", "coioides", df$scientific_name)
-df$scientific_name <- gsub("coloides", "coioides", df$scientific_name)
-df$scientific_name <- gsub("faragineus", "favagineus", df$scientific_name)
-df$scientific_name <- gsub("favagineous", "favagineus", df$scientific_name)
-df$scientific_name <- gsub("hortulatus", "hortulanus", df$scientific_name)
-df$scientific_name <- gsub("Himantur", "Himantura", df$scientific_name)
-df$scientific_name <- gsub("Himanturaa", "Himantura", df$scientific_name)
-df$scientific_name <- gsub("Hippscarus", "Hipposcarus", df$scientific_name)
-df$scientific_name <- gsub("vagiensis", "vaigiensis", df$scientific_name)
-df$scientific_name <- gsub("vaigienesis", "vaigiensis", df$scientific_name)
-df$scientific_name <- gsub("fuaviflamma", "fulviflamma", df$scientific_name)
-df$scientific_name <- gsub("fluliuflamma", "fulviflamma", df$scientific_name)
-df$scientific_name <- gsub("fuluvifiamma", "fulviflamma", df$scientific_name)
-df$scientific_name <- gsub("fulvifiamma", "fulviflamma", df$scientific_name)
-df$scientific_name <- gsub("Latjanus", "Lutjanus", df$scientific_name)
-df$scientific_name <- gsub("conchiliatus", "conchliatus", df$scientific_name)
-df$scientific_name <- gsub("conchuliatutus", "conchliatus", df$scientific_name)
-df$scientific_name <- gsub("conchyliantus", "conchliatus", df$scientific_name)
-df$scientific_name <- gsub("hara$", "harak", df$scientific_name)
-df$scientific_name <- gsub("harar$", "harak", df$scientific_name)
-df$scientific_name <- gsub("letjan$", "lentjan", df$scientific_name)
-df$scientific_name <- gsub("olivacous$", "olivaceus", df$scientific_name)
-df$scientific_name <- gsub("Letjanus", "Lutjanus", df$scientific_name)
-df$scientific_name <- gsub("Liza", "Planiliza", df$scientific_name)
-df$scientific_name <- gsub("alatar$", "alata", df$scientific_name)
-df$scientific_name <- gsub("argemtimaculutus", "argentimaculatus", df$scientific_name)
-df$scientific_name <- gsub("argentinmaculatus", "argentimaculatus", df$scientific_name)
-df$scientific_name <- gsub("ghibbon$", "gibbus", df$scientific_name)
-df$scientific_name <- gsub("Lutjan", "Lutjanus", df$scientific_name)
-df$scientific_name <- gsub("Lutjanusus", "Lutjanus", df$scientific_name)
-df$scientific_name <- gsub("Migul", "Mugil", df$scientific_name)
-df$scientific_name <- gsub("Monodactytus", "Monodactylus", df$scientific_name)
-df$scientific_name <- gsub("bernditi", "berndti", df$scientific_name)
-df$scientific_name <- gsub("berndt", "berndti", df$scientific_name)
-df$scientific_name <- gsub("berndtii", "berndti", df$scientific_name)
-df$scientific_name <- gsub("annalutus", "annulatus", df$scientific_name)
-df$scientific_name <- gsub("anna$", "annulatus", df$scientific_name)
-df$scientific_name <- gsub("annaturus", "annulatus", df$scientific_name)
-df$scientific_name <- gsub("annulator", "annulatus", df$scientific_name)
-df$scientific_name <- gsub("annulutus", "annulatus", df$scientific_name)
-df$scientific_name <- gsub("annunthurus$", "annulatus", df$scientific_name)
-df$scientific_name <- gsub("annuthurus$", "annulatus", df$scientific_name)
-df$scientific_name <- gsub("brachycentus$", "brachycentron", df$scientific_name)
-df$scientific_name <- gsub("bracycentron", "brachycentron", df$scientific_name)
-df$scientific_name <- gsub("branchycentron", "brachycentron", df$scientific_name)
-df$scientific_name <- gsub("unicaris", "unicornis", df$scientific_name)
-df$scientific_name <- gsub("oyanea$", "cyanea", df$scientific_name)
-df$scientific_name <- gsub("Panacirus", "Panulirus", df$scientific_name)
-df$scientific_name <- gsub("Panilirus", "Panulirus", df$scientific_name)
-df$scientific_name <- gsub("Panulinus", "Panulirus", df$scientific_name)
-df$scientific_name <- gsub("homaruis", "homarus", df$scientific_name)
-df$scientific_name <- gsub("humarus", "homarus", df$scientific_name)
-df$scientific_name <- gsub("hurmarus", "homarus", df$scientific_name)
-df$scientific_name <- gsub("pencillatus", "penicillatus", df$scientific_name)
-df$scientific_name <- gsub("Paraparenus", "Parupeneus", df$scientific_name)
-df$scientific_name <- gsub("Parapeneneus", "Parupeneus", df$scientific_name)
-df$scientific_name <- gsub("Parapenenus", "Parupeneus", df$scientific_name)
-df$scientific_name <- gsub("Parapeneous", "Parupeneus", df$scientific_name)
-df$scientific_name <- gsub("Parapeneus", "Parupeneus", df$scientific_name)
-df$scientific_name <- gsub("Parapenious", "Parupeneus", df$scientific_name)
-df$scientific_name <- gsub("Parapenous", "Parupeneus", df$scientific_name)
-df$scientific_name <- gsub("Paraperenus", "Parupeneus", df$scientific_name)
-df$scientific_name <- gsub("Parupenenus", "Parupeneus", df$scientific_name)
-df$scientific_name <- gsub("Parupeneous", "Parupeneus", df$scientific_name)
-df$scientific_name <- gsub("Parupenenus", "Parupeneus", df$scientific_name)
-df$scientific_name <- gsub("Perepeneus", "Parupeneus", df$scientific_name)
-df$scientific_name <- gsub("baberinus", "barberinus", df$scientific_name)
-df$scientific_name <- gsub("indica$", "indicus", df$scientific_name)
-df$scientific_name <- gsub("Plactorhinches", "Plectorhinchus", df$scientific_name)
-df$scientific_name <- gsub("Plactorhinchus", "Plectorhinchus", df$scientific_name)
-df$scientific_name <- gsub("Platasus", "Plotosus", df$scientific_name)
-df$scientific_name <- gsub("Platxbelone", "Platybelone", df$scientific_name)
-df$scientific_name <- gsub("fiavomaculatus", "flavomaculatus", df$scientific_name)
-df$scientific_name <- gsub("flavamaculatus", "flavomaculatus", df$scientific_name)
-df$scientific_name <- gsub("plaxfairi", "playfairi", df$scientific_name)
-df$scientific_name <- gsub("playfairii", "playfairi", df$scientific_name)
-df$scientific_name <- gsub("sardidus", "sordidus", df$scientific_name)
-df$scientific_name <- gsub("Plectorhinechus", "Plectorhinchus", df$scientific_name)
-df$scientific_name <- gsub("Plectorhines", "Plectorhinchus", df$scientific_name)
-df$scientific_name <- gsub("Plectorhninus", "Plectorhinchus", df$scientific_name)
-df$scientific_name <- gsub("Plectorihinchus", "Plectorhinchus", df$scientific_name)
-df$scientific_name <- gsub("Plectrorchinchw", "Plectorhinchus", df$scientific_name)
-df$scientific_name <- gsub("Plectrorhinchw", "Plectorhinchus", df$scientific_name)
-df$scientific_name <- gsub("Priacanthurus", "Priacanthus", df$scientific_name)
-df$scientific_name <- gsub("Pricanthurus", "Priacanthus", df$scientific_name)
-df$scientific_name <- gsub("hamsur$", "hamrur", df$scientific_name)
-df$scientific_name <- gsub("Psedorhombus", "Pseudorhombus", df$scientific_name)
-df$scientific_name <- gsub("mile$", "miles", df$scientific_name)
-df$scientific_name <- gsub("Rhineacanthus", "Rhinecanthus", df$scientific_name)
-df$scientific_name <- gsub("aculateus$", "aculeatus", df$scientific_name)
-df$scientific_name <- gsub("Sardinelle", "Sardinella", df$scientific_name)
-df$scientific_name <- gsub("Scarrus", "Scarus", df$scientific_name)
-df$scientific_name <- gsub("Scarua", "Scarus", df$scientific_name)
-df$scientific_name <- gsub("Scarus$", "Scarus sp.", df$scientific_name)
-df$scientific_name <- gsub("ghoban$", "ghobban", df$scientific_name)
-df$scientific_name <- gsub("ghobbao", "ghobban", df$scientific_name)
-df$scientific_name <- gsub("nuselii", "russelii", df$scientific_name)
-df$scientific_name <- gsub("risselii", "russelii", df$scientific_name)
-df$scientific_name <- gsub("ruselii", "russelii", df$scientific_name)
-df$scientific_name <- gsub("psittatus", "psittacus", df$scientific_name)
-df$scientific_name <- gsub("phargonis", "pharaonis", df$scientific_name)
-df$scientific_name <- gsub("fluscence", "fuscescens", df$scientific_name)
-df$scientific_name <- gsub("fluscenscens", "fuscescens", df$scientific_name)
-df$scientific_name <- gsub("fluscescens", "fuscescens", df$scientific_name)
-df$scientific_name <- gsub("gittatus", "guttatus", df$scientific_name)
-df$scientific_name <- gsub("guitatus", "guttatus", df$scientific_name)
-df$scientific_name <- gsub("Signus", "Siganus", df$scientific_name)
-df$scientific_name <- gsub("Sphyreana", "Sphyraena", df$scientific_name)
-df$scientific_name <- gsub("Spinephelus", "Epinephelus", df$scientific_name)
-df$scientific_name <- gsub("iciura$", "leiura", df$scientific_name)
-df$scientific_name <- gsub("satheta$", "sathete", df$scientific_name)
-df$scientific_name <- gsub("Strougylura", "Strongylura", df$scientific_name)
-df$scientific_name <- gsub("Suffiamen", "Sufflamen", df$scientific_name)
-df$scientific_name <- gsub("Sufiamen", "Sufflamen", df$scientific_name)
-df$scientific_name <- gsub("bymma", "lymma", df$scientific_name)
-df$scientific_name <- gsub("chiltanae", "chiltonae", df$scientific_name)
-df$scientific_name <- gsub("chittonae", "chiltonae", df$scientific_name)
-df$scientific_name <- gsub("chillonae", "chiltonae", df$scientific_name)
-df$scientific_name <- gsub("Thysanophys", "Thysanophrys", df$scientific_name)
-df$scientific_name <- gsub("lepsurus", "lepturus", df$scientific_name)
-df$scientific_name <- gsub("duaucelii", "duvauceli", df$scientific_name)
-df$scientific_name <- gsub("duraucelii", "duvauceli", df$scientific_name)
-df$scientific_name <- gsub("duvaucelii", "duvauceli", df$scientific_name)
-df$scientific_name <- gsub("nigricaudus", "nigricauda", df$scientific_name)
-df$scientific_name <- gsub("Ancanthurus", "Acanthurus", df$scientific_name)
-df$scientific_name <- gsub("Elinephelus", "Epinephelus", df$scientific_name)
-df$scientific_name <- gsub("Etinephelus", "Epinephelus", df$scientific_name)
-df$scientific_name <- gsub("Gomphesus", "Gomphosus", df$scientific_name)
-df$scientific_name <- gsub("Laptoscarus", "Leptoscarus", df$scientific_name)
-df$scientific_name <- gsub("lebulous", "nebulosus", df$scientific_name)
-df$scientific_name <- gsub("varigatus", "variegatus", df$scientific_name)
-df$scientific_name <- gsub("veriegatus", "variegatus", df$scientific_name)
-df$scientific_name <- gsub("flulviflamma", "fulviflamma", df$scientific_name)
-df$scientific_name <- gsub("fluviflamma", "fulviflamma", df$scientific_name)
-df$scientific_name <- gsub("bernati", "berndti", df$scientific_name)
-df$scientific_name <- gsub("Ovaculichthys", "Novaculichthys", df$scientific_name)
-df$scientific_name <- gsub("berbarinus", "barberinus", df$scientific_name)
-df$scientific_name <- gsub("semcirculotus", "semicirculatus", df$scientific_name)
-df$scientific_name <- gsub("Scolopis", "Scolopsis", df$scientific_name)
-df$scientific_name <- gsub("Siggg", "Siganus", df$scientific_name)
-df$scientific_name <- gsub("Sinagus", "Siganus", df$scientific_name)
-df$scientific_name <- gsub("sandwichlensis", "sandwichiensis", df$scientific_name)
-df$scientific_name <- gsub("lacheri", "lachneri", df$scientific_name)
-df$scientific_name <- gsub("Leptoscurus", "Leptoscarus", df$scientific_name)
-df$scientific_name <- gsub("haak", "harak", df$scientific_name)
-df$scientific_name <- gsub("Lethritus", "Lethrinus", df$scientific_name)
-df$scientific_name <- gsub("Luthrinus", "Lethrinus", df$scientific_name)
-df$scientific_name <- gsub("fulfuiflamma", "fulviflamma", df$scientific_name)
-df$scientific_name <- gsub("orgentimoeulatus", "argentimaculatus", df$scientific_name)
-df$scientific_name <- gsub("argentues", "argenteus", df$scientific_name)
-df$scientific_name <- gsub("orgentues", "argenteus", df$scientific_name)
-df$scientific_name <- gsub("Parapenes", "Parupeneus", df$scientific_name)
-df$scientific_name <- gsub("Parapenius", "Parupeneus", df$scientific_name)
-df$scientific_name <- gsub("Parupeneus", "Parupeneus", df$scientific_name)
-df$scientific_name <- gsub("barberins", "barberinus", df$scientific_name)
-df$scientific_name <- gsub("berberinus", "barberinus", df$scientific_name)
-df$scientific_name <- gsub("Platorhinchus", "Plectorhinchus", df$scientific_name)
-df$scientific_name <- gsub("Plectorhichus", "Plectorhinchus", df$scientific_name)
-df$scientific_name <- gsub("Plectohinchus", "Plectorhinchus", df$scientific_name)
-df$scientific_name <- gsub("Pleitorhinchus", "Plectorhinchus", df$scientific_name)
-df$scientific_name <- gsub("Platybalone", "Platybelone", df$scientific_name)
-df$scientific_name <- gsub("Pomacanthurus", "Pomacanthus", df$scientific_name)
-df$scientific_name <- gsub("Pseudorhombuo", "Pseudorhombus", df$scientific_name)
-df$scientific_name <- gsub("Scanus", "Scarus", df$scientific_name)
-df$scientific_name <- gsub("globiseps", "globiceps", df$scientific_name)
-df$scientific_name <- gsub("acutiplanis", "acutipinnis", df$scientific_name)
-df$scientific_name <- gsub("Utoreuthis", "Uroteuthis", df$scientific_name)
-df$scientific_name <- gsub("Scarus tricolo$", "Scarus tricolor", df$scientific_name)
-df$scientific_name <- gsub("Parupeneous macronema$", "Parupeneus macronemus", df$scientific_name)
-df$scientific_name <- gsub("Parupeneus macronema$", "Parupeneus macronemus", df$scientific_name)
-df$scientific_name <- gsub("Scarus russelli$", "Scarus russelii", df$scientific_name)
-df$scientific_name <- gsub("Acanthurus tennentii", "Acanthurus tennenti", df$scientific_name)
-df$scientific_name <- gsub("Lethrinus conchliatus", "Lethrinus conchyliatus", df$scientific_name)
-df$scientific_name <- gsub("Naso brachycention", "Naso brachycentron", df$scientific_name)
-df$scientific_name <- gsub("Acathopacrus berda", "Acanthopagrus berda", df$scientific_name)
-df$scientific_name <- gsub("Colotomus carolinus", "Calotomus carolinus", df$scientific_name)
-df$scientific_name <- gsub("Coranx hippos", "Caranx hippos", df$scientific_name)
-df$scientific_name <- gsub("Cynoglossus lancheri", "Cynoglossus lachneri", df$scientific_name)
-df$scientific_name <- gsub("Gomphosus caeruleos", "Gomphosus caeruleus", df$scientific_name)
-df$scientific_name <- gsub("Gompheus caeruleus", "Gomphosus caeruleus", df$scientific_name)
-df$scientific_name <- gsub("Gymnothirax favagineus", "Gymnothorax favagineus", df$scientific_name)
-df$scientific_name <- gsub("Hinecanthurus aculeatus", "Rhinecanthus aculeatus", df$scientific_name)
-df$scientific_name <- gsub("Hipposcarus globiceps", "Hipposcarus longiceps", df$scientific_name)
-df$scientific_name <- gsub("Leptoscarus vaigiencies", "Leptoscarus vaigiensis", df$scientific_name)
-df$scientific_name <- gsub("Lethhrinus lentjan", "Lethrinus lentjan", df$scientific_name)
-df$scientific_name <- gsub("Lethrinas harak", "Lethrinus harak", df$scientific_name)
-df$scientific_name <- gsub("Lethrnus nebulosus", "Lethrinus nebulosus", df$scientific_name)
-df$scientific_name <- gsub("Litjanus argentimaculatus", "Lutjanus argentimaculatus", df$scientific_name)
-df$scientific_name <- gsub("Litjanus fluiviflamma", "Lutjanus fulviflamma", df$scientific_name)
-df$scientific_name <- gsub("Litjanus fulviflamma", "Lutjanus fulviflamma", df$scientific_name)
-df$scientific_name <- gsub("Litjanus gibbus", "Lutjanus gibbus", df$scientific_name)
-df$scientific_name <- gsub("Lutjanus flaviflammma", "Lutjanus fulviflamma", df$scientific_name)
-df$scientific_name <- gsub("Ostracion cubicum", "Ostracion cubicus", df$scientific_name)
-df$scientific_name <- gsub("Ostracion nasus", "Rhynchostracion nasus", df$scientific_name)
-df$scientific_name <- gsub("Panalirus versicolor", "Panulirus versicolor", df$scientific_name)
-df$scientific_name <- gsub("Panulirus penicillatus", "Panulirus penicilatus", df$scientific_name)
-df$scientific_name <- gsub("Parupeneus indius", "Parupeneus indicus", df$scientific_name)
-df$scientific_name <- gsub("Paruperenus macronemus", "Parupeneus macronemus", df$scientific_name)
-df$scientific_name <- gsub("Perupeneus macronemus", "Parupeneus macronemus", df$scientific_name)
-df$scientific_name <- gsub("Priacanthus humrur", "Priacanthus hamrur", df$scientific_name)
-df$scientific_name <- gsub("Scarius rubroviolaceus", "Scarus rubroviolaceus", df$scientific_name)
-df$scientific_name <- gsub("Scarus ghobbon", "Scarus ghobban", df$scientific_name)
-df$scientific_name <- gsub("Siganas guttatus", "Siganus guttatus", df$scientific_name)
-df$scientific_name <- gsub("Sthrophidon sathete", "Strophidon sathete", df$scientific_name)
-df$scientific_name <- gsub("Uroteuthis duvaucellii", "Uroteuthis duvauceli", df$scientific_name)
+catch_composition$scientific_name <- gsub("Acanthrus", "Acanthurus", catch_composition$scientific_name)
+catch_composition$scientific_name <- gsub("Acantharus", "Acanthurus", catch_composition$scientific_name)
+catch_composition$scientific_name <- gsub("Acantrus", "Acanthurus", catch_composition$scientific_name)
+catch_composition$scientific_name <- gsub("Acantarus", "Acanthurus", catch_composition$scientific_name)
+catch_composition$scientific_name <- gsub("Acathurus", "Acanthurus", catch_composition$scientific_name)
+catch_composition$scientific_name <- gsub("Acronthurus", "Acanthurus", catch_composition$scientific_name)
+catch_composition$scientific_name <- gsub("Acanthrurus", "Acanthurus", catch_composition$scientific_name)
+catch_composition$scientific_name <- gsub("dossumieri", "dussumieri", catch_composition$scientific_name)
+catch_composition$scientific_name <- gsub("dusimieri", "dussumieri", catch_composition$scientific_name)
+catch_composition$scientific_name <- gsub("dusimii", "dussumieri", catch_composition$scientific_name)
+catch_composition$scientific_name <- gsub("dussimieri", "dussumieri", catch_composition$scientific_name)
+catch_composition$scientific_name <- gsub("Abdefduf", "Abudefduf", catch_composition$scientific_name)
+catch_composition$scientific_name <- gsub("Cheilo", "Cheilio", catch_composition$scientific_name)
+catch_composition$scientific_name <- gsub("inemis", "inermis", catch_composition$scientific_name)
+catch_composition$scientific_name <- gsub("argentmaculatus", "argentimaculatus", catch_composition$scientific_name)
+catch_composition$scientific_name <- gsub("Cheillinus", "Cheilinus", catch_composition$scientific_name)
+catch_composition$scientific_name <- gsub("candiculatus", "canaliculatus", catch_composition$scientific_name)
+catch_composition$scientific_name <- gsub("canaliculutus", "canaliculatus", catch_composition$scientific_name)
+catch_composition$scientific_name <- gsub("Cholurururs", "Chlorurus", catch_composition$scientific_name)
+catch_composition$scientific_name <- gsub("stronycephalus", "strongylocephalus", catch_composition$scientific_name)
+catch_composition$scientific_name <- gsub("Gymonthorax", "Gymnothorax", catch_composition$scientific_name)
+catch_composition$scientific_name <- gsub("Gymothorax", "Gymnothorax", catch_composition$scientific_name)
+catch_composition$scientific_name <- gsub("javanicus", "favagineus", catch_composition$scientific_name)
+catch_composition$scientific_name <- gsub("vaiginsis", "vaigiensis", catch_composition$scientific_name)
+catch_composition$scientific_name <- gsub("semicirculatus", "semicirculatus", catch_composition$scientific_name)
+catch_composition$scientific_name <- gsub("semisulcatus", "semicirculatus", catch_composition$scientific_name)
+catch_composition$scientific_name <- gsub("Pomacnathus", "Pomacanthus", catch_composition$scientific_name)
+catch_composition$scientific_name <- gsub("granoculis", "grandoculis", catch_composition$scientific_name)
+catch_composition$scientific_name <- gsub("malanostigma", "melanostigma", catch_composition$scientific_name)
+catch_composition$scientific_name <- gsub("hard", "harid", catch_composition$scientific_name)
+catch_composition$scientific_name <- gsub("sexfaciatus", "sexfasciatus", catch_composition$scientific_name)
+catch_composition$scientific_name <- gsub("dussumiera", "dussumieri", catch_composition$scientific_name)
+catch_composition$scientific_name <- gsub("caeruleopanctatus", "caeruleopunctatus", catch_composition$scientific_name)
+catch_composition$scientific_name <- gsub("hebei", "heberi", catch_composition$scientific_name)
+catch_composition$scientific_name <- gsub("kippos", "hippos", catch_composition$scientific_name)
+catch_composition$scientific_name <- gsub("Carnx", "Caranx", catch_composition$scientific_name)
+catch_composition$scientific_name <- gsub("coioidea", "coioides", catch_composition$scientific_name)
+catch_composition$scientific_name <- gsub("monochrou", "monochrous", catch_composition$scientific_name)
+catch_composition$scientific_name <- gsub("monochrouss", "monochrous", catch_composition$scientific_name)
+catch_composition$scientific_name <- gsub("Kyphasus", "Kyphosus", catch_composition$scientific_name)
+catch_composition$scientific_name <- gsub("Lenthrinus", "Lethrinus", catch_composition$scientific_name)
+catch_composition$scientific_name <- gsub("Leturinus", "Lethrinus", catch_composition$scientific_name)
+catch_composition$scientific_name <- gsub("vaiguensis", "vaigiensis", catch_composition$scientific_name)
+catch_composition$scientific_name <- gsub("bornonicus", "borbonicus", catch_composition$scientific_name)
+catch_composition$scientific_name <- gsub("nebulosis", "nebulosus", catch_composition$scientific_name)
+catch_composition$scientific_name <- gsub("nebulous", "nebulosus", catch_composition$scientific_name)
+catch_composition$scientific_name <- gsub("Leptoscaus", "Leptoscarus", catch_composition$scientific_name)
+catch_composition$scientific_name <- gsub("fluluiflamma", "fulviflamma", catch_composition$scientific_name)
+catch_composition$scientific_name <- gsub("flavlineathe", "flavolineatus", catch_composition$scientific_name)
+catch_composition$scientific_name <- gsub("taeniourous", "taeniorus", catch_composition$scientific_name)
+catch_composition$scientific_name <- gsub("Navaculichthys", "Novaculichthys", catch_composition$scientific_name)
+catch_composition$scientific_name <- gsub("taeniorus", "taeniourus", catch_composition$scientific_name)
+catch_composition$scientific_name <- gsub("Parupeneus sp nov.", "Parupeneus", catch_composition$scientific_name)
+catch_composition$scientific_name <- gsub("Platux", "Platax", catch_composition$scientific_name)
+catch_composition$scientific_name <- gsub("platyyuna", "platyura", catch_composition$scientific_name)
+catch_composition$scientific_name <- gsub("playfair", "playfairi", catch_composition$scientific_name)
+catch_composition$scientific_name <- gsub("Plectorhincus", "Plectorhinchus", catch_composition$scientific_name)
+catch_composition$scientific_name <- gsub("Plectorhnichus", "Plectorhinchus", catch_composition$scientific_name)
+catch_composition$scientific_name <- gsub("Plotasus", "Plotosus", catch_composition$scientific_name)
+catch_composition$scientific_name <- gsub("Pomatonus", "Pomatomus", catch_composition$scientific_name)
+catch_composition$scientific_name <- gsub("Rhinecanthurus", "Rhineacanthus", catch_composition$scientific_name)
+catch_composition$scientific_name <- gsub("vubroviolaceus", "rubroviolaceus", catch_composition$scientific_name)
+catch_composition$scientific_name <- gsub("sirubroviolaceus", "rubroviolaceus", catch_composition$scientific_name)
+catch_composition$scientific_name <- gsub("Scromberomorus", "Scomerommorus", catch_composition$scientific_name)
+catch_composition$scientific_name <- gsub("Sphraena", "Sphyraena", catch_composition$scientific_name)
+catch_composition$scientific_name <- gsub("meyeri", "meyeni", catch_composition$scientific_name)
+catch_composition$scientific_name <- gsub("triostregus", "triostegus", catch_composition$scientific_name)
+catch_composition$scientific_name <- gsub("Adudefduf", "Abudefduf", catch_composition$scientific_name)
+catch_composition$scientific_name <- gsub("scoplas", "scopas", catch_composition$scientific_name)
+catch_composition$scientific_name <- gsub("xanthonta", "xanthonota", catch_composition$scientific_name)
+catch_composition$scientific_name <- gsub("Carangoifes", "Carangoides", catch_composition$scientific_name)
+catch_composition$scientific_name <- gsub("vippos", "hippos", catch_composition$scientific_name)
+catch_composition$scientific_name <- gsub("Cephelopholu", "Cephalopholis", catch_composition$scientific_name)
+catch_composition$scientific_name <- gsub("Chaetadon", "Chaetodon", catch_composition$scientific_name)
+catch_composition$scientific_name <- gsub("auringa", "auriga", catch_composition$scientific_name)
+catch_composition$scientific_name <- gsub("selen$", "selene", catch_composition$scientific_name) # $ indicates end of phrase; didnt use ^ because this is species name is the 2nd word 
+catch_composition$scientific_name <- gsub("trilohatus", "trilobatus", catch_composition$scientific_name)
+catch_composition$scientific_name <- gsub("Cheiellinus", "Cheilinus", catch_composition$scientific_name)
+catch_composition$scientific_name <- gsub("Cheillnus", "Cheilinus", catch_composition$scientific_name)
+catch_composition$scientific_name <- gsub("inerms", "inermis", catch_composition$scientific_name)
+catch_composition$scientific_name <- gsub("piinnulatus", "pinnulatus", catch_composition$scientific_name)
+catch_composition$scientific_name <- gsub("pinnulatrus", "pinnulatus", catch_composition$scientific_name)
+catch_composition$scientific_name <- gsub("Cirrihitus", "Cirrhitus", catch_composition$scientific_name)
+catch_composition$scientific_name <- gsub("farmosa", "formosa", catch_composition$scientific_name)
+catch_composition$scientific_name <- gsub("Cymonthorax", "Gymnothorax", catch_composition$scientific_name)
+catch_composition$scientific_name <- gsub("Cynoglassus", "Cynoglossus", catch_composition$scientific_name)
+catch_composition$scientific_name <- gsub("lachnen", "lachneri", catch_composition$scientific_name)
+catch_composition$scientific_name <- gsub("luchneri", "lachneri", catch_composition$scientific_name)
+catch_composition$scientific_name <- gsub("Epimephelus", "Epinephelus", catch_composition$scientific_name)
+catch_composition$scientific_name <- gsub("colodes", "coioides", catch_composition$scientific_name)
+catch_composition$scientific_name <- gsub("coicoides", "coioides", catch_composition$scientific_name)
+catch_composition$scientific_name <- gsub("coloides", "coioides", catch_composition$scientific_name)
+catch_composition$scientific_name <- gsub("faragineus", "favagineus", catch_composition$scientific_name)
+catch_composition$scientific_name <- gsub("favagineous", "favagineus", catch_composition$scientific_name)
+catch_composition$scientific_name <- gsub("hortulatus", "hortulanus", catch_composition$scientific_name)
+catch_composition$scientific_name <- gsub("Himantur", "Himantura", catch_composition$scientific_name)
+catch_composition$scientific_name <- gsub("Himanturaa", "Himantura", catch_composition$scientific_name)
+catch_composition$scientific_name <- gsub("Hippscarus", "Hipposcarus", catch_composition$scientific_name)
+catch_composition$scientific_name <- gsub("vagiensis", "vaigiensis", catch_composition$scientific_name)
+catch_composition$scientific_name <- gsub("vaigienesis", "vaigiensis", catch_composition$scientific_name)
+catch_composition$scientific_name <- gsub("fuaviflamma", "fulviflamma", catch_composition$scientific_name)
+catch_composition$scientific_name <- gsub("fluliuflamma", "fulviflamma", catch_composition$scientific_name)
+catch_composition$scientific_name <- gsub("fuluvifiamma", "fulviflamma", catch_composition$scientific_name)
+catch_composition$scientific_name <- gsub("fulvifiamma", "fulviflamma", catch_composition$scientific_name)
+catch_composition$scientific_name <- gsub("Latjanus", "Lutjanus", catch_composition$scientific_name)
+catch_composition$scientific_name <- gsub("conchiliatus", "conchliatus", catch_composition$scientific_name)
+catch_composition$scientific_name <- gsub("conchuliatutus", "conchliatus", catch_composition$scientific_name)
+catch_composition$scientific_name <- gsub("conchyliantus", "conchliatus", catch_composition$scientific_name)
+catch_composition$scientific_name <- gsub("hara$", "harak", catch_composition$scientific_name)
+catch_composition$scientific_name <- gsub("harar$", "harak", catch_composition$scientific_name)
+catch_composition$scientific_name <- gsub("letjan$", "lentjan", catch_composition$scientific_name)
+catch_composition$scientific_name <- gsub("olivacous$", "olivaceus", catch_composition$scientific_name)
+catch_composition$scientific_name <- gsub("Letjanus", "Lutjanus", catch_composition$scientific_name)
+catch_composition$scientific_name <- gsub("Liza", "Planiliza", catch_composition$scientific_name)
+catch_composition$scientific_name <- gsub("alatar$", "alata", catch_composition$scientific_name)
+catch_composition$scientific_name <- gsub("argemtimaculutus", "argentimaculatus", catch_composition$scientific_name)
+catch_composition$scientific_name <- gsub("argentinmaculatus", "argentimaculatus", catch_composition$scientific_name)
+catch_composition$scientific_name <- gsub("ghibbon$", "gibbus", catch_composition$scientific_name)
+catch_composition$scientific_name <- gsub("Lutjan", "Lutjanus", catch_composition$scientific_name)
+catch_composition$scientific_name <- gsub("Lutjanusus", "Lutjanus", catch_composition$scientific_name)
+catch_composition$scientific_name <- gsub("Migul", "Mugil", catch_composition$scientific_name)
+catch_composition$scientific_name <- gsub("Monodactytus", "Monodactylus", catch_composition$scientific_name)
+catch_composition$scientific_name <- gsub("bernditi", "berndti", catch_composition$scientific_name)
+catch_composition$scientific_name <- gsub("berndt", "berndti", catch_composition$scientific_name)
+catch_composition$scientific_name <- gsub("berndtii", "berndti", catch_composition$scientific_name)
+catch_composition$scientific_name <- gsub("annalutus", "annulatus", catch_composition$scientific_name)
+catch_composition$scientific_name <- gsub("anna$", "annulatus", catch_composition$scientific_name)
+catch_composition$scientific_name <- gsub("annaturus", "annulatus", catch_composition$scientific_name)
+catch_composition$scientific_name <- gsub("annulator", "annulatus", catch_composition$scientific_name)
+catch_composition$scientific_name <- gsub("annulutus", "annulatus", catch_composition$scientific_name)
+catch_composition$scientific_name <- gsub("annunthurus$", "annulatus", catch_composition$scientific_name)
+catch_composition$scientific_name <- gsub("annuthurus$", "annulatus", catch_composition$scientific_name)
+catch_composition$scientific_name <- gsub("brachycentus$", "brachycentron", catch_composition$scientific_name)
+catch_composition$scientific_name <- gsub("bracycentron", "brachycentron", catch_composition$scientific_name)
+catch_composition$scientific_name <- gsub("branchycentron", "brachycentron", catch_composition$scientific_name)
+catch_composition$scientific_name <- gsub("unicaris", "unicornis", catch_composition$scientific_name)
+catch_composition$scientific_name <- gsub("oyanea$", "cyanea", catch_composition$scientific_name)
+catch_composition$scientific_name <- gsub("Panacirus", "Panulirus", catch_composition$scientific_name)
+catch_composition$scientific_name <- gsub("Panilirus", "Panulirus", catch_composition$scientific_name)
+catch_composition$scientific_name <- gsub("Panulinus", "Panulirus", catch_composition$scientific_name)
+catch_composition$scientific_name <- gsub("homaruis", "homarus", catch_composition$scientific_name)
+catch_composition$scientific_name <- gsub("humarus", "homarus", catch_composition$scientific_name)
+catch_composition$scientific_name <- gsub("hurmarus", "homarus", catch_composition$scientific_name)
+catch_composition$scientific_name <- gsub("pencillatus", "penicillatus", catch_composition$scientific_name)
+catch_composition$scientific_name <- gsub("Paraparenus", "Parupeneus", catch_composition$scientific_name)
+catch_composition$scientific_name <- gsub("Parapeneneus", "Parupeneus", catch_composition$scientific_name)
+catch_composition$scientific_name <- gsub("Parapenenus", "Parupeneus", catch_composition$scientific_name)
+catch_composition$scientific_name <- gsub("Parapeneous", "Parupeneus", catch_composition$scientific_name)
+catch_composition$scientific_name <- gsub("Parapeneus", "Parupeneus", catch_composition$scientific_name)
+catch_composition$scientific_name <- gsub("Parapenious", "Parupeneus", catch_composition$scientific_name)
+catch_composition$scientific_name <- gsub("Parapenous", "Parupeneus", catch_composition$scientific_name)
+catch_composition$scientific_name <- gsub("Paraperenus", "Parupeneus", catch_composition$scientific_name)
+catch_composition$scientific_name <- gsub("Parupenenus", "Parupeneus", catch_composition$scientific_name)
+catch_composition$scientific_name <- gsub("Parupeneous", "Parupeneus", catch_composition$scientific_name)
+catch_composition$scientific_name <- gsub("Parupenenus", "Parupeneus", catch_composition$scientific_name)
+catch_composition$scientific_name <- gsub("Perepeneus", "Parupeneus", catch_composition$scientific_name)
+catch_composition$scientific_name <- gsub("baberinus", "barberinus", catch_composition$scientific_name)
+catch_composition$scientific_name <- gsub("indica$", "indicus", catch_composition$scientific_name)
+catch_composition$scientific_name <- gsub("Plactorhinches", "Plectorhinchus", catch_composition$scientific_name)
+catch_composition$scientific_name <- gsub("Plactorhinchus", "Plectorhinchus", catch_composition$scientific_name)
+catch_composition$scientific_name <- gsub("Platasus", "Plotosus", catch_composition$scientific_name)
+catch_composition$scientific_name <- gsub("Platxbelone", "Platybelone", catch_composition$scientific_name)
+catch_composition$scientific_name <- gsub("fiavomaculatus", "flavomaculatus", catch_composition$scientific_name)
+catch_composition$scientific_name <- gsub("flavamaculatus", "flavomaculatus", catch_composition$scientific_name)
+catch_composition$scientific_name <- gsub("plaxfairi", "playfairi", catch_composition$scientific_name)
+catch_composition$scientific_name <- gsub("playfairii", "playfairi", catch_composition$scientific_name)
+catch_composition$scientific_name <- gsub("sardidus", "sordidus", catch_composition$scientific_name)
+catch_composition$scientific_name <- gsub("Plectorhinechus", "Plectorhinchus", catch_composition$scientific_name)
+catch_composition$scientific_name <- gsub("Plectorhines", "Plectorhinchus", catch_composition$scientific_name)
+catch_composition$scientific_name <- gsub("Plectorhninus", "Plectorhinchus", catch_composition$scientific_name)
+catch_composition$scientific_name <- gsub("Plectorihinchus", "Plectorhinchus", catch_composition$scientific_name)
+catch_composition$scientific_name <- gsub("Plectrorchinchw", "Plectorhinchus", catch_composition$scientific_name)
+catch_composition$scientific_name <- gsub("Plectrorhinchw", "Plectorhinchus", catch_composition$scientific_name)
+catch_composition$scientific_name <- gsub("Priacanthurus", "Priacanthus", catch_composition$scientific_name)
+catch_composition$scientific_name <- gsub("Pricanthurus", "Priacanthus", catch_composition$scientific_name)
+catch_composition$scientific_name <- gsub("hamsur$", "hamrur", catch_composition$scientific_name)
+catch_composition$scientific_name <- gsub("Psedorhombus", "Pseudorhombus", catch_composition$scientific_name)
+catch_composition$scientific_name <- gsub("mile$", "miles", catch_composition$scientific_name)
+catch_composition$scientific_name <- gsub("Rhineacanthus", "Rhinecanthus", catch_composition$scientific_name)
+catch_composition$scientific_name <- gsub("aculateus$", "aculeatus", catch_composition$scientific_name)
+catch_composition$scientific_name <- gsub("Sardinelle", "Sardinella", catch_composition$scientific_name)
+catch_composition$scientific_name <- gsub("Scarrus", "Scarus", catch_composition$scientific_name)
+catch_composition$scientific_name <- gsub("Scarua", "Scarus", catch_composition$scientific_name)
+catch_composition$scientific_name <- gsub("Scarus$", "Scarus sp.", catch_composition$scientific_name)
+catch_composition$scientific_name <- gsub("ghoban$", "ghobban", catch_composition$scientific_name)
+catch_composition$scientific_name <- gsub("ghobbao", "ghobban", catch_composition$scientific_name)
+catch_composition$scientific_name <- gsub("nuselii", "russelii", catch_composition$scientific_name)
+catch_composition$scientific_name <- gsub("risselii", "russelii", catch_composition$scientific_name)
+catch_composition$scientific_name <- gsub("ruselii", "russelii", catch_composition$scientific_name)
+catch_composition$scientific_name <- gsub("psittatus", "psittacus", catch_composition$scientific_name)
+catch_composition$scientific_name <- gsub("phargonis", "pharaonis", catch_composition$scientific_name)
+catch_composition$scientific_name <- gsub("fluscence", "fuscescens", catch_composition$scientific_name)
+catch_composition$scientific_name <- gsub("fluscenscens", "fuscescens", catch_composition$scientific_name)
+catch_composition$scientific_name <- gsub("fluscescens", "fuscescens", catch_composition$scientific_name)
+catch_composition$scientific_name <- gsub("gittatus", "guttatus", catch_composition$scientific_name)
+catch_composition$scientific_name <- gsub("guitatus", "guttatus", catch_composition$scientific_name)
+catch_composition$scientific_name <- gsub("Signus", "Siganus", catch_composition$scientific_name)
+catch_composition$scientific_name <- gsub("Sphyreana", "Sphyraena", catch_composition$scientific_name)
+catch_composition$scientific_name <- gsub("Spinephelus", "Epinephelus", catch_composition$scientific_name)
+catch_composition$scientific_name <- gsub("iciura$", "leiura", catch_composition$scientific_name)
+catch_composition$scientific_name <- gsub("satheta$", "sathete", catch_composition$scientific_name)
+catch_composition$scientific_name <- gsub("Strougylura", "Strongylura", catch_composition$scientific_name)
+catch_composition$scientific_name <- gsub("Suffiamen", "Sufflamen", catch_composition$scientific_name)
+catch_composition$scientific_name <- gsub("Sufiamen", "Sufflamen", catch_composition$scientific_name)
+catch_composition$scientific_name <- gsub("bymma", "lymma", catch_composition$scientific_name)
+catch_composition$scientific_name <- gsub("chiltanae", "chiltonae", catch_composition$scientific_name)
+catch_composition$scientific_name <- gsub("chittonae", "chiltonae", catch_composition$scientific_name)
+catch_composition$scientific_name <- gsub("chillonae", "chiltonae", catch_composition$scientific_name)
+catch_composition$scientific_name <- gsub("Thysanophys", "Thysanophrys", catch_composition$scientific_name)
+catch_composition$scientific_name <- gsub("lepsurus", "lepturus", catch_composition$scientific_name)
+catch_composition$scientific_name <- gsub("duaucelii", "duvauceli", catch_composition$scientific_name)
+catch_composition$scientific_name <- gsub("duraucelii", "duvauceli", catch_composition$scientific_name)
+catch_composition$scientific_name <- gsub("duvaucelii", "duvauceli", catch_composition$scientific_name)
+catch_composition$scientific_name <- gsub("nigricaudus", "nigricauda", catch_composition$scientific_name)
+catch_composition$scientific_name <- gsub("Ancanthurus", "Acanthurus", catch_composition$scientific_name)
+catch_composition$scientific_name <- gsub("Elinephelus", "Epinephelus", catch_composition$scientific_name)
+catch_composition$scientific_name <- gsub("Etinephelus", "Epinephelus", catch_composition$scientific_name)
+catch_composition$scientific_name <- gsub("Gomphesus", "Gomphosus", catch_composition$scientific_name)
+catch_composition$scientific_name <- gsub("Laptoscarus", "Leptoscarus", catch_composition$scientific_name)
+catch_composition$scientific_name <- gsub("lebulous", "nebulosus", catch_composition$scientific_name)
+catch_composition$scientific_name <- gsub("varigatus", "variegatus", catch_composition$scientific_name)
+catch_composition$scientific_name <- gsub("veriegatus", "variegatus", catch_composition$scientific_name)
+catch_composition$scientific_name <- gsub("flulviflamma", "fulviflamma", catch_composition$scientific_name)
+catch_composition$scientific_name <- gsub("fluviflamma", "fulviflamma", catch_composition$scientific_name)
+catch_composition$scientific_name <- gsub("bernati", "berndti", catch_composition$scientific_name)
+catch_composition$scientific_name <- gsub("Ovaculichthys", "Novaculichthys", catch_composition$scientific_name)
+catch_composition$scientific_name <- gsub("berbarinus", "barberinus", catch_composition$scientific_name)
+catch_composition$scientific_name <- gsub("semcirculotus", "semicirculatus", catch_composition$scientific_name)
+catch_composition$scientific_name <- gsub("Scolopis", "Scolopsis", catch_composition$scientific_name)
+catch_composition$scientific_name <- gsub("Siggg", "Siganus", catch_composition$scientific_name)
+catch_composition$scientific_name <- gsub("Sinagus", "Siganus", catch_composition$scientific_name)
+catch_composition$scientific_name <- gsub("sandwichlensis", "sandwichiensis", catch_composition$scientific_name)
+catch_composition$scientific_name <- gsub("lacheri", "lachneri", catch_composition$scientific_name)
+catch_composition$scientific_name <- gsub("Leptoscurus", "Leptoscarus", catch_composition$scientific_name)
+catch_composition$scientific_name <- gsub("haak", "harak", catch_composition$scientific_name)
+catch_composition$scientific_name <- gsub("Lethritus", "Lethrinus", catch_composition$scientific_name)
+catch_composition$scientific_name <- gsub("Luthrinus", "Lethrinus", catch_composition$scientific_name)
+catch_composition$scientific_name <- gsub("fulfuiflamma", "fulviflamma", catch_composition$scientific_name)
+catch_composition$scientific_name <- gsub("orgentimoeulatus", "argentimaculatus", catch_composition$scientific_name)
+catch_composition$scientific_name <- gsub("argentues", "argenteus", catch_composition$scientific_name)
+catch_composition$scientific_name <- gsub("orgentues", "argenteus", catch_composition$scientific_name)
+catch_composition$scientific_name <- gsub("Parapenes", "Parupeneus", catch_composition$scientific_name)
+catch_composition$scientific_name <- gsub("Parapenius", "Parupeneus", catch_composition$scientific_name)
+catch_composition$scientific_name <- gsub("Parupeneus", "Parupeneus", catch_composition$scientific_name)
+catch_composition$scientific_name <- gsub("barberins", "barberinus", catch_composition$scientific_name)
+catch_composition$scientific_name <- gsub("berberinus", "barberinus", catch_composition$scientific_name)
+catch_composition$scientific_name <- gsub("Platorhinchus", "Plectorhinchus", catch_composition$scientific_name)
+catch_composition$scientific_name <- gsub("Plectorhichus", "Plectorhinchus", catch_composition$scientific_name)
+catch_composition$scientific_name <- gsub("Plectohinchus", "Plectorhinchus", catch_composition$scientific_name)
+catch_composition$scientific_name <- gsub("Pleitorhinchus", "Plectorhinchus", catch_composition$scientific_name)
+catch_composition$scientific_name <- gsub("Platybalone", "Platybelone", catch_composition$scientific_name)
+catch_composition$scientific_name <- gsub("Pomacanthurus", "Pomacanthus", catch_composition$scientific_name)
+catch_composition$scientific_name <- gsub("Pseudorhombuo", "Pseudorhombus", catch_composition$scientific_name)
+catch_composition$scientific_name <- gsub("Scanus", "Scarus", catch_composition$scientific_name)
+catch_composition$scientific_name <- gsub("globiseps", "globiceps", catch_composition$scientific_name)
+catch_composition$scientific_name <- gsub("acutiplanis", "acutipinnis", catch_composition$scientific_name)
+catch_composition$scientific_name <- gsub("Utoreuthis", "Uroteuthis", catch_composition$scientific_name)
+catch_composition$scientific_name <- gsub("Scarus tricolo$", "Scarus tricolor", catch_composition$scientific_name)
+catch_composition$scientific_name <- gsub("Parupeneous macronema$", "Parupeneus macronemus", catch_composition$scientific_name)
+catch_composition$scientific_name <- gsub("Parupeneus macronema$", "Parupeneus macronemus", catch_composition$scientific_name)
+catch_composition$scientific_name <- gsub("Scarus russelli$", "Scarus russelii", catch_composition$scientific_name)
+catch_composition$scientific_name <- gsub("Acanthurus tennentii", "Acanthurus tennenti", catch_composition$scientific_name)
+catch_composition$scientific_name <- gsub("Lethrinus conchliatus", "Lethrinus conchyliatus", catch_composition$scientific_name)
+catch_composition$scientific_name <- gsub("Naso brachycention", "Naso brachycentron", catch_composition$scientific_name)
+catch_composition$scientific_name <- gsub("Acathopacrus berda", "Acanthopagrus berda", catch_composition$scientific_name)
+catch_composition$scientific_name <- gsub("Colotomus carolinus", "Calotomus carolinus", catch_composition$scientific_name)
+catch_composition$scientific_name <- gsub("Coranx hippos", "Caranx hippos", catch_composition$scientific_name)
+catch_composition$scientific_name <- gsub("Cynoglossus lancheri", "Cynoglossus lachneri", catch_composition$scientific_name)
+catch_composition$scientific_name <- gsub("Gomphosus caeruleos", "Gomphosus caeruleus", catch_composition$scientific_name)
+catch_composition$scientific_name <- gsub("Gompheus caeruleus", "Gomphosus caeruleus", catch_composition$scientific_name)
+catch_composition$scientific_name <- gsub("Gymnothirax favagineus", "Gymnothorax favagineus", catch_composition$scientific_name)
+catch_composition$scientific_name <- gsub("Hinecanthurus aculeatus", "Rhinecanthus aculeatus", catch_composition$scientific_name)
+catch_composition$scientific_name <- gsub("Hipposcarus globiceps", "Hipposcarus longiceps", catch_composition$scientific_name)
+catch_composition$scientific_name <- gsub("Leptoscarus vaigiencies", "Leptoscarus vaigiensis", catch_composition$scientific_name)
+catch_composition$scientific_name <- gsub("Lethhrinus lentjan", "Lethrinus lentjan", catch_composition$scientific_name)
+catch_composition$scientific_name <- gsub("Lethrinas harak", "Lethrinus harak", catch_composition$scientific_name)
+catch_composition$scientific_name <- gsub("Lethrnus nebulosus", "Lethrinus nebulosus", catch_composition$scientific_name)
+catch_composition$scientific_name <- gsub("Litjanus argentimaculatus", "Lutjanus argentimaculatus", catch_composition$scientific_name)
+catch_composition$scientific_name <- gsub("Litjanus fluiviflamma", "Lutjanus fulviflamma", catch_composition$scientific_name)
+catch_composition$scientific_name <- gsub("Litjanus fulviflamma", "Lutjanus fulviflamma", catch_composition$scientific_name)
+catch_composition$scientific_name <- gsub("Litjanus gibbus", "Lutjanus gibbus", catch_composition$scientific_name)
+catch_composition$scientific_name <- gsub("Lutjanus flaviflammma", "Lutjanus fulviflamma", catch_composition$scientific_name)
+catch_composition$scientific_name <- gsub("Ostracion cubicum", "Ostracion cubicus", catch_composition$scientific_name)
+catch_composition$scientific_name <- gsub("Ostracion nasus", "Rhynchostracion nasus", catch_composition$scientific_name)
+catch_composition$scientific_name <- gsub("Panalirus versicolor", "Panulirus versicolor", catch_composition$scientific_name)
+catch_composition$scientific_name <- gsub("Panulirus penicillatus", "Panulirus penicilatus", catch_composition$scientific_name)
+catch_composition$scientific_name <- gsub("Parupeneus indius", "Parupeneus indicus", catch_composition$scientific_name)
+catch_composition$scientific_name <- gsub("Paruperenus macronemus", "Parupeneus macronemus", catch_composition$scientific_name)
+catch_composition$scientific_name <- gsub("Perupeneus macronemus", "Parupeneus macronemus", catch_composition$scientific_name)
+catch_composition$scientific_name <- gsub("Priacanthus humrur", "Priacanthus hamrur", catch_composition$scientific_name)
+catch_composition$scientific_name <- gsub("Scarius rubroviolaceus", "Scarus rubroviolaceus", catch_composition$scientific_name)
+catch_composition$scientific_name <- gsub("Scarus ghobbon", "Scarus ghobban", catch_composition$scientific_name)
+catch_composition$scientific_name <- gsub("Siganas guttatus", "Siganus guttatus", catch_composition$scientific_name)
+catch_composition$scientific_name <- gsub("Sthrophidon sathete", "Strophidon sathete", catch_composition$scientific_name)
+catch_composition$scientific_name <- gsub("Uroteuthis duvaucellii", "Uroteuthis duvauceli", catch_composition$scientific_name)
 
 # correcting spellings in validation list 
 validation_lists$scientific_name <- gsub("Gymonthorax", "Gymnothorax", validation_lists$scientific_name)
@@ -683,13 +723,13 @@ validation_lists$scientific_name <- gsub("Lethrinus conchliatus", "Lethrinus con
 validation_lists$scientific_name <- gsub("Naso brachycention", "Naso brachycentron", validation_lists$scientific_name)
 ```
 
-Double checking our df against the valid names so we know what names are typos. 
+Double checking our catch_composition against the valid names so we know what names are typos. 
 
 ```{r}
-# making df of names that are in the catch_composition (df) but are not in the validation_lists
+# making catch_composition of names that are in the catch_composition (catch_composition) but are not in the validation_lists
 # these names are typos - fix with gsub functions above 
 valid_names <- validation_lists %>% select(scientific_name)
-catch_names <- df %>% select(scientific_name)
+catch_names <- catch_composition %>% select(scientific_name)
 
 unvalidated_names <- setdiff(catch_names, valid_names) %>% 
   filter(!scientific_name == "NANA") %>% filter(!scientific_name == "Nana")
@@ -698,7 +738,7 @@ unvalidated_names <- setdiff(catch_names, valid_names) %>%
 unique(sort(unvalidated_names$scientific_name))
 
 # checking to see how many times a particular fish appears in the dataset
-filter(df, scientific_name == "Scylla serrata") %>%
+filter(catch_composition, scientific_name == "Scylla serrata") %>%
   select(number_of_fish) %>% filter(!is.na(number_of_fish)) %>%
   mutate(count = n(),
          sum = sum(number_of_fish))
@@ -807,30 +847,28 @@ filter_out_species <- c("Pono blue fish", "Acanthopagrus berda", "Acanthurus duv
                         "Pomacanthus maculosus", "Scarus sutor", "Scarus vaigiensis", "Scolopsis bimaculata", "Scylla serrata", "Taeniura meyeni", "Uroteuthis cynea",
                         "Uroteuthis lineatus", "Sardinella melanura", "Plotosus canius")
 
-filter_sppdf <- data.frame(filter_out_species) %>%
+filter_sppcatch_composition <- data.frame(filter_out_species) %>%
   rename(scientific_name = filter_out_species)
 
-df <- df %>% 
-  filter(!scientific_name %in% filter_sppdf$scientific_name)
+catch_composition <- catch_composition %>% 
+  filter(!scientific_name %in% filter_sppcatch_composition$scientific_name)
 
 # checking this was removed
-unique(sort(df$scientific_name))
+unique(sort(catch_composition$scientific_name))
 ```
 
 #### Changing incorrect scientific names
 
 ```{r}
-df$scientific_name <- gsub("Scarus carolinus", "Calotomus carolinus", df$scientific_name)
-df$scientific_name <- gsub("Hipposcarus scarus", "Hipposcarus longiceps", df$scientific_name)
-df$scientific_name <- gsub("Lethrinus vaigiensis", "Kyphosus vaigiensis", df$scientific_name)
-df$scientific_name <- gsub("Acanthurus harak", "Lethrinus harak", df$scientific_name)
-df$scientific_name <- gsub("Monodactylus argentimailatus", "Monodactylus argenteus", df$scientific_name)
-df$scientific_name <- gsub("Lethrinus sutor", "Siganus sutor", df$scientific_name)
-df$scientific_name <- gsub("Tafi sutor", "Siganus sutor", df$scientific_name)
-df$scientific_name <- gsub("Sphyraena leiura", "Sphyraena japonica", df$scientific_name)
+catch_composition$scientific_name <- gsub("Scarus carolinus", "Calotomus carolinus", catch_composition$scientific_name)
+catch_composition$scientific_name <- gsub("Hipposcarus scarus", "Hipposcarus longiceps", catch_composition$scientific_name)
+catch_composition$scientific_name <- gsub("Lethrinus vaigiensis", "Kyphosus vaigiensis", catch_composition$scientific_name)
+catch_composition$scientific_name <- gsub("Acanthurus harak", "Lethrinus harak", catch_composition$scientific_name)
+catch_composition$scientific_name <- gsub("Monodactylus argentimailatus", "Monodactylus argenteus", catch_composition$scientific_name)
+catch_composition$scientific_name <- gsub("Lethrinus sutor", "Siganus sutor", catch_composition$scientific_name)
+catch_composition$scientific_name <- gsub("Tafi sutor", "Siganus sutor", catch_composition$scientific_name)
+catch_composition$scientific_name <- gsub("Sphyraena leiura", "Sphyraena japonica", catch_composition$scientific_name)
 ```
-
-
 
 ### Length (cm)
 
@@ -847,52 +885,52 @@ This column is a character for because of the "<" and "-".
 
 
 ```{r}
-unique(sort(df$length_cm))
+unique(sort(catch_composition$length_cm))
 
 # replace the write in verbiage with no characters
-df$length_cm <- gsub(">50 write in: ", "", df$length_cm)
-df$length_cm <- gsub(">50 write in:", "", df$length_cm)
-df$length_cm <- gsub(">50", "", df$length_cm)
+catch_composition$length_cm <- gsub(">50 write in: ", "", catch_composition$length_cm)
+catch_composition$length_cm <- gsub(">50 write in:", "", catch_composition$length_cm)
+catch_composition$length_cm <- gsub(">50", "", catch_composition$length_cm)
 
 # replacing values that don't make sense
-df$length_cm <- gsub("269-30", "26-30", df$length_cm)
-df$length_cm <- gsub("˂10", "<10", df$length_cm)
-df$length_cm <- gsub(">10", "<10", df$length_cm)
+catch_composition$length_cm <- gsub("269-30", "26-30", catch_composition$length_cm)
+catch_composition$length_cm <- gsub("˂10", "<10", catch_composition$length_cm)
+catch_composition$length_cm <- gsub(">10", "<10", catch_composition$length_cm)
 
 # correcting incorrect ranges
-df$length_cm <- gsub("31-15", "31-35", df$length_cm)
-df$length_cm <- gsub("10-15", "11-15", df$length_cm)
-df$length_cm <- gsub("31-37", "31-35", df$length_cm)
-df$length_cm <- gsub("31-36", "31-35", df$length_cm)
-df$length_cm <- gsub("16-25", "16-20", df$length_cm)
-df$length_cm <- gsub("21-30", "21-25", df$length_cm)
-df$length_cm <- gsub("26-35", "26-30", df$length_cm)
-df$length_cm <- gsub("31.-35", "31-35", df$length_cm)
-df$length_cm <- gsub("36-34", "36-40", df$length_cm)
-df$length_cm <- gsub("25-30", "26-30", df$length_cm)
-df$length_cm <- gsub("45-50", "46-50", df$length_cm)
-df$length_cm <- gsub("31-25", "31-35", df$length_cm)
-df$length_cm <- gsub("1-15", "11-15", df$length_cm)
-df$length_cm <- gsub("26-31", "26-30", df$length_cm)
-df$length_cm <- gsub("26-20", "26-30", df$length_cm)
-df$length_cm <- gsub("21-26", "21-25", df$length_cm)
-df$length_cm <- gsub("21-24", "21-25", df$length_cm)
-df$length_cm <- gsub("16-30", "16-20", df$length_cm)
-df$length_cm <- gsub("110-15", "11-15", df$length_cm)
-df$length_cm <- gsub("111-15", "11-15", df$length_cm)
-df$length_cm <- gsub("11-16", "11-15", df$length_cm)
-df$length_cm <- gsub("41-46", "41-45", df$length_cm)
-df$length_cm <- gsub("26-25", "21-25", df$length_cm)
-df$length_cm <- gsub("41-50", "46-50", df$length_cm)
+catch_composition$length_cm <- gsub("31-15", "31-35", catch_composition$length_cm)
+catch_composition$length_cm <- gsub("10-15", "11-15", catch_composition$length_cm)
+catch_composition$length_cm <- gsub("31-37", "31-35", catch_composition$length_cm)
+catch_composition$length_cm <- gsub("31-36", "31-35", catch_composition$length_cm)
+catch_composition$length_cm <- gsub("16-25", "16-20", catch_composition$length_cm)
+catch_composition$length_cm <- gsub("21-30", "21-25", catch_composition$length_cm)
+catch_composition$length_cm <- gsub("26-35", "26-30", catch_composition$length_cm)
+catch_composition$length_cm <- gsub("31.-35", "31-35", catch_composition$length_cm)
+catch_composition$length_cm <- gsub("36-34", "36-40", catch_composition$length_cm)
+catch_composition$length_cm <- gsub("25-30", "26-30", catch_composition$length_cm)
+catch_composition$length_cm <- gsub("45-50", "46-50", catch_composition$length_cm)
+catch_composition$length_cm <- gsub("31-25", "31-35", catch_composition$length_cm)
+catch_composition$length_cm <- gsub("1-15", "11-15", catch_composition$length_cm)
+catch_composition$length_cm <- gsub("26-31", "26-30", catch_composition$length_cm)
+catch_composition$length_cm <- gsub("26-20", "26-30", catch_composition$length_cm)
+catch_composition$length_cm <- gsub("21-26", "21-25", catch_composition$length_cm)
+catch_composition$length_cm <- gsub("21-24", "21-25", catch_composition$length_cm)
+catch_composition$length_cm <- gsub("16-30", "16-20", catch_composition$length_cm)
+catch_composition$length_cm <- gsub("110-15", "11-15", catch_composition$length_cm)
+catch_composition$length_cm <- gsub("111-15", "11-15", catch_composition$length_cm)
+catch_composition$length_cm <- gsub("11-16", "11-15", catch_composition$length_cm)
+catch_composition$length_cm <- gsub("41-46", "41-45", catch_composition$length_cm)
+catch_composition$length_cm <- gsub("26-25", "21-25", catch_composition$length_cm)
+catch_composition$length_cm <- gsub("41-50", "46-50", catch_composition$length_cm)
 
 # taking out double values 
-df$length_cm <- gsub("21-25 26-30", NA, df$length_cm)
-df$length_cm <- gsub("21-25 26-31", NA, df$length_cm)
-df$length_cm <- gsub("21-25, 26-30", NA, df$length_cm)
-df$length_cm <- gsub("^$", NA, df$length_cm)
+catch_composition$length_cm <- gsub("21-25 26-30", NA, catch_composition$length_cm)
+catch_composition$length_cm <- gsub("21-25 26-31", NA, catch_composition$length_cm)
+catch_composition$length_cm <- gsub("21-25, 26-30", NA, catch_composition$length_cm)
+catch_composition$length_cm <- gsub("^$", NA, catch_composition$length_cm)
 
 # converting <10 to a range of 0-10 
-df <- df %>% 
+catch_composition <- catch_composition %>% 
   mutate(length_cm = if_else(length_cm == "<10", "0-10", length_cm),
          length_cm = if_else(length_cm == "<11", "11-15", length_cm),
          length_cm = if_else(length_cm == "<12", "11-15", length_cm),
@@ -903,10 +941,10 @@ df <- df %>%
          length_cm = if_else(length_cm == "<17", "16-20", length_cm))
 
 # converting numerical values to ranges 
-df$length_calc <- ifelse(grepl("-",df$length_cm), NA, df$length_cm) # if there is a "-" in the observation, then replace with NA and if not, put that value
-df$length_calc <- as.numeric(df$length_calc) # converting this to numeric so I can use the next mutate function to change these values to bins
+catch_composition$length_calc <- ifelse(grepl("-",catch_composition$length_cm), NA, catch_composition$length_cm) # if there is a "-" in the observation, then replace with NA and if not, put that value
+catch_composition$length_calc <- as.numeric(catch_composition$length_calc) # converting this to numeric so I can use the next mutate function to change these values to bins
 
-df <- df %>%
+catch_composition <- catch_composition %>%
  mutate(length_calc = case_when(
     length_calc >= 0 & length_calc <= 10.5 ~ "0-10",
     length_calc >= 10.5 & length_calc <= 15.4 ~ "11-15",
@@ -923,12 +961,12 @@ df <- df %>%
     length_calc >= 80.5 & length_calc <= 90.4 ~ "81-90",
     length_calc > 90.5 ~ ">90")) 
 
-df <- df %>%
+catch_composition <- catch_composition %>%
   mutate(length_corrected = if_else(is.na(length_calc), length_cm, length_calc))
 
 # double checking that worked for the corrected column 
-unique(sort(df$length_cm))
-unique(sort(df$length_corrected))
+unique(sort(catch_composition$length_cm))
+unique(sort(catch_composition$length_corrected))
 ```
 
 Correct output for length_corrected: `">90"   "0-10"  "11-15" "16-20" "21-25" "26-30" "31-35" "36-40" "41-45" "46-50" "51-60" "61-70" "71-80" "81-90"`. 
@@ -941,7 +979,7 @@ Decide if we need to take these out or not.
 fishbase <- read_excel("data/fishbase.xlsx", sheet = "life history") %>% #read in excel file 
   select(scientific_name, Lm, Lm_se_min, Lm_se_max, Lmax)
 
-length_check <- full_join(df, fishbase, by = "scientific_name") %>%
+length_check <- full_join(catch_composition, fishbase, by = "scientific_name") %>%
   select(Operation_date, fisher_id, scientific_name, Lmax, length_corrected) %>%
   mutate(median_length = case_when(
     length_corrected == "0-10" ~ 5,
@@ -967,34 +1005,34 @@ length_check <- full_join(df, fishbase, by = "scientific_name") %>%
 #### Correcting those size bin lengths that are over Lmax 
 
 ```{r}
-df$length_corrected[df$scientific_name == "Acanthurus dussumieri" & df$length_corrected == "51-60"] <- "46-50"
-df$length_corrected[df$scientific_name == "Parupeneus macronemus" & df$length_corrected == "41-45"] <- "36-40"
-df$length_corrected[df$scientific_name == "Siganus stellatus" & df$length_corrected == "41-45"] <- "36-40"
+catch_composition$length_corrected[catch_composition$scientific_name == "Acanthurus dussumieri" & catch_composition$length_corrected == "51-60"] <- "46-50"
+catch_composition$length_corrected[catch_composition$scientific_name == "Parupeneus macronemus" & catch_composition$length_corrected == "41-45"] <- "36-40"
+catch_composition$length_corrected[catch_composition$scientific_name == "Siganus stellatus" & catch_composition$length_corrected == "41-45"] <- "36-40"
 
-df$length_corrected[df$scientific_name == "Acanthurus triostegus" & df$length_corrected == "36-40"] <- "21-25"
-df$length_corrected[df$scientific_name == "Acanthurus triostegus" & df$length_corrected == "31-35"] <- "21-25"
-df$length_corrected[df$scientific_name == "Acanthurus triostegus" & df$length_corrected == "26-30"] <- "21-25"
+catch_composition$length_corrected[catch_composition$scientific_name == "Acanthurus triostegus" & catch_composition$length_corrected == "36-40"] <- "21-25"
+catch_composition$length_corrected[catch_composition$scientific_name == "Acanthurus triostegus" & catch_composition$length_corrected == "31-35"] <- "21-25"
+catch_composition$length_corrected[catch_composition$scientific_name == "Acanthurus triostegus" & catch_composition$length_corrected == "26-30"] <- "21-25"
 
-df$length_corrected[df$scientific_name == "Gerres oyena" & df$length_corrected == "36-40"] <- "26-30"
-df$length_corrected[df$scientific_name == "Gerres oyena" & df$length_corrected == "31-35"] <- "26-30"
+catch_composition$length_corrected[catch_composition$scientific_name == "Gerres oyena" & catch_composition$length_corrected == "36-40"] <- "26-30"
+catch_composition$length_corrected[catch_composition$scientific_name == "Gerres oyena" & catch_composition$length_corrected == "31-35"] <- "26-30"
 
-df$length_corrected[df$scientific_name == "Leptoscarus vaigiensis" & df$length_corrected == "36-40"] <- "31-35"
-df$length_corrected[df$scientific_name == "Leptoscarus vaigiensis" & df$length_corrected == "41-45"] <- "31-35"
-df$length_corrected[df$scientific_name == "Leptoscarus vaigiensis" & df$length_corrected == "51-60"] <- "31-35"
+catch_composition$length_corrected[catch_composition$scientific_name == "Leptoscarus vaigiensis" & catch_composition$length_corrected == "36-40"] <- "31-35"
+catch_composition$length_corrected[catch_composition$scientific_name == "Leptoscarus vaigiensis" & catch_composition$length_corrected == "41-45"] <- "31-35"
+catch_composition$length_corrected[catch_composition$scientific_name == "Leptoscarus vaigiensis" & catch_composition$length_corrected == "51-60"] <- "31-35"
 
-df$length_corrected[df$scientific_name == "Lutjanus fulviflamma" & df$length_corrected == "61-70"] <- "31-35"
-df$length_corrected[df$scientific_name == "Lutjanus fulviflamma" & df$length_corrected == "51-60"] <- "31-35"
+catch_composition$length_corrected[catch_composition$scientific_name == "Lutjanus fulviflamma" & catch_composition$length_corrected == "61-70"] <- "31-35"
+catch_composition$length_corrected[catch_composition$scientific_name == "Lutjanus fulviflamma" & catch_composition$length_corrected == "51-60"] <- "31-35"
 
-df$length_corrected[df$scientific_name == "Acanthurus nigrofuscus" & df$length_corrected == "31-35"] <- "16-20"
-df$length_corrected[df$scientific_name == "Acanthurus nigrofuscus" & df$length_corrected == "41-45"] <- "16-20"
-df$length_corrected[df$scientific_name == "Acanthurus nigrofuscus" & df$length_corrected == "21-25"] <- "16-20"
-df$length_corrected[df$scientific_name == "Acanthurus nigrofuscus" & df$length_corrected == "36-40"] <- "16-20"
-df$length_corrected[df$scientific_name == "Acanthurus nigrofuscus" & df$length_corrected == "26-30"] <- "16-20"
+catch_composition$length_corrected[catch_composition$scientific_name == "Acanthurus nigrofuscus" & catch_composition$length_corrected == "31-35"] <- "16-20"
+catch_composition$length_corrected[catch_composition$scientific_name == "Acanthurus nigrofuscus" & catch_composition$length_corrected == "41-45"] <- "16-20"
+catch_composition$length_corrected[catch_composition$scientific_name == "Acanthurus nigrofuscus" & catch_composition$length_corrected == "21-25"] <- "16-20"
+catch_composition$length_corrected[catch_composition$scientific_name == "Acanthurus nigrofuscus" & catch_composition$length_corrected == "36-40"] <- "16-20"
+catch_composition$length_corrected[catch_composition$scientific_name == "Acanthurus nigrofuscus" & catch_composition$length_corrected == "26-30"] <- "16-20"
 
-df$length_corrected[df$scientific_name == "Parupeneus macronemus" & df$length_corrected == "41-45"] <- "36-40"
-df$length_corrected[df$scientific_name == "Chaetodon selene" & df$length_corrected == "21-25"] <- "11-15"
-df$length_corrected[df$scientific_name == "Chaetodon selene" & df$length_corrected == "16-20"] <- "11-15"
-df$length_corrected[df$scientific_name == "Cephalopholis argus" & df$length_corrected == "81-90"] <- "51-60"
+catch_composition$length_corrected[catch_composition$scientific_name == "Parupeneus macronemus" & catch_composition$length_corrected == "41-45"] <- "36-40"
+catch_composition$length_corrected[catch_composition$scientific_name == "Chaetodon selene" & catch_composition$length_corrected == "21-25"] <- "11-15"
+catch_composition$length_corrected[catch_composition$scientific_name == "Chaetodon selene" & catch_composition$length_corrected == "16-20"] <- "11-15"
+catch_composition$length_corrected[catch_composition$scientific_name == "Cephalopholis argus" & catch_composition$length_corrected == "81-90"] <- "51-60"
 ```
 
 
@@ -1005,33 +1043,36 @@ df$length_corrected[df$scientific_name == "Cephalopholis argus" & df$length_corr
 Double check that this list looks right. Left off at looking at this list and then 
 
 ```{r}
-df$`gear type` <- toupper(df$`gear type`)
+catch_composition$`gear type` <- toupper(catch_composition$`gear type`)
 
-df$`gear type` <- gsub("MONOFILLAMENT", "MONOFILAMENT", df$`gear type`)
-df$`gear type` <- gsub("MONOFILLAMNET", "MONOFILAMENT", df$`gear type`)
-df$`gear type` <- gsub("UNMODIFIED TRAP", "UNMODIFIED", df$`gear type`)
-df$`gear type` <- gsub("MODIFIED TRAP", "MODIFIED", df$`gear type`)
-df$`gear type` <- gsub("SPEAR GUN", "SPEARGUN", df$`gear type`)
-df$`gear type` <- gsub("SEINE NETS", "SEINE NET", df$`gear type`)
+catch_composition$`gear type` <- gsub("MONOFILLAMENT", "MONOFILAMENT", catch_composition$`gear type`)
+catch_composition$`gear type` <- gsub("MONOFILLAMNET", "MONOFILAMENT", catch_composition$`gear type`)
+catch_composition$`gear type` <- gsub("UNMODIFIED TRAP", "UNMODIFIED", catch_composition$`gear type`)
+catch_composition$`gear type` <- gsub("MODIFIED TRAP", "MODIFIED", catch_composition$`gear type`)
+catch_composition$`gear type` <- gsub("SPEAR GUN", "SPEARGUN", catch_composition$`gear type`)
+catch_composition$`gear type` <- gsub("SEINE NETS", "SEINE NET", catch_composition$`gear type`)
 
-unique(sort(df$`gear type`))
+unique(sort(catch_composition$`gear type`))
 ```
+
 
 ### Number of fish 
 
 Doube check this range is what is expected. 
 
 ```{r}
-unique(sort(df$number_of_fish))
+## PRE FILTER = 46,500
+## POST FILTER = 42,945
 
-df %>% ggplot(., aes(y=number_of_fish)) + geom_boxplot() + theme_bw()
+hist(catch_composition$number_of_fish)
 
 #### filtering out 6,000 and 30,0000 
-df$number_of_fish <- ifelse(df$number_of_fish > 20, NA, df$number_of_fish)
-hist(df$number_of_fish)
+#catch_composition$number_of_fish <- ifelse(catch_composition$number_of_fish > 20, NA, catch_composition$number_of_fish)
 
-unique(sort(df$number_of_fish))
-unique(sort(df$trap_type))
+catch_composition <- catch_composition %>%
+  filter(number_of_fish < 20)
+
+unique(sort(catch_composition$number_of_fish))
 # 
 # df %>% 
 #   mutate(crew_size = case_when(trap_type == "MODIFIED TRAP" ~ "MODIFIED")) %>%
@@ -1044,32 +1085,130 @@ unique(sort(df$trap_type))
 ### Destination of fish
 
 ```{r}
-df$destination <- toupper(df$destination)
+catch_composition$destination <- toupper(catch_composition$destination)
 
-df$destination <- gsub("OTHER WRITE IN:", "", df$destination)
-df$destination <- gsub(" LOCAL CONSUMER", "LOCAL CONSUMER", df$destination)
-df$destination <- gsub("LOCAL CONSUMERS", "LOCAL CONSUMER", df$destination)
-df$destination <- gsub(" MZUNGU", "MZUNGU", df$destination)
+catch_composition$destination <- gsub("OTHER WRITE IN:", "", catch_composition$destination)
+catch_composition$destination <- gsub(" LOCAL CONSUMER", "LOCAL CONSUMER", catch_composition$destination)
+catch_composition$destination <- gsub("LOCAL CONSUMERS", "LOCAL CONSUMER", catch_composition$destination)
+catch_composition$destination <- gsub(" MZUNGU", "MZUNGU", catch_composition$destination)
 
-unique(sort(df$destination))
+unique(sort(catch_composition$destination))
 ```
 
-## <a name="notes"></a> **Final check: any notes from both datasets**
-
+## Creating new larger dataframe with only surveys that appear in both spreadsheets
 
 ```{r}
-## check for any notes that the data collectors left for analysis 
-unique(df$fishing_operation_notes)
-unique(df$catch_composition_notes)
+## Removing any entries where the operation date doesn't match the date set
+## Removing fisher phone to address any duplicates with different phone numbers 
+## Removing any surveys with incorrect time of traps set and collected 
+## PRE FILTER = 7,813
+## POST FILTER = 4,660 
+fishing_operation2 <- fishing_operation %>% 
+  dplyr::select(-fisher_phone) %>% distinct() %>%
+  mutate(keep_date = if_else(Operation_date == date_set_dd_mm_yyyy | 
+                                 Operation_date == date_collected_dd_mm_yyyy, TRUE, FALSE)) %>%
+  filter(!keep_date == "FALSE") %>%
+  filter(!is.na(date_time_collected))
+
+## At this point, MODIFIED = 509 surveys and UNMODIFIED = 1,685 
+## not subsetted to only modified and unmodified yet (larger df # of rows will be bigger than 509 + 1,685)
+# subset_fishing_operation2 <- fishing_operation2 %>% subset(trap_type == "MODIFIED")
+
+## Identifying survey ids that are duplicated
+## Goal is to get to one survey per fisher per time and date 
+## Changing name of modified trap to just modified 
+fishing_operation2 <- fishing_operation2 %>%
+  mutate(trap_type = gsub("MODIFIED TRAP", "MODIFIED", trap_type)) %>% ## removing "Trap" from trap type column 
+  unite(survey_id, date_time_collected, fisher_id, sep = " ", remove = FALSE)
+
+fishing_operation2 <- fishing_operation2 %>%
+  mutate(duplicate_surveyid = if_else(duplicated(fishing_operation2$survey_id), TRUE, FALSE))
+### in this case, if the duplicate_surveyid column states TRUE, there are 2 rows with the same survey id
+### because one row will have info for modified traps used, and one row will have info for unmodified traps used 
+### if true, these surveys have mixed modified and unmodified trap sets 
+
+fishing_operation2 <- fishing_operation2 %>% 
+  ## remove survey trips that did not write down the total number of traps collected 
+## PRE FILTER = 4,660
+## POST FILTER = 1,916 
+  filter(!is.na(total_traps_collected)) 
+
+fishing_operation2 <- fishing_operation2 %>%
+  ## identifying surveys that were entered for each fisherman on the trip (only some were like this)
+  mutate(multiple_fishermen = if_else((duplicated(fishing_operation2[c("BMU",
+                                                                  "total_traps_collected",
+                                                                  "total_biomass_kg",
+                                                                  "total_value_KES",
+                                                                  "No. of fishers in crew")])), TRUE, FALSE)) %>%
+  ## rows with TRUE means that another row is the same survey and we don't need both 
+  ## this filtering keeps only FALSE columns, which is whatever row was first of the group (hence the rest being
+  ## true duplicates)
+  filter(!multiple_fishermen == "TRUE")
+## PRE FILTER = 1,916
+## POST FILTER = 758 surveys  
+
+### 42,945 rows filtered down to 
+## with distinct() 38,494 rows 
+catch_composition2 <- catch_composition %>% 
+  dplyr::select(-notes_picture) %>% 
+  unite(date_id, Operation_date, fisher_id, sep = " ", remove = FALSE) %>% distinct()
+  
+fishing_operation2 <- fishing_operation2 %>% 
+  dplyr::select(-`time_in_water (effort)`, -general_notes,
+                -`time_set_24hh:mm`, -`time_collected_24hh:mm`)
+
+## come back to the below, we might not need this 
+# ## identifying where trap_type and gear type do not match 
+# catch_composition_gear <- catch_composition2 %>% 
+#   dplyr::select(Operation_date, fisher_id, `gear type`) %>% distinct() %>%
+#   unite(op, Operation_date, fisher_id, sep = " ", remove = TRUE)
+# 
+# fishing_operation_gear <- fishing_operation2 %>%
+#   dplyr::select(Operation_date, fisher_id, trap_type) %>% distinct() %>%
+#   unite(op, Operation_date, fisher_id, sep = " ", remove = TRUE)
+# 
+# # only ids that show up in both, join dfs 
+# gear_notmatched <- inner_join(catch_composition_gear, fishing_operation_gear, by = "op") %>%
+#   mutate(., traps_match = if_else(`gear type` == trap_type, TRUE, FALSE)) 
+# ### identifying those with `gear type` not matching trap_type 
+# 
+# ## identifying those of the not match with 2 `op` rows meaning one is for unmodified and one is for modified
+# ## these are not a mistake and should be kept 
+# gear_notmatched <- gear_notmatched %>%
+#   mutate(keep_id = if_else(duplicated(gear_notmatched$op), TRUE, FALSE))
+
+
+## joining so that rows only found in both spreadsheets are kept 
+## 758 surveys from fishing_operation2 df with those that match catch_composition2
+## 4,539 rows 
+df2 <- inner_join(fishing_operation2, catch_composition2, 
+                  by = c("Operation_date", "fisher_id")) %>%
+  ### remove duplicated rows (likely due to typing errors)
+  distinct() %>% 
+  ### keeping only those that match gear type and trap type columns 
+  ### creating and new column and then filtering out let's me visual check it worked before filtering 
+  mutate(keep_traptype = if_else(trap_type == `gear type`, TRUE, FALSE)) %>%
+  filter(!keep_traptype == "FALSE")
+
+
 ```
+
 
 ## <a name="export"></a> **Exporting cleaned dataset**
 
 ```{r}
-head(df)
-nrow(df)
+head(df2)
+nrow(df2) ## 4539 rows 
 
-write_xlsx(df, "data/cleaned-Fishlandings-data-FEB 2023 JMCC.xlsx")
+df2 %>% subset(trap_type == "MODIFIED") %>% select(survey_id) %>% distinct()
+## 591 surveys from unmodified 
+## 150 surveys from modified 
+## 741 surveys total after filtering 
+
+df2export <- df2 %>% select(-keep_traptype, -multiple_fishermen, -duplicate_surveyid, -keep_date,
+                            -date_id, -Operation_date, -`gear type`, -length_cm, -length_calc)
+
+write_xlsx(df2export, "data/cleaned-Fishlandings-data-FEB 2023 JMCC.xlsx")
 ```
 
 

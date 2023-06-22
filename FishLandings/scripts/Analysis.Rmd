@@ -1,5 +1,5 @@
 ---
-title: "CPUE, maturity, and length analysis of Fishing Landings dataset"
+title: "Analysis of Fishing Landings dataset"
 author: "Author: Emma Strand; emma_strand@uri.edu"
 output:
   github_document: default
@@ -18,48 +18,9 @@ knitr::opts_chunk$set(echo = TRUE)
 ```
 
 
-## Calculations Made (all only unmodified and modified traps)
+## Prior Scripts 
 
-In `modified_trap_df`:  
-Grouped by survey id (operation date + fisher ID):  
-- `total_catch` (total number of fish in that fishing trip) = sum of `number_of_fish`   
-- `kg_per_trap` (total # kg per trap -- Biomass) = total_biomass_kg/total_traps_collected   
-- `catch_per_trap` (# of fish per trap -- Abundance) = total_catch/total_traps_collected   
-
-
-In `species_list` to calculate top 10 species throughout entire survey:  
-Grouped by species and trap type,
-- `species_catch` = sum of `number_of_fish`  
-
-
-In `species_df` to calculate top species regardless of trap type:  
-Grouped by species,   
-- `species_total_catch` = sum of `number_of_fish`
-
-
-In `species_df` to calculate abundance for each top species:  
-Dataset filtered to only top 10 species:  
-Grouped by survey id and species,  
-- `topspecies_catch` = sum of `number_of_fish` (number of fish in top 10 for each trap, not the same # of fish value as above calculations)    
-- `catch_per_trap` = topspecies_catch/total_traps_collected. *Catch per trap is the # of that species / trap # from that survey* i.e. 25 Siganus sutor individuals / 4 traps collected for that fishing trip = there are 6.25 Siganus sutor per trap set. 
-
-
-In `maturity` to calculate the abundance of mature and immature fish:  
-- `median_length` is the median of the length bin (i.e. 6-10 bin = median length of 8, 71-80 bin = median length of 75.5)  
-Grouped by survey id, species, maturity, trap type:  
-- `nofish_pertrap` = number of fish / total traps collected.  
-  
-
-## Contents 
-
-- [**Reading in datafiles**](#data)  
-- [**Total catch (grams) per unit effort (trap set)**](#catch_effort)  
-- [**Calculate top species caught**](#species)  
-- [**Top species stats per trap**](#species_pertrap)  
-- [**Creating database from Fishbase**](#fishbase)  
-- [**Catch per unit effort for top species by maturity**](#maturity)  
-- [**Catch and length data of mature fish**](#length)   
-- [**Length Frequency plots of top species**](#freq_plots)   
+QC: https://github.com/emmastrand/Kenya_SamakiSalama/blob/main/FishLandings/scripts/QC.md 
 
 ## <a name="data"></a> **Reading in datafiles**
 
@@ -83,19 +44,48 @@ library(ggstatsplot)
 
 ## Read in the data frame that is the output of the QC script. 
 
+Summary information so far: 741 total surveys, 591 unmodified traps, 150 modified traps. 
+
 ```{r, message=FALSE, warning=FALSE}
 # read in excel file
+## 4539 rows x 31 variables (this should match the final version of QC script)
 data <- read_excel("data/cleaned-Fishlandings-data-FEB 2023 JMCC.xlsx") #read in excel file 
 
-data <- data %>% separate(Operation_date, c("year", "month", "day"), remove = FALSE) # creating new columns with month year and date
-data$month <- as.numeric(data$month) #changing this column to numeric instead of a character (needed for next fxn)
-data$month <- month.abb[data$month] #changing numeric months to month names 
+# creating new columns with month year and date
+## survey ID is master identifier that is based on `date_collected_dd_mm_yyyy` column 
+data <- data %>% 
+  separate(date_collected_dd_mm_yyyy, c("year", "month", "day"), remove = FALSE) 
 
+#changing this column to numeric instead of a character (needed for next fxn)
+data$month <- as.numeric(data$month) 
+#changing numeric months to month names
+data$month <- month.abb[data$month] 
+# changing levels of month (important for figures later on); only first three letter of month 
 data$month <- factor(data$month, levels=c("Jan", "Feb","Mar","Apr","May","Jun",
                                           "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"))
-
-data$total_traps_collected[data$total_traps_collected == 0] <- NA
 ```
+
+## Metadata summary information
+
+```{r}
+## 546 rows from 150 unique surveys 
+modified_metadata <- data %>% subset(trap_type == "MODIFIED")
+```
+
+
+
+## Check ranges and add filters 
+
+```{r}
+
+
+
+
+```
+
+
+
+
 
 ## Creating a survey id and calculating total catch, catch per trap, kg per trap
 
@@ -1532,6 +1522,7 @@ mamakaranga_df <- collabdf6 %>% subset(destination == "MAMA KARANGA")
 home_df %>% write.csv("output/desintation_home.csv")
 fishdealer_df %>% write.csv("output/desintation_fishdealer.csv")
 mamakaranga_df %>% write.csv("output/desintation_mamakaranga.csv")
+
 ```
 
 Editing dataframe for collaborators 
