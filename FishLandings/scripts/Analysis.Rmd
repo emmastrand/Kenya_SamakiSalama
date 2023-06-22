@@ -48,7 +48,7 @@ Summary information so far: 741 total surveys, 591 unmodified traps, 150 modifie
 
 ```{r, message=FALSE, warning=FALSE}
 # read in excel file
-## 4539 rows x 31 variables (this should match the final version of QC script)
+## 4539 rows x 25 variables (this should match the final version of QC script)
 data <- read_excel("data/cleaned-Fishlandings-data-FEB 2023 JMCC.xlsx") #read in excel file 
 
 # creating new columns with month year and date
@@ -67,25 +67,115 @@ data$month <- factor(data$month, levels=c("Jan", "Feb","Mar","Apr","May","Jun",
 
 ## Metadata summary information
 
-```{r}
-## 546 rows from 150 unique surveys 
-modified_metadata <- data %>% subset(trap_type == "MODIFIED")
-```
+**Modified traps Uyombo, Mayungu (BMUs)**
+- 150 surveys
+- 2021: September, August, November   
+- 2022: February, March, April   
+- Data collected by: CLAPERTON KAZUNGU, CELESTINE N. ALI, KADZO BAYA  
+- Four landing sites: UYOMBO, MAYUNGU, MAWE YA KATI, KIVULINI
+- 49 fishers involved / 69 fishers total 
+- Destinations: Fish dealer, Home, Mama Karanga
 
+**Unmodified traps in Uyombo, Mayungu (BMUs)**   
+- 591 surveys 
+- 2021: May, June, July, August, September, October, November, December   
+- 2022: February, March, April   
+- Data collected by: CLAPERTON KAZUNGU, CELESTINE N. ALI, KADZO BAYA  
+- Four landing sites: UYOMBO, MAYUNGU, MAWE YA KATI, KIVULINI
+- 64 fishers involved / 69 fishers total 
+- Destinations: Fish dealer, Home, Mama Karanga, Gift, Other
+
+```{r}
+## modified: 546 rows from 150 unique surveys 
+## unmodified: 3,993 rows from 591 surveys 
+
+# unmodified_metadata <- data %>% subset(trap_type == "UNMODIFIED") %>%
+#   unite(yearmonth, year, month, sep = " ", remove = FALSE)
+# 
+# unique(modified_metadata$destination)
+# unique(unmodified_metadata$survey_id)
+```
 
 
 ## Check ranges and add filters 
 
+79 unique species total: 31 of those found in modified traps and 78 of those found in unmodified traps 
+
 ```{r}
+range(data$total_traps_collected) ## 1-16 traps used 
+range(data$total_biomass_kg) ## 0.3 kg - 24 kg 
+range(data$total_value_KES) ## 60 KES - 4800 KES 
+range(data$`No. of fishers in crew`) ## 1 - 6 fishermen involved with 1 representative survey per catch 
+range(data$number_of_fish) ## 1 - 19 fish caught per species caught 
 
+unique(data$length_corrected)
+#unique(data$scientific_name)
+#unique(unmodified_metadata$scientific_name)
+```
 
+### Editing modified and unmodified to experimental and control traps 
 
+```{r}
+data <- data %>%
+  mutate(trap_type = case_when(
+    trap_type == "MODIFIED" ~ "Experimental",
+    trap_type == "UNMODIFIED" ~ "Control"))
+```
 
+### Additional filtering of non-realistic data 
+
+1. Survey id `2022-02-11 12:37:00 SS/MAY/SB/035/FF` appears to set trap and collect at the same time in 2 locations so removing the location with the non-realistic CPUE of above 40. 
+
+```{r}
+## PRE FILTER 4,539 rows
+## POST FILTER 4,529 rows (confirmed only the below was taken outs)
+data <- data %>% 
+  subset(!landing_site == "MAYUNGU" | !survey_id == "2022-02-11 12:37:00 SS/MAY/SB/035/FF")
+```
+
+## Calculating total catch per trap (CPUE)
+
+```{r}
+data2 <- data %>%
+  # group by survey id
+  dplyr::group_by(survey_id, trap_type) %>% 
+  # count the number of fish caught for each survey id
+  mutate(total_catch = sum(number_of_fish),
+  # catch per unit effort (# of traps)
+         CPUE = total_catch/total_traps_collected)
+
+range(data2$total_catch) ## 1 - 114 fish 
+range(data2$CPUE) ## 0.25 - 16.28 fish per trap 
+
+CPUE_plot <- data2 %>% dplyr::select(survey_id, trap_type, CPUE) %>% distinct() %>%
+  ggplot(., aes(x=trap_type, y=CPUE)) + geom_boxplot(outlier.shape = NA) + 
+  geom_jitter(alpha=0.2, size=0.6, width=0.25, color="gray50") + theme_bw()
+
+ggsave(file="output/CPUE.png", CPUE_plot, width = 4, height = 4, units = c("in"))
+```
+
+### Statistics on the above. 
+
+Default of t.test in R is a Welch t-test which is just an adaptation of t-test, and it is used when the two samples have possibly unequal variances. Use var.equal = TRUE or FALSE to specifiy the variances of the dataset. 
+
+You can test equal variances with a Fisher's F-test. If p < 0.05 then we include var.equal = FALSE in below ttest. If p > 0.05 then we include var.equal = TRUE in below ttest.
+
+```{r}
+data2_CPUE <- data2 %>% dplyr::select(survey_id, trap_type, CPUE) %>% distinct()
+
+exp_CPUE <- data2_CPUE %>% subset(trap_type == "Experimental") ## 150 data points
+con_CPUE <- data2_CPUE %>% subset(trap_type == "Control") ## 591 data points 
+
+var.test(exp_CPUE$CPUE, con_CPUE$CPUE) 
+## p-value = 0.01627; ratio = 0.7219532
+t.test(CPUE~trap_type, data = data2_CPUE, var.equal = FALSE)
 ```
 
 
+left with the above looking good. need to replace statistics in spreadsheet table. 6/21/2023 continue tomorrow. 
 
 
+#### OLD SCRIPT; reworking above 
 
 ## Creating a survey id and calculating total catch, catch per trap, kg per trap
 
