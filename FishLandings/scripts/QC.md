@@ -1166,6 +1166,13 @@ filter_sppcatch_composition <- data.frame(filter_out_species) %>%
 catch_composition <- catch_composition %>% 
   filter(!scientific_name %in% filter_sppcatch_composition$scientific_name)
 
+catch_composition <- catch_composition %>% filter(!scientific_name == "Octopus cyanea") %>% 
+  filter(!scientific_name == "Gymnothorax griseus") %>% 
+  filter(!scientific_name == "Gymnothorax favagineus") %>% 
+  filter(!scientific_name == "Strophidon sathete") %>%
+  filter(!scientific_name == "Gymnothorax flavimarginatus") %>% 
+  filter(!scientific_name == "Leptoscarus variegatus") 
+
 # checking this was removed
 unique(sort(catch_composition$scientific_name))
 ```
@@ -1190,58 +1197,55 @@ unique(sort(catch_composition$scientific_name))
     ##  [35] "Epinephelus melanostigma"      "Epinephelus merra"            
     ##  [37] "Epinephelus spilotoceps"       "Gerres oyena"                 
     ##  [39] "Gomphosus caeruleus"           "Gymnothorax"                  
-    ##  [41] "Gymnothorax favagineus"        "Gymnothorax flavimarginatus"  
-    ##  [43] "Gymnothorax griseus"           "Gymnothorax monochrous"       
-    ##  [45] "Halichoeres hortulanus"        "Heniochus acuminatus"         
-    ##  [47] "Heniochus monoceros"           "Himantura gerrardi"           
-    ##  [49] "Hipposcarus harid"             "Hipposcarus longiceps"        
-    ##  [51] "Kyphosus bigibbus"             "Kyphosus vaigiensis"          
-    ##  [53] "Leptoscarus vaigiensis"        "Leptoscarus variegatus"       
-    ##  [55] "Lethrinus conchyliatus"        "Lethrinus harak"              
-    ##  [57] "Lethrinus lentjan"             "Lethrinus mahsena"            
-    ##  [59] "Lethrinus nebulosus"           "Lethrinus obsoletus"          
-    ##  [61] "Lethrinus olivaceus"           "Lethrinus variegatus"         
-    ##  [63] "Lutjanus argentimaculatus"     "Lutjanus fulviflamma"         
-    ##  [65] "Lutjanus gibbus"               "Lutjanus johnii"              
-    ##  [67] "Lutjanus lentjan"              "Monodactylus argenteus"       
-    ##  [69] "Monodactylus argentimailatus"  "Monotaxis grandoculis"        
-    ##  [71] "Mugil cephalus"                "Mulloidichthys flavolineatus" 
-    ##  [73] "Myripristis berndti"           "NANA"                         
-    ##  [75] "Naso annulatus"                "Naso brachycentron"           
-    ##  [77] "Naso hexacanthus"              "Naso lituratus"               
-    ##  [79] "Naso stellatus"                "Naso unicornis"               
-    ##  [81] "Novaculichthys taeniourus"     "Octopus cyanea"               
-    ##  [83] "Ostracion cubicus"             "Panulirus homarus"            
-    ##  [85] "Panulirus penicilatus"         "Parupeneus barberinus"        
-    ##  [87] "Parupeneus indicus"            "Parupeneus macronemus"        
-    ##  [89] "Planiliza alata"               "Planiliza sp."                
-    ##  [91] "Platax teira"                  "Platybelone platyura"         
-    ##  [93] "Plectorhinchus"                "Plectorhinchus flavomaculatus"
-    ##  [95] "Plectorhinchus gaterinus"      "Plectorhinchus playfairi"     
-    ##  [97] "Plectorhinchus sordidus"       "Plectorhinchus vittatus"      
-    ##  [99] "Plotosus lineatus"             "Pomacanthus semicirculatus"   
-    ## [101] "Pomadasys argenteus"           "Pomatomus saltatrix"          
-    ## [103] "Pono"                          "Priacanthus hamrur"           
-    ## [105] "Pseudorhombus arsius"          "Pterois miles"                
-    ## [107] "Rhinecanthus aculeatus"        "Rhynchostracion nasus"        
-    ## [109] "Scarus carolinus"              "Scarus coeruleus"             
-    ## [111] "Scarus frenatus"               "Scarus ghobban"               
-    ## [113] "Scarus globiceps"              "Scarus psittacus"             
-    ## [115] "Scarus rubroviolaceus"         "Scarus russelii"              
-    ## [117] "Scarus sp."                    "Scomberomorus commerson"      
-    ## [119] "Sepia pharaonis"               "Siganus argenteus"            
-    ## [121] "Siganus canaliculatus"         "Siganus fuscescens"           
-    ## [123] "Siganus guttatus"              "Siganus stellatus"            
-    ## [125] "Siganus sutor"                 "Sphyraena acutipinnis"        
-    ## [127] "Sphyraena barracuda"           "Sphyraena japonica"           
-    ## [129] "Sphyraena leiura"              "Strongylura leiura"           
-    ## [131] "Strophidon sathete"            "Sufflamen chrysopterum"       
-    ## [133] "Taeniura lymma"                "Tafi sutor"                   
-    ## [135] "Terapon jarbua"                "Terapon theraps"              
-    ## [137] "Thunnus albacares"             "Thysanophrys chiltonae"       
-    ## [139] "Thysanophyrys chiltonae"       "Trichiurus lepturus"          
-    ## [141] "Upeneus sulphureus"            "Upeneus tragula"              
-    ## [143] "Uroteuthis duvauceli"
+    ##  [41] "Gymnothorax monochrous"        "Halichoeres hortulanus"       
+    ##  [43] "Heniochus acuminatus"          "Heniochus monoceros"          
+    ##  [45] "Himantura gerrardi"            "Hipposcarus harid"            
+    ##  [47] "Hipposcarus longiceps"         "Kyphosus bigibbus"            
+    ##  [49] "Kyphosus vaigiensis"           "Leptoscarus vaigiensis"       
+    ##  [51] "Lethrinus conchyliatus"        "Lethrinus harak"              
+    ##  [53] "Lethrinus lentjan"             "Lethrinus mahsena"            
+    ##  [55] "Lethrinus nebulosus"           "Lethrinus obsoletus"          
+    ##  [57] "Lethrinus olivaceus"           "Lethrinus variegatus"         
+    ##  [59] "Lutjanus argentimaculatus"     "Lutjanus fulviflamma"         
+    ##  [61] "Lutjanus gibbus"               "Lutjanus johnii"              
+    ##  [63] "Lutjanus lentjan"              "Monodactylus argenteus"       
+    ##  [65] "Monodactylus argentimailatus"  "Monotaxis grandoculis"        
+    ##  [67] "Mugil cephalus"                "Mulloidichthys flavolineatus" 
+    ##  [69] "Myripristis berndti"           "NANA"                         
+    ##  [71] "Naso annulatus"                "Naso brachycentron"           
+    ##  [73] "Naso hexacanthus"              "Naso lituratus"               
+    ##  [75] "Naso stellatus"                "Naso unicornis"               
+    ##  [77] "Novaculichthys taeniourus"     "Ostracion cubicus"            
+    ##  [79] "Panulirus homarus"             "Panulirus penicilatus"        
+    ##  [81] "Parupeneus barberinus"         "Parupeneus indicus"           
+    ##  [83] "Parupeneus macronemus"         "Planiliza alata"              
+    ##  [85] "Planiliza sp."                 "Platax teira"                 
+    ##  [87] "Platybelone platyura"          "Plectorhinchus"               
+    ##  [89] "Plectorhinchus flavomaculatus" "Plectorhinchus gaterinus"     
+    ##  [91] "Plectorhinchus playfairi"      "Plectorhinchus sordidus"      
+    ##  [93] "Plectorhinchus vittatus"       "Plotosus lineatus"            
+    ##  [95] "Pomacanthus semicirculatus"    "Pomadasys argenteus"          
+    ##  [97] "Pomatomus saltatrix"           "Pono"                         
+    ##  [99] "Priacanthus hamrur"            "Pseudorhombus arsius"         
+    ## [101] "Pterois miles"                 "Rhinecanthus aculeatus"       
+    ## [103] "Rhynchostracion nasus"         "Scarus carolinus"             
+    ## [105] "Scarus coeruleus"              "Scarus frenatus"              
+    ## [107] "Scarus ghobban"                "Scarus globiceps"             
+    ## [109] "Scarus psittacus"              "Scarus rubroviolaceus"        
+    ## [111] "Scarus russelii"               "Scarus sp."                   
+    ## [113] "Scomberomorus commerson"       "Sepia pharaonis"              
+    ## [115] "Siganus argenteus"             "Siganus canaliculatus"        
+    ## [117] "Siganus fuscescens"            "Siganus guttatus"             
+    ## [119] "Siganus stellatus"             "Siganus sutor"                
+    ## [121] "Sphyraena acutipinnis"         "Sphyraena barracuda"          
+    ## [123] "Sphyraena japonica"            "Sphyraena leiura"             
+    ## [125] "Strongylura leiura"            "Sufflamen chrysopterum"       
+    ## [127] "Taeniura lymma"                "Tafi sutor"                   
+    ## [129] "Terapon jarbua"                "Terapon theraps"              
+    ## [131] "Thunnus albacares"             "Thysanophrys chiltonae"       
+    ## [133] "Thysanophyrys chiltonae"       "Trichiurus lepturus"          
+    ## [135] "Upeneus sulphureus"            "Upeneus tragula"              
+    ## [137] "Uroteuthis duvauceli"
 
 #### Changing incorrect scientific names
 
@@ -1280,82 +1284,76 @@ unique(sort(catch_composition$length_cm))
     ##   [1] "˂10"                "<10"                "<11"               
     ##   [4] "<12"                "<13"                "<14"               
     ##   [7] "<15"                "<16"                "<17"               
-    ##  [10] ">10"                ">50"                ">50 write in:"     
-    ##  [13] ">50 write in: 101"  ">50 write in: 102"  ">50 write in: 103" 
-    ##  [16] ">50 write in: 104"  ">50 write in: 105"  ">50 write in: 107" 
-    ##  [19] ">50 write in: 109"  ">50 write in: 110"  ">50 write in: 111" 
-    ##  [22] ">50 write in: 112"  ">50 write in: 118"  ">50 write in: 173" 
-    ##  [25] ">50 write in: 176"  ">50 write in: 181"  ">50 write in: 183" 
-    ##  [28] ">50 write in: 51"   ">50 write in: 52"   ">50 write in: 53"  
-    ##  [31] ">50 write in: 54"   ">50 write in: 55"   ">50 write in: 56.2"
-    ##  [34] ">50 write in: 57"   ">50 write in: 58"   ">50 write in: 58.6"
-    ##  [37] ">50 write in: 59"   ">50 write in: 60.3" ">50 write in: 62"  
-    ##  [40] ">50 write in: 62.9" ">50 write in: 63"   ">50 write in: 64.4"
-    ##  [43] ">50 write in: 64.8" ">50 write in: 65"   ">50 write in: 65.1"
-    ##  [46] ">50 write in: 66.5" ">50 write in: 67"   ">50 write in: 67.6"
-    ##  [49] ">50 write in: 67.7" ">50 write in: 68"   ">50 write in: 68.7"
-    ##  [52] ">50 write in: 69"   ">50 write in: 69.5" ">50 write in: 69.8"
-    ##  [55] ">50 write in: 70"   ">50 write in: 71.2" ">50 write in: 71.9"
-    ##  [58] ">50 write in: 72"   ">50 write in: 72.2" ">50 write in: 72.3"
-    ##  [61] ">50 write in: 74.3" ">50 write in: 75"   ">50 write in: 75.5"
-    ##  [64] ">50 write in: 79.2" ">50 write in: 80"   ">50 write in: 80.2"
-    ##  [67] ">50 write in: 81.2" ">50 write in: 82"   ">50 write in: 85"  
-    ##  [70] ">50 write in: 86"   ">50 write in: 87"   ">50 write in: 88"  
-    ##  [73] ">50 write in: 89"   ">50 write in: 90"   ">50 write in: 91"  
-    ##  [76] ">50 write in: 92"   ">50 write in: 93"   ">50 write in: 94"  
-    ##  [79] ">50 write in: 96"   ">50 write in: 97"   ">50 write in: 98"  
-    ##  [82] ">50 write in:100"   ">50 write in:101"   ">50 write in:152"  
-    ##  [85] ">50 write in:55"    ">50 write in:59"    ">50 write in:61"   
-    ##  [88] ">50 write in:65.7"  ">50 write in:68"    ">50 write in:69.3" 
-    ##  [91] ">50 write in:72.1"  "1-15"               "102"               
-    ##  [94] "103"                "104"                "105"               
-    ##  [97] "106"                "107"                "108"               
-    ## [100] "109"                "11-15"              "11-16"             
-    ## [103] "110"                "111"                "112"               
-    ## [106] "114"                "115"                "117"               
-    ## [109] "119"                "123"                "128"               
-    ## [112] "129"                "16"                 "16-20"             
-    ## [115] "17"                 "170"                "173"               
-    ## [118] "177"                "181"                "198"               
-    ## [121] "21-25"              "21-26"              "25-30"             
-    ## [124] "26-20"              "26-25"              "26-30"             
-    ## [127] "26-31"              "26-35"              "31-25"             
-    ## [130] "31-35"              "36-34"              "36-40"             
-    ## [133] "41-45"              "41-50"              "46-50"             
-    ## [136] "51"                 "52"                 "54"                
-    ## [139] "55"                 "56"                 "58"                
-    ## [142] "59"                 "60"                 "60.3"              
-    ## [145] "60.4"               "61"                 "62"                
-    ## [148] "63"                 "64.8"               "64.9"              
-    ## [151] "65"                 "65.6"               "65.8"              
-    ## [154] "66"                 "67"                 "67.1"              
-    ## [157] "67.7"               "68"                 "68.1"              
-    ## [160] "68.2"               "68.4"               "68.5"              
-    ## [163] "68.7"               "68.9"               "69"                
-    ## [166] "69.7"               "69.8"               "69.9"              
-    ## [169] "70"                 "70.5"               "71.8"              
-    ## [172] "72"                 "72.2"               "72.3"              
-    ## [175] "72.4"               "72.6"               "73"                
-    ## [178] "74"                 "74.1"               "74.2"              
-    ## [181] "74.3"               "74.5"               "74.7"              
-    ## [184] "75"                 "75.5"               "75.6"              
-    ## [187] "75.7"               "75.8"               "75.9"              
-    ## [190] "76"                 "76.4"               "76.6"              
-    ## [193] "76.7"               "76.8"               "76.9"              
-    ## [196] "77"                 "77.2"               "77.8"              
-    ## [199] "78"                 "78.1"               "78.2"              
-    ## [202] "78.4"               "78.5"               "78.6"              
-    ## [205] "78.8"               "79"                 "79.1"              
-    ## [208] "79.2"               "79.4"               "79.5"              
-    ## [211] "79.8"               "80"                 "80.2"              
-    ## [214] "80.3"               "81"                 "82"                
-    ## [217] "82.1"               "82.2"               "82.3"              
-    ## [220] "82.4"               "83"                 "84"                
-    ## [223] "85"                 "86"                 "87"                
-    ## [226] "88"                 "89"                 "90"                
-    ## [229] "91"                 "92"                 "93"                
-    ## [232] "94"                 "95"                 "96"                
-    ## [235] "97"                 "98"                 "99"
+    ##  [10] ">50 write in: 101"  ">50 write in: 102"  ">50 write in: 103" 
+    ##  [13] ">50 write in: 104"  ">50 write in: 107"  ">50 write in: 109" 
+    ##  [16] ">50 write in: 110"  ">50 write in: 111"  ">50 write in: 112" 
+    ##  [19] ">50 write in: 118"  ">50 write in: 176"  ">50 write in: 51"  
+    ##  [22] ">50 write in: 52"   ">50 write in: 53"   ">50 write in: 54"  
+    ##  [25] ">50 write in: 55"   ">50 write in: 56.2" ">50 write in: 57"  
+    ##  [28] ">50 write in: 58"   ">50 write in: 58.6" ">50 write in: 59"  
+    ##  [31] ">50 write in: 60.3" ">50 write in: 62"   ">50 write in: 62.9"
+    ##  [34] ">50 write in: 64.4" ">50 write in: 64.8" ">50 write in: 65"  
+    ##  [37] ">50 write in: 65.1" ">50 write in: 66.5" ">50 write in: 67"  
+    ##  [40] ">50 write in: 67.6" ">50 write in: 67.7" ">50 write in: 68"  
+    ##  [43] ">50 write in: 68.7" ">50 write in: 69"   ">50 write in: 69.5"
+    ##  [46] ">50 write in: 69.8" ">50 write in: 70"   ">50 write in: 71.2"
+    ##  [49] ">50 write in: 71.9" ">50 write in: 72"   ">50 write in: 72.2"
+    ##  [52] ">50 write in: 72.3" ">50 write in: 74.3" ">50 write in: 75.5"
+    ##  [55] ">50 write in: 79.2" ">50 write in: 80"   ">50 write in: 80.2"
+    ##  [58] ">50 write in: 81.2" ">50 write in: 82"   ">50 write in: 85"  
+    ##  [61] ">50 write in: 86"   ">50 write in: 87"   ">50 write in: 89"  
+    ##  [64] ">50 write in: 90"   ">50 write in: 91"   ">50 write in: 92"  
+    ##  [67] ">50 write in: 93"   ">50 write in: 94"   ">50 write in: 96"  
+    ##  [70] ">50 write in: 98"   ">50 write in:101"   ">50 write in:55"   
+    ##  [73] ">50 write in:59"    ">50 write in:65.7"  ">50 write in:68"   
+    ##  [76] ">50 write in:69.3"  ">50 write in:72.1"  "1-15"              
+    ##  [79] "102"                "103"                "105"               
+    ##  [82] "106"                "107"                "108"               
+    ##  [85] "109"                "11-15"              "110"               
+    ##  [88] "111"                "112"                "114"               
+    ##  [91] "115"                "117"                "119"               
+    ##  [94] "123"                "129"                "16"                
+    ##  [97] "16-20"              "17"                 "173"               
+    ## [100] "177"                "21-25"              "21-26"             
+    ## [103] "25-30"              "26-20"              "26-25"             
+    ## [106] "26-30"              "26-31"              "26-35"             
+    ## [109] "31-25"              "31-35"              "36-34"             
+    ## [112] "36-40"              "41-45"              "41-50"             
+    ## [115] "46-50"              "51"                 "52"                
+    ## [118] "54"                 "55"                 "56"                
+    ## [121] "58"                 "59"                 "60"                
+    ## [124] "60.3"               "60.4"               "61"                
+    ## [127] "62"                 "63"                 "64.8"              
+    ## [130] "64.9"               "65"                 "65.6"              
+    ## [133] "65.8"               "66"                 "67"                
+    ## [136] "67.1"               "67.7"               "68"                
+    ## [139] "68.1"               "68.2"               "68.4"              
+    ## [142] "68.5"               "68.7"               "68.9"              
+    ## [145] "69"                 "69.7"               "69.8"              
+    ## [148] "69.9"               "70"                 "70.5"              
+    ## [151] "71.8"               "72"                 "72.2"              
+    ## [154] "72.3"               "72.4"               "72.6"              
+    ## [157] "73"                 "74"                 "74.1"              
+    ## [160] "74.2"               "74.3"               "74.5"              
+    ## [163] "74.7"               "75"                 "75.5"              
+    ## [166] "75.6"               "75.7"               "75.8"              
+    ## [169] "75.9"               "76"                 "76.4"              
+    ## [172] "76.6"               "76.7"               "76.8"              
+    ## [175] "76.9"               "77"                 "77.2"              
+    ## [178] "77.8"               "78"                 "78.1"              
+    ## [181] "78.2"               "78.4"               "78.5"              
+    ## [184] "78.6"               "78.8"               "79"                
+    ## [187] "79.1"               "79.2"               "79.4"              
+    ## [190] "79.5"               "79.8"               "80"                
+    ## [193] "80.2"               "80.3"               "81"                
+    ## [196] "82"                 "82.1"               "82.2"              
+    ## [199] "82.3"               "82.4"               "83"                
+    ## [202] "84"                 "85"                 "86"                
+    ## [205] "87"                 "88"                 "89"                
+    ## [208] "90"                 "91"                 "92"                
+    ## [211] "93"                 "94"                 "95"                
+    ## [214] "96"                 "97"                 "98"                
+    ## [217] "99"
 
 ``` r
 # replace the write in verbiage with no characters
@@ -1439,24 +1437,23 @@ catch_composition <- catch_composition %>%
 unique(sort(catch_composition$length_cm))
 ```
 
-    ##   [1] "0-10"  "100"   "101"   "102"   "103"   "104"   "105"   "106"   "107"  
-    ##  [10] "108"   "109"   "11-15" "110"   "111"   "112"   "114"   "115"   "117"  
-    ##  [19] "118"   "119"   "123"   "128"   "129"   "152"   "16"    "16-20" "17"   
-    ##  [28] "170"   "173"   "176"   "177"   "181"   "183"   "198"   "21-25" "26-30"
-    ##  [37] "31-35" "36-40" "41-45" "46-50" "51"    "52"    "53"    "54"    "55"   
-    ##  [46] "56"    "56.2"  "57"    "58"    "58.6"  "59"    "60"    "60.3"  "60.4" 
-    ##  [55] "61"    "62"    "62.9"  "63"    "64.4"  "64.8"  "64.9"  "65"    "65.1" 
-    ##  [64] "65.6"  "65.7"  "65.8"  "66"    "66.5"  "67"    "67.1"  "67.6"  "67.7" 
-    ##  [73] "68"    "68.1"  "68.2"  "68.4"  "68.5"  "68.7"  "68.9"  "69"    "69.3" 
-    ##  [82] "69.5"  "69.7"  "69.8"  "69.9"  "70"    "70.5"  "71.2"  "71.8"  "71.9" 
-    ##  [91] "72"    "72.1"  "72.2"  "72.3"  "72.4"  "72.6"  "73"    "74"    "74.1" 
-    ## [100] "74.2"  "74.3"  "74.5"  "74.7"  "75"    "75.5"  "75.6"  "75.7"  "75.8" 
-    ## [109] "75.9"  "76"    "76.4"  "76.6"  "76.7"  "76.8"  "76.9"  "77"    "77.2" 
-    ## [118] "77.8"  "78"    "78.1"  "78.2"  "78.4"  "78.5"  "78.6"  "78.8"  "79"   
-    ## [127] "79.1"  "79.2"  "79.4"  "79.5"  "79.8"  "80"    "80.2"  "80.3"  "81"   
-    ## [136] "81.2"  "82"    "82.1"  "82.2"  "82.3"  "82.4"  "83"    "84"    "85"   
-    ## [145] "86"    "87"    "88"    "89"    "90"    "91"    "92"    "93"    "94"   
-    ## [154] "95"    "96"    "97"    "98"    "99"
+    ##   [1] "0-10"  "101"   "102"   "103"   "104"   "105"   "106"   "107"   "108"  
+    ##  [10] "109"   "11-15" "110"   "111"   "112"   "114"   "115"   "117"   "118"  
+    ##  [19] "119"   "123"   "129"   "16"    "16-20" "17"    "173"   "176"   "177"  
+    ##  [28] "21-25" "26-30" "31-35" "36-40" "41-45" "46-50" "51"    "52"    "53"   
+    ##  [37] "54"    "55"    "56"    "56.2"  "57"    "58"    "58.6"  "59"    "60"   
+    ##  [46] "60.3"  "60.4"  "61"    "62"    "62.9"  "63"    "64.4"  "64.8"  "64.9" 
+    ##  [55] "65"    "65.1"  "65.6"  "65.7"  "65.8"  "66"    "66.5"  "67"    "67.1" 
+    ##  [64] "67.6"  "67.7"  "68"    "68.1"  "68.2"  "68.4"  "68.5"  "68.7"  "68.9" 
+    ##  [73] "69"    "69.3"  "69.5"  "69.7"  "69.8"  "69.9"  "70"    "70.5"  "71.2" 
+    ##  [82] "71.8"  "71.9"  "72"    "72.1"  "72.2"  "72.3"  "72.4"  "72.6"  "73"   
+    ##  [91] "74"    "74.1"  "74.2"  "74.3"  "74.5"  "74.7"  "75"    "75.5"  "75.6" 
+    ## [100] "75.7"  "75.8"  "75.9"  "76"    "76.4"  "76.6"  "76.7"  "76.8"  "76.9" 
+    ## [109] "77"    "77.2"  "77.8"  "78"    "78.1"  "78.2"  "78.4"  "78.5"  "78.6" 
+    ## [118] "78.8"  "79"    "79.1"  "79.2"  "79.4"  "79.5"  "79.8"  "80"    "80.2" 
+    ## [127] "80.3"  "81"    "81.2"  "82"    "82.1"  "82.2"  "82.3"  "82.4"  "83"   
+    ## [136] "84"    "85"    "86"    "87"    "88"    "89"    "90"    "91"    "92"   
+    ## [145] "93"    "94"    "95"    "96"    "97"    "98"    "99"
 
 ``` r
 unique(sort(catch_composition$length_corrected))
@@ -1499,26 +1496,21 @@ length_check <- full_join(catch_composition, fishbase, by = "scientific_name") %
   mutate(count = n()) %>% select(-Operation_date, -fisher_id) %>% distinct(); length_check
 ```
 
-    ## # A tibble: 16 × 6
-    ## # Groups:   length_corrected, scientific_name [16]
+    ## # A tibble: 39 × 6
+    ## # Groups:   length_corrected, scientific_name [39]
     ##    scientific_name        Lmax length_corrected median_length length_check count
     ##    <chr>                 <dbl> <chr>                    <dbl> <chr>        <int>
-    ##  1 Acanthurus nigrofusc…  21   31-35                     33   over            27
-    ##  2 Parupeneus macronemus  40   41-45                     43   over             2
-    ##  3 Acanthurus nigrofusc…  21   41-45                     43   over             6
-    ##  4 Chaetodon selene       16   21-25                     23   over             4
-    ##  5 Acanthurus nigrofusc…  21   21-25                     23   over            76
-    ##  6 Cephalopholis argus    60   81-90                     85.5 over             2
-    ##  7 Acanthurus nigrofusc…  21   36-40                     38   over            18
-    ##  8 Leptoscarus vaigiens…  35.2 41-45                     43   over             1
-    ##  9 Leptoscarus vaigiens…  35.2 36-40                     38   over             9
-    ## 10 Chaetodon selene       16   16-20                     18   over            53
-    ## 11 Acanthurus nigrofusc…  21   26-30                     28   over            40
-    ## 12 Siganus stellatus      40   41-45                     43   over             2
-    ## 13 Gerres oyena           30   31-35                     33   over            16
-    ## 14 Leptoscarus vaigiens…  35.2 51-60                     55.5 over             3
-    ## 15 Gerres oyena           30   36-40                     38   over             2
-    ## 16 Acanthurus triostegus  27   31-35                     33   over             2
+    ##  1 Plotosus lineatus        32 41-45                       43 over             2
+    ##  2 Plotosus lineatus        32 36-40                       38 over             4
+    ##  3 Acanthurus nigrofusc…    21 31-35                       33 over            27
+    ##  4 Lethrinus variegatus     20 21-25                       23 over             4
+    ##  5 Acanthurus tennenti      31 31-35                       33 over             2
+    ##  6 Acanthurus tennenti      31 36-40                       38 over             4
+    ##  7 Plotosus lineatus        32 46-50                       48 over             3
+    ##  8 Plotosus lineatus        32 31-35                       33 over             3
+    ##  9 Parupeneus macronemus    40 41-45                       43 over             2
+    ## 10 Acanthurus nigrofusc…    21 41-45                       43 over             6
+    ## # ℹ 29 more rows
 
 #### Correcting those size bin lengths that are over Lmax
 
@@ -1728,7 +1720,7 @@ df2 <- inner_join(fishing_operation2, catch_composition2,
 
     ## Warning in inner_join(fishing_operation2, catch_composition2, by = c("Operation_date", : Detected an unexpected many-to-many relationship between `x` and `y`.
     ## ℹ Row 1 of `x` matches multiple rows in `y`.
-    ## ℹ Row 85 of `y` matches multiple rows in `x`.
+    ## ℹ Row 83 of `y` matches multiple rows in `x`.
     ## ℹ If a many-to-many relationship is expected, set `relationship =
     ##   "many-to-many"` to silence this warning.
 
@@ -1759,7 +1751,7 @@ head(df2)
 nrow(df2) ## 4539 rows 
 ```
 
-    ## [1] 4539
+    ## [1] 4508
 
 ``` r
 df2 %>% subset(trap_type == "MODIFIED") %>% select(survey_id) %>% distinct()

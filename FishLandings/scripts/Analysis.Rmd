@@ -48,7 +48,7 @@ Summary information so far: 741 total surveys, 591 unmodified traps, 150 modifie
 
 ```{r, message=FALSE, warning=FALSE}
 # read in excel file
-## 4539 rows x 25 variables (this should match the final version of QC script)
+## 4,508 rows x 25 variables (this should match the final version of QC script)
 data <- read_excel("data/cleaned-Fishlandings-data-FEB 2023 JMCC.xlsx") #read in excel file 
 
 # creating new columns with month year and date
@@ -87,13 +87,16 @@ data$month <- factor(data$month, levels=c("Jan", "Feb","Mar","Apr","May","Jun",
 
 ```{r}
 ## modified: 546 rows from 150 unique surveys 
-## unmodified: 3,993 rows from 591 surveys 
+## unmodified: 3,962 rows from 591 surveys 
 
-# unmodified_metadata <- data %>% subset(trap_type == "UNMODIFIED") %>%
-#   unite(yearmonth, year, month, sep = " ", remove = FALSE)
-# 
-# unique(modified_metadata$destination)
-# unique(unmodified_metadata$survey_id)
+unmodified_metadata <- data %>% subset(trap_type == "UNMODIFIED") %>%
+  unite(yearmonth, year, month, sep = " ", remove = FALSE)
+
+modified_metadata <- data %>% subset(trap_type == "MODIFIED") %>%
+  unite(yearmonth, year, month, sep = " ", remove = FALSE)
+
+unique(modified_metadata$destination)
+unique(unmodified_metadata$survey_id)
 ```
 
 
@@ -127,8 +130,8 @@ data <- data %>%
 1. Survey id `2022-02-11 12:37:00 SS/MAY/SB/035/FF` appears to set trap and collect at the same time in 2 locations so removing the location with the non-realistic CPUE of above 40. 
 
 ```{r}
-## PRE FILTER 4,539 rows
-## POST FILTER 4,529 rows (confirmed only the below was taken outs)
+## PRE FILTER 4,508 rows
+## POST FILTER 4,498 rows (confirmed only the below was taken outs)
 data <- data %>% 
   subset(!landing_site == "MAYUNGU" | !survey_id == "2022-02-11 12:37:00 SS/MAY/SB/035/FF")
 ```
@@ -145,13 +148,13 @@ data2 <- data %>%
          CPUE = total_catch/total_traps_collected)
 
 range(data2$total_catch) ## 1 - 114 fish 
-range(data2$CPUE) ## 0.25 - 16.28 fish per trap 
+range(data2$CPUE) ## 0.25 - 16.00 fish per trap 
 
 CPUE_plot <- data2 %>% dplyr::select(survey_id, trap_type, CPUE) %>% distinct() %>%
   ggplot(., aes(x=trap_type, y=CPUE)) + geom_boxplot(outlier.shape = NA) + 
   geom_jitter(alpha=0.2, size=0.6, width=0.25, color="gray50") + theme_bw()
 
-ggsave(file="output/CPUE.png", CPUE_plot, width = 4, height = 4, units = c("in"))
+ggsave(file="output/CPUE.png", CPUE_plot, width = 3, height = 3.5, units = c("in"))
 ```
 
 ### Statistics on the above. 
@@ -167,73 +170,92 @@ exp_CPUE <- data2_CPUE %>% subset(trap_type == "Experimental") ## 150 data point
 con_CPUE <- data2_CPUE %>% subset(trap_type == "Control") ## 591 data points 
 
 var.test(exp_CPUE$CPUE, con_CPUE$CPUE) 
-## p-value = 0.01627; ratio = 0.7219532
+## p-value = 0.0196; ratio = 0.7288769
 t.test(CPUE~trap_type, data = data2_CPUE, var.equal = FALSE)
+## p-value = 0.5434 
+
+CPUE_per_trap_stats <- summarySE(data2_CPUE, measurevar = c("CPUE"), groupvars = c("trap_type"))
+
+# CPUE_plot2 <- data2_CPUE %>% 
+#   ggplot(., aes(x=trap_type, y=CPUE)) + 
+#   geom_jitter(size=1, alpha=0.5, width=0.2) + theme_classic() + #ylim(2.5,3.5) +
+#   geom_point(data=CPUE_per_trap_stats, aes(x=trap_type, y=CPUE), size=4) +
+#   geom_errorbar(data=CPUE_per_trap_stats, aes(ymin=CPUE-se, ymax=CPUE+se), size=0.5, width=.2)
+# 
+# ggsave(file="output/CPUE2.png", CPUE_plot2, width = 3, height = 3.5, units = c("in"))
+```
+
+## Calculating (reported) yield per trap 
+
+```{r}
+data2 <- data2 %>%
+  ## this df is still grouped by survey id and trap type 
+  # reported yield (kg) per unit effort (# of traps)
+  mutate(yield_kg_trap = total_biomass_kg/total_traps_collected)
+
+range(data2$yield_kg_trap) ## 0.057 kg - 5.25 kg 
+
+yield_kg_plot <- data2 %>% dplyr::select(survey_id, trap_type, yield_kg_trap) %>% distinct() %>%
+  ggplot(., aes(x=trap_type, y=yield_kg_trap)) + geom_boxplot(outlier.shape = NA) + 
+  geom_jitter(alpha=0.2, size=0.6, width=0.25, color="gray50") + theme_bw()
+
+ggsave(file="output/Yield.png", yield_kg_plot, width = 3, height = 3.5, units = c("in"))
+```
+
+### Statistics on the above. 
+
+```{r}
+data2_yieldkg <- data2 %>% dplyr::select(survey_id, trap_type, yield_kg_trap) %>% distinct()
+
+exp_yieldkg <- data2_yieldkg %>% subset(trap_type == "Experimental") ## 150 data points
+con_yieldkg <- data2_yieldkg %>% subset(trap_type == "Control") ## 591 data points 
+
+var.test(exp_yieldkg$yield_kg_trap, con_yieldkg$yield_kg_trap) 
+## p-value = 0.9069; ratio = 0.981616
+t.test(yield_kg_trap~trap_type, data = data2_yieldkg, var.equal = TRUE)
+## p-value = 0.0433 
+
+yieldkg_per_trap_stats <- summarySE(data2_yieldkg, measurevar = c("yield_kg_trap"), groupvars = c("trap_type"))
 ```
 
 
-left with the above looking good. need to replace statistics in spreadsheet table. 6/21/2023 continue tomorrow. 
-
-
-#### OLD SCRIPT; reworking above 
-
-## Creating a survey id and calculating total catch, catch per trap, kg per trap
+## Calculating (reported) value per trap 
 
 ```{r}
-data <- data %>%
-  unite(survey_id, Operation_date, fisher_id, date_time_collected, sep = " ", remove = FALSE) %>% # needs to be both bc data input has errors
-  mutate(trap_type = case_when(
-    trap_type == "MODIFIED TRAP" ~ "Experimental",
-    trap_type == "UNMODIFIED" ~ "Control")) %>% # renaming modified and unmodified to experimental and control
-  subset(trap_type == "Experimental" | trap_type == "Control") %>%
-  dplyr::group_by(survey_id) %>% # group by survey id
-  mutate(total_catch = sum(number_of_fish)) # count the number of fish caught for each survey id
+data2 <- data2 %>%
+  ## this df is still grouped by survey id and trap type 
+  # reported value (KES) per unit effort (# of traps)
+  mutate(value_KES_trap = total_value_KES/total_traps_collected)
 
-data_summary <- data %>% select(survey_id, trap_type) %>% distinct()
+range(data2$value_KES_trap) ## 11.42 KES - 1150 KES 
 
-## filtering total catch 
-unique(sort(data$total_catch))
-hist(data$total_catch)
-data$total_catch <- ifelse(data$total_catch > 1000, NA, data$total_catch)
-hist(data$total_catch) # double checking this code worked 
+value_KES_plot <- data2 %>% dplyr::select(survey_id, trap_type, value_KES_trap) %>% distinct() %>%
+  ggplot(., aes(x=trap_type, y=value_KES_trap)) + geom_boxplot(outlier.shape = NA) + 
+  geom_jitter(alpha=0.2, size=0.6, width=0.25, color="gray50") + theme_bw()
 
-## resume calculations
-data <- data %>%
-  mutate(kg_per_trap = total_biomass_kg/total_traps_collected, #divide total weight for survey id by total traps 
-         catch_per_trap = total_catch/total_traps_collected,
-         value_per_trap = total_value_KES/total_traps_collected) %>% #divide total catch per survey id by total traps 
-  dplyr::ungroup(survey_id)# ungroup
-
-data$catch_per_trap <- ifelse(data$catch_per_trap > 25, NA, data$catch_per_trap)
-
-## checking catch per trap 
-hist(data$catch_per_trap)
+ggsave(file="output/Value.png", value_KES_plot, width = 3, height = 3.5, units = c("in"))
 ```
 
-## Calculating top species 
+### Statistics on the above. 
 
 ```{r}
-species_list <- data %>% select(scientific_name, number_of_fish, trap_type) %>% 
-  filter(!is.na(trap_type)) %>% 
-  filter(!is.na(number_of_fish)) %>% 
-  dplyr::group_by(scientific_name, trap_type) %>%
-  mutate(species_catch = sum(number_of_fish)) %>% 
-  select(-number_of_fish) %>% distinct() %>%
-  ungroup()
+data2_valueKES <- data2 %>% dplyr::select(survey_id, trap_type, value_KES_trap) %>% distinct()
 
-# print top 5 species from modified traps 
-species_list %>% subset(trap_type == "Experimental") %>%                                    
-  arrange(desc(species_catch)) %>% head(5)
+exp_valueKES <- data2_valueKES %>% subset(trap_type == "Experimental") ## 150 data points
+con_valueKES <- data2_valueKES %>% subset(trap_type == "Control") ## 591 data points 
 
-# print top 5 species from unmodified traps 
-species_list %>% subset(trap_type == "Control") %>%                                    
-  arrange(desc(species_catch)) %>% head(5)
+var.test(exp_valueKES$value_KES_trap, con_valueKES$value_KES_trap) 
+## p-value = 0.8557; ratio = 0.9733375
+t.test(value_KES_trap~trap_type, data = data2_valueKES, var.equal = TRUE)
+## p-value = 0.03236 
+
+valueKES_per_trap_stats <- summarySE(data2_valueKES, measurevar = c("value_KES_trap"), groupvars = c("trap_type"))
 ```
 
-## Calculating median length per trap
+## Calculating median length 
 
 ```{r}
-data <- data %>%
+data2 <- data2 %>% ungroup() %>%
   mutate(median_length = case_when(
     length_corrected == "0-10" ~ 5,
     length_corrected == "11-15" ~ 13,
@@ -251,337 +273,95 @@ data <- data %>%
     length_corrected == ">90" ~ 100 ### circle back to what value to use here
   )) 
 
-length_df <- data %>% 
-  select(survey_id, total_traps_collected, scientific_name, number_of_fish, trap_type,
-         length_corrected, median_length) %>%
-  mutate(number_of_fish = if_else(is.na(number_of_fish), 1, number_of_fish)) %>% # replacing NAs with the value of 1
-  tidyr::uncount(., number_of_fish, .remove = TRUE) %>% # expanding number of fish to number of observations
-  dplyr::group_by(survey_id) %>% # group by survey id
-  mutate(mean_length_persurvey = mean(median_length)) %>%
-  ungroup() %>% select(-scientific_name, -length_corrected, -median_length, -total_traps_collected) %>%
-  distinct()
+hist(data2$median_length) ## majority fall within 10-40 cm 
 
-length_df_stats <- length_df %>% filter(!is.na(mean_length_persurvey))
-length_df_stats <- summarySE(length_df_stats, measurevar = c("mean_length_persurvey"), 
-                             groupvars = c("trap_type"))
+length_plot <- data2 %>% 
+  dplyr::select(survey_id, trap_type, median_length) %>% distinct() %>%
+  ggplot(., aes(x=trap_type, y=median_length)) + geom_boxplot(outlier.shape = NA) + 
+  geom_jitter(alpha=0.1, size=0.4, width=0.25, color="gray50") + theme_bw()
 
-Legnth_persurvey <- length_df %>% 
-  ggplot(aes(x=trap_type, y=mean_length_persurvey)) +
-  geom_boxplot(outlier.size = 0, lwd=0.5) +
-  #color_scale_manual(values = c(""))
-  geom_point(size=0.75) +
-  theme_classic() + 
-  ylab("Length (cm)") + #xlab("Type of trap") +
-  theme(axis.text.x = element_text(vjust = 1.1)) #Set the text angle
-
-Legnth_persurvey2 <- length_df_stats %>% 
-  ggplot(aes(x=trap_type, y=mean_length_persurvey)) +
-  geom_point(size=4) +
-  geom_errorbar(aes(ymin=mean_length_persurvey-se, ymax=mean_length_persurvey+se), width=.1) +
-  theme_classic() + 
-  ylab("Length (cm)") + #xlab("Type of trap") +
-  theme(axis.text.x = element_text(vjust = 1.1)) #Set the text angle
-
-# ggsave(file="output/Length_persurvey.png", Legnth_persurvey, width = 4, height = 4, units = c("in"))
-# ggsave(file="output/Length_persurvey2.png", Legnth_persurvey2, width = 2, height = 3, units = c("in"))
-
-Legnth_persurvey3 <- ggbetweenstats(data=length_df, x = trap_type, y = mean_length_persurvey, 
-               type = "p", plot.type = "boxviolin", sample.size.label = TRUE,
-               mean.point.args = list(size = 2, color = 'black'),
-               mean.label.args = list(size = 2),
-               point.args = list(position = ggplot2::position_jitterdodge(dodge.width = 0.5), 
-                                 alpha = 0.1, size = 1, stroke = 0)) +
- # ggplot2::scale_shape_manual(values=c(21,21)) +
-  ggplot2::scale_color_manual(values = c( "black", "black")) +
-  #ggplot2::scale_fill_manual(values = c( "gray74", "white")) +
-  labs(x = "Trap Type", y = "Length (cm)") 
-
-ggsave(file="output/Length_persurvey3.png", Legnth_persurvey3, width = 4.5, height = 5, units = c("in"))
-
-UN_length <- length_df %>% subset(trap_type == "Control") %>% filter(!is.na(mean_length_persurvey)) 
-MOD_length <- length_df %>% subset(trap_type == "Experimental") %>% filter(!is.na(mean_length_persurvey))
-
-var.test(UN_length$mean_length_persurvey, MOD_length$mean_length_persurvey)
-t.test(mean_length_persurvey~trap_type, data = length_df, var.equal = FALSE)
+ggsave(file="output/Length.png", length_plot, width = 3, height = 3.5, units = c("in"))
 ```
 
+### Statistics on the above. 
 
 ```{r}
-# length_spp <- data %>% 
-#   mutate(number_of_fish = if_else(is.na(number_of_fish), 1, number_of_fish)) %>% # replacing NAs with the value of 1
-#   tidyr::uncount(., number_of_fish, .remove = TRUE) %>% # expanding number of fish to number of observations
-#   filter(!is.na(median_length)) %>%
-#   subset(scientific_name == "Siganus sutor" | scientific_name == "Lethrinus nebulosus" |
-#            scientific_name == "Scarus ghobban" | scientific_name == "Leptoscarus vaigiensis" |
-#            scientific_name == "Siganus canaliculatus")
-# 
-# length_stats <- summarySE(length_spp, measurevar = c("median_length"), 
-#                                groupvars = c("scientific_name", "trap_type"))
-# 
-# length_spp <- length_spp %>% subset(scientific_name == "Siganus canaliculatus")
-# exp_length <- length_spp %>% subset(trap_type == "Experimental") 
-# con_length <- length_spp %>% subset(trap_type == "Control") 
-# 
-# var.test(exp_length$median_length, con_length$median_length)
-# t.test(median_length~trap_type, data = length_spp, var.equal = FALSE)
+data2_length <- data2 %>% dplyr::select(survey_id, trap_type, median_length) %>% distinct() %>%
+  filter(!is.na(median_length))
+
+exp_length <- data2_length %>% subset(trap_type == "Experimental") ## 406 data points (multiple fish per survey)
+con_length <- data2_length %>% subset(trap_type == "Control") ## 2,032 data points (multiple fish per survey)
+
+var.test(exp_length$median_length, con_length$median_length) 
+## p-value < 2.2e-16; ratio = 0.6141567
+t.test(median_length~trap_type, data = data2_length, var.equal = FALSE)
+## p-value < 2.2e-16
+
+length_stats <- summarySE(data2_length, measurevar = c("median_length"), groupvars = c("trap_type"))
 ```
 
 
+## Calculating species data
 
+73 total species of fish caught (`species_list` is output). 
 
-## <a name="catch_effort"></a> **Total catch (grams) per unit effort (trap set)**
+Produces species counts for each type of trap. Top 5:
 
-**Total catch per unit effort between modified and traditional traps. It would be great to see this as grams captured per trap set.**
+**Control** for 591 surveys
+1: Siganus sutor (6,963)  
+2: Leptoscarus vaigiensis (1,887)  
+3: Lethrinus nebulosus (1,074)  
+4: Scarus ghobban (1,042) 
+5: Scarus rubroviolaceus (765) 
 
-Grouping by fisher_id but this might be effective to group by enumerator once I have correct list of names. There are 3 boat trips recorded with the exact same fish data that are under 3 different fisher ID names but all the same enumerator.. come back to this in QC.
-
-#### Calculating % composition to use in nutrient and value  
+**Experimental** for 150 surveys 
+1: Siganus sutor (1,818)
+2: Scarus ghobban (124) 
+3: Lethrinus nebulosus (113) 
+4: Siganus canaliculatus (84)
+5: Parupeneus macronemus (50) 
 
 ```{r}
-data <- data %>% 
-  mutate(number_of_fish = if_else(is.na(number_of_fish), 1, number_of_fish)) %>% group_by(survey_id) %>%
-  mutate(total_catch = sum(number_of_fish),
-         percent_composition = number_of_fish/total_catch)
+spp_df <- data2 %>% ungroup() %>%
+  group_by(scientific_name, trap_type) %>%
+  ## this df is still grouped by survey id and trap type 
+  # reported value (KES) per unit effort (# of traps)
+  mutate(spp_count = sum(number_of_fish)) %>% 
+  dplyr::select(scientific_name, trap_type, spp_count) %>% distinct() %>% ungroup()
+
+species_list <- spp_df %>% dplyr::select(scientific_name) %>% distinct()
+species_list %>% write.csv("data/full_species_list.csv")
 ```
 
 
-Goal: kilograms captured per trap set.
+## Loading Galligan and FishBase dataset 
+
+Most species in the list above have metadata below. 
 
 ```{r}
-modified_trap_df <- data %>%
-  select(survey_id, enumerator, trap_type, total_traps_collected, 
-         `No. of fishers in crew`, landing_site, total_catch, month, 
-         year, kg_per_trap, catch_per_trap, value_per_trap) %>%
-  distinct() %>% ungroup()
+fishbase_lifehistory <- read_excel("data/fishbase.xlsx", sheet = "life history") %>% #read in excel file 
+  select(scientific_name, Lm, Lmax) %>% dplyr::rename(Lm_fishbase = Lm) %>% dplyr::rename(Lmax_fishbase = Lmax) 
 
-# modified_trap_df_summary <- modified_trap_df %>% select(survey_id, trap_type) %>% 
-#   distinct() %>% subset(trap_type == "Control")
-# 
-# control_no <- modified_trap_df %>% subset(trap_type == "Experimental")
+# rows that appear in species_list but not fishbase_lifehistory
+## checking which fish I still need Fishbase information for (44 species)
+# dplyr::setdiff(species_list, fishbase_lifehistory) %>% write.csv("data/add_fishbase_info.csv")
 
-#### 
-df_spp <- data %>% filter(!is.na(value_per_trap)) %>%
-  subset(scientific_name == "Leptoscarus vaigiensis")
-exp <- df_spp %>% subset(trap_type == "Experimental") 
-con <- df_spp %>% subset(trap_type == "Control") 
+fishbase_biomass <- read_excel("data/fishbase.xlsx", sheet = "biomass") %>%
+  dplyr::select(scientific_name, a, b)
 
-hist(modified_trap_df$value_per_trap)
-
-var.test(exp$value_per_trap, con$value_per_trap)
-t.test((kg_per_trap)~trap_type, data = modified_trap_df, var.equal = FALSE)
-wilcox.test(log10(kg_per_trap)~trap_type, data = df_spp, var.equal = FALSE)
-summarySE(df_spp, measurevar = c("value_per_trap"), groupvars = c("trap_type"))
-
-#### 
-kg_per_trap_stats <- modified_trap_df %>% filter(!is.na(kg_per_trap)) %>% group_by(trap_type) %>%
-  mutate(., median = median(kg_per_trap, na.rm = TRUE))
-kg_per_trap_stats <- summarySE(kg_per_trap_stats, measurevar = c("kg_per_trap"), groupvars = c("trap_type"))
-
-catch_per_trap_stats <- modified_trap_df %>% filter(!is.na(catch_per_trap)) %>% group_by(trap_type) %>%
-  mutate(., median = median(catch_per_trap, na.rm = TRUE))
-catch_per_trap_stats <- summarySE(catch_per_trap_stats, measurevar = c("catch_per_trap"), groupvars = c("trap_type"))
-
-value_per_trap_stats <- modified_trap_df %>% filter(!is.na(value_per_trap)) %>% group_by(trap_type) %>%
-  mutate(., median = median(value_per_trap, na.rm = TRUE))
-value_per_trap_stats <- summarySE(value_per_trap_stats, measurevar = c("value_per_trap"), groupvars = c("trap_type"))
+galligan <- read.csv("data/SpeciesData_GatedTraps_Galligan_edited.csv", header=TRUE, sep = ",") %>%
+  dplyr::rename(scientific_name = Species) %>% dplyr::select(., scientific_name)
+# dplyr::setdiff(species_list, galligan) 
+### 11 fish found in our dataset that are not found in Galligan dataset 
+## these won't be included in the nutrient or revenue analysis
+## I think this is OK b/c all species have 113 or lower than 40 total catch
 ```
 
-```{r}
-# df_sppfig <- data %>%
-#    subset(scientific_name == "Siganus sutor" | scientific_name == "Lethrinus nebulosus" |
-#            scientific_name == "Scarus ghobban" | scientific_name == "Leptoscarus vaigiensis" |
-#            scientific_name == "Siganus canaliculatus") %>%
-#   gather(measurement, value, 37:40) %>%
-#   group_by(scientific_name, trap_type) %>%
-#   filter(!is.na(value)) 
-#   
-# df_sppstats <- summarySE(df_sppfig, measurevar = c("value"), groupvars = c("measurement", "trap_type", "scientific_name"))
-# 
-# spp_fig <- df_sppstats %>%
-#   ggplot(., aes(x=scientific_name, y=value, color=trap_type)) + geom_point() +
-#   geom_errorbar(aes(ymin=value-se, ymax=value+se), width=.1) + theme_classic() + 
-#   facet_wrap(~measurement, scales = "free") 
-# 
-# ggsave(file="output/Metrics_5spp.png", spp_fig, width = 8, height = 6, units = c("in"))
-```
 
+
+#### OLD SCRIPT; reworking above 
 
 ### Plotting figures.
-
-Abundance = Catch per trap 
-
-```{r}
-## 
-hist(log10(modified_trap_df$catch_per_trap))
-t.test((catch_per_trap)~trap_type, data = modified_trap_df, var.equal = FALSE, na.rm=TRUE)
-wilcox.test(log10(catch_per_trap)~trap_type, data = df_spp, var.equal = FALSE)
-
-# basic total catch per trap with no other variables 
-CPUE_n <- modified_trap_df %>% 
-  ggplot(aes(x=trap_type, y=catch_per_trap)) +
-  geom_boxplot(outlier.size = 0, lwd=0.5) +
-  #color_scale_manual(values = c(""))
-    geom_point(size=0.75) +
-  theme_classic() + facet_wrap(~enumerator, scales = "free_y") +
-  ylab("Abundance (# of individuals per trap collected)") + #xlab("Type of trap") +
-  theme(axis.text.x = element_text(vjust = 1.1)) #Set the text angle
-
-CPUE_n2 <- catch_per_trap_stats %>% 
-  ggplot(aes(x=trap_type, y=catch_per_trap)) +
-  geom_point(size=1) +
-  geom_errorbar(aes(ymin=catch_per_trap-se, ymax=catch_per_trap+se), width=.1) +
-  theme_classic() + 
-  ylab("CPUE (n trap-1)") + #xlab("Type of trap") +
-  theme(axis.text.x = element_text(vjust = 1.1)) #Set the text angle
-
-# ggsave(file="output/CPUE.png", CPUE_n, width = 4, height = 4, units = c("in"))
-# ggsave(file="output/CPUE2.png", CPUE_n2, width = 2, height = 3, units = c("in"))
-
-CPUE_n3 <- ggbetweenstats(data=modified_trap_df, x = trap_type, y = catch_per_trap, 
-               type = "np", plot.type = "boxviolin", sample.size.label = TRUE,
-               mean.point.args = list(size = 2, color = "gray"),
-               mean.label.args = list(size = 2),
-               point.args = list(position = ggplot2::position_jitterdodge(dodge.width = 0.5), 
-                                 alpha= 0.2, size = 1.5, stroke = 0)) +
-  scale_color_manual(values = c( "#387780", "#FF8C61")) +
-  labs(x = "Trap Type", y = "Abundance (# of individuals per trap collected)") 
-
-#ggsave(file="output/CPUE3.png", CPUE_n3, width = 4.5, height = 5, units = c("in"))
-
-# by fisherman 
-modified_trap_df %>% 
-  ggplot(aes(x=trap_type, y=catch_per_trap, color=trap_type)) + 
-  facet_wrap(~enumerator) +
-  geom_boxplot(aes(color=trap_type), outlier.size = 0, lwd=0.5) +
-    geom_point(aes(fill=trap_type), pch = 21, size=1) +
-  theme_bw() + 
-  ylab("Abundance (# of individuals per trap collected)") + #xlab("Type of trap") +
-  theme(axis.text.x = element_text(vjust = 1.1)) #Set the text angle
-
-# by landing site
-modified_trap_df %>% 
-  ggplot(aes(x=trap_type, y=catch_per_trap, color=trap_type)) + 
-  facet_wrap(~landing_site) +
-  geom_boxplot(aes(color=trap_type), outlier.size = 0, lwd=0.5) +
-    geom_point(aes(fill=trap_type), pch = 21, size=1) +
-  theme_bw() + 
-  ylab("Abundance (# of individuals per trap collected)") + xlab("Type of trap") +
-  theme(axis.text.x = element_text(vjust = 1.1)) #Set the text angle
-
-# by month and year 
-modified_trap_df %>% unite(ym, year, month, sep = " ", remove = FALSE) %>% filter(catch_per_trap < 1500) %>%
-  ggplot(aes(x=month, y=catch_per_trap, color=trap_type)) + 
-  facet_wrap(~year, scales = "free_y") +
-  geom_boxplot(aes(color=trap_type), outlier.size = 0, lwd=0.5) +
-  #geom_point(aes(x=ym, y=catch_per_trap, fill=trap_type), pch = 21, size=1) +
-  theme_classic() + 
-  ylab("Abundance (# of individuals per trap collected)") + xlab("Time of year") +
-  theme(axis.text.x = element_text(vjust = 1.1, hjust=1.1, angle=60)) #Set the text angle
-```
-
-Biomass = Kilograms per trap 
-
-```{r}
-##
-hist(modified_trap_df$kg_per_trap)
-
-# basic grams per trap plot with no other variables 
-Yield_reported <- modified_trap_df %>% 
-  ggplot(aes(x=trap_type, y=kg_per_trap)) + facet_wrap(~enumerator, scales = "free_y") +
-  geom_boxplot(outlier.size = 0, lwd=0.5) +
-    geom_point(size=0.75) +
-  theme_classic() + 
-  ylab("Biomass (kg per trap collected)") + xlab("Type of trap") +
-  theme(axis.text.x = element_text(vjust = 1.1)) #Set the text angle
-
-Yield_reported2 <- kg_per_trap_stats %>% 
-  ggplot(aes(x=trap_type, y=kg_per_trap)) + 
-  geom_point(size=4) +
-  geom_errorbar(aes(ymin=kg_per_trap-se, ymax=kg_per_trap+se), width=.1) +
-  theme_classic() + 
-  ylab("Biomass (kg per trap collected)") + xlab("Type of trap") +
-  theme(axis.text.x = element_text(vjust = 1.1)) #Set the text angle
-
-#ggsave(file="output/Yield_reported.png", Yield_reported, width = 4, height = 4, units = c("in"))
-#ggsave(file="output/Yield_reported2.png", Yield_reported2, width = 2, height = 3, units = c("in"))
-
-Yield_reported3 <- ggbetweenstats(data=modified_trap_df, x = trap_type, y = kg_per_trap, 
-               type = "np", plot.type = "boxviolin", sample.size.label = TRUE,
-               mean.point.args = list(size = 2, color = "gray"),
-               mean.label.args = list(size = 2),
-               point.args = list(position = ggplot2::position_jitterdodge(dodge.width = 0.5), 
-                                 alpha= 0.1, size = 1, stroke = 0)) +
-  scale_color_manual(values = c( "black", "black")) +
-  labs(x = "Trap Type", y = "Biomass (kg per trap collected)") 
-
-ggsave(file="output/Yield_reported3.png", Yield_reported3, width = 4.5, height = 5, units = c("in"))
-
-# visually seeing if this differs by fisherman 
-modified_trap_df %>% 
-  ggplot(aes(x=trap_type, y=kg_per_trap, color=trap_type)) + 
-  facet_wrap(~enumerator) +
-  geom_boxplot(aes(color=trap_type), outlier.size = 0, lwd=0.5) +
-    geom_point(aes(fill=trap_type), pch = 21, size=1) +
-  theme_bw() + 
-  ylab("Biomass (kg per trap collected)") + xlab("Type of trap") +
-  theme(axis.text.x = element_text(vjust = 1.1)) #Set the text angle
-
-# visually seeing if this differs by landing site 
-modified_trap_df %>% 
-  ggplot(aes(x=trap_type, y=kg_per_trap, color=trap_type)) + 
-  facet_wrap(~landing_site) +
-  geom_boxplot(aes(color=trap_type), outlier.size = 0, lwd=0.5) +
-    geom_point(aes(fill=trap_type), pch = 21, size=1) +
-  theme_bw() + 
-  ylab("Biomass (kg per trap collected)") + xlab("Type of trap") +
-  theme(axis.text.x = element_text(vjust = 1.1)) #Set the text angle
-
-# by month and year 
-modified_trap_df %>% unite(ym, year, month, sep = " ", remove = FALSE) %>% #filter(catch_per_trap < 1500) %>%
-  ggplot(aes(x=month, y=kg_per_trap, color=trap_type)) + 
-  facet_wrap(~year) +
-  geom_boxplot(aes(color=trap_type), outlier.size = 0, lwd=0.5) +
- # geom_point(aes(x=month, group=trap_type, y=grams_per_trap, fill=trap_type), pch = 21, size=1) +
-  theme_classic() + 
-  ylab("Biomass (kg per trap collected)") + xlab("Time of year") +
-  theme(axis.text.x = element_text(vjust = 1.1, hjust=1.1, angle=60)) #Set the text angle
-```
-
-Value reported per trap
-
-```{r}
-hist(modified_trap_df$value_per_trap)
-
-Value_reported <- modified_trap_df %>% 
-  ggplot(aes(x=trap_type, y=value_per_trap)) + 
-  geom_boxplot(outlier.size = 0, lwd=0.5) +
-    geom_point(size=0.75) +
-  theme_classic() + 
-  ylab("Value (KES per trap collected)") + xlab("Type of trap") +
-  theme(axis.text.x = element_text(vjust = 1.1)) #Set the text angle
-
-Value_reported2 <- value_per_trap_stats %>% 
-  ggplot(aes(x=trap_type, y=value_per_trap)) + 
-  geom_point(size=4) +
-  geom_errorbar(aes(ymin=value_per_trap-se, ymax=value_per_trap+se), width=.1) +
-  theme_classic() + 
-  ylab("Value (KES per trap collected)") + xlab("Type of trap") +
-  theme(axis.text.x = element_text(vjust = 1.1)) #Set the text angle
-
-# ggsave(file="output/Value_reported.png", Value_reported, width = 4, height = 4, units = c("in"))
-# ggsave(file="output/Value_reported2.png", Value_reported2, width = 2, height = 3, units = c("in"))
-
-Value_reported3 <- ggbetweenstats(data=modified_trap_df, x = trap_type, y = value_per_trap, 
-               type = "np", plot.type = "boxviolin", sample.size.label = TRUE,
-               mean.point.args = list(size = 2, color = "gray"),
-               mean.label.args = list(size = 2),
-               point.args = list(position = ggplot2::position_jitterdodge(dodge.width = 0.5), 
-                                 alpha= 0.1, size = 1, stroke = 0)) +
-  scale_color_manual(values = c( "black", "black")) +
-  labs(x = "Trap Type", y = "Value per trap") 
-
-ggsave(file="output/Value_reported3.png", Value_reported3, width = 4.5, height = 5, units = c("in"))
-```
 
 
 The relationship between grams per trap and total catch per trap. 
@@ -685,67 +465,7 @@ corrplot(cor(correlation), addCoef.col = 1,    # Change font size of correlation
 dev.off()
 ```
 
-### Statistics on the above. 
 
-Default of t.test in R is a Welch t-test which is just an adaptation of t-test, and it is used when the two samples have possibly unequal variances. Use var.equal = TRUE or FALSE to specifiy the variances of the dataset. 
-
-You can test equal variances with a Fisher's F-test. If p < 0.05 then we include var.equal = FALSE in below ttest. If p > 0.05 then we include var.equal = TRUE in below ttest.
-
-We are using an unpaired two sample t-test for this dataset. 
-
-```{r}
-UN <- modified_trap_df %>% subset(trap_type == "Control") %>% filter(!is.na(kg_per_trap)) %>% 
-  filter(!is.na(catch_per_trap)) %>% filter(!is.na(value_per_trap))
-MOD <- modified_trap_df %>% subset(trap_type == "Experimental") %>% filter(!is.na(kg_per_trap)) %>% 
-  filter(!is.na(catch_per_trap)) %>% filter(!is.na(value_per_trap))
-```
-
-#### Kilograms per trap 
-
-```{r}
-var.test(UN$kg_per_trap, MOD$kg_per_trap)
-t.test(kg_per_trap~trap_type, data = modified_trap_df, var.equal = FALSE)
-```
-
-#### Total catch per trap  
-
-```{r}
-var.test(UN$catch_per_trap, MOD$catch_per_trap)
-t.test(catch_per_trap~trap_type, data = modified_trap_df, var.equal = FALSE)
-```
-
-#### Total catch per trap  
-
-```{r}
-var.test(UN$value_per_trap, MOD$value_per_trap)
-t.test(value_per_trap~trap_type, data = modified_trap_df, var.equal = TRUE)
-```
-
-#### Total catch per trap vs weight in grams per trap. 
-
-We use a linear mixed model for this so we can include other variables like fisherman and landing site. 
-
-Grams per trap is log transformed.
-
-I'm not sure yet if this is the best way to do this... 
-
-```{r}
-# # unmodified
-# un_catch_model <- lmer(log(kg_per_trap) ~ catch_per_trap + (1|enumerator) + (1|landing_site), na.action=na.omit, data=UN)
-# qqPlot(residuals(un_catch_model)) 
-# hist(residuals(un_catch_model))
-# 
-# # modified
-# mod_catch_model <- lmer(log(kg_per_trap) ~ catch_per_trap + (1|enumerator) + (1|landing_site), na.action=na.omit, data=MOD)
-# qqPlot(residuals(mod_catch_model)) 
-# hist(residuals(mod_catch_model))
-# 
-# summary(un_catch_model)
-# summary(mod_catch_model)
-# 
-# Anova(un_catch_model, ddf="lme4", type='III')
-# Anova(mod_catch_model, ddf="lme4", type='III')
-```
 
 ## <a name="species"></a> **Calculate top species caught**
 
@@ -842,8 +562,7 @@ var.test(Topspp_MOD$catch_per_trap, MOD$catch_per_trap) # output is significant 
 Data pulled from Fishbase and put in the datasheet `fishbase.xlsx`. 
 
 ```{r}
-fishbase <- read_excel("data/fishbase.xlsx", sheet = "life history") %>% #read in excel file 
-  select(scientific_name, Lm, Lm_se_min, Lm_se_max, Lmax)
+
 
 maturity <- full_join(data, fishbase, by = "scientific_name") %>% # joining maturity reproduction info with main dataframe
   filter(!is.na(Lm)) # taking out observations that don't have an Lm value so only the top species 
@@ -1054,37 +773,6 @@ https://rstudio-pubs-static.s3.amazonaws.com/595950_6dc36259819541e5869f9fff162a
 
 https://statisticsglobe.com/normal-density-curve-on-top-of-histogram-ggplot2-r
 
-## Fishbase R 
-
-https://github.com/ropensci/rfishbase
-
-Left off at FishBase R having SSL certificate problems. Download a and b from fishbase for top 5 and make script for this. 
-
-```{r}
-#remotes::install_github("ropensci/rfishbase")
-#library("rfishbase")
-#library(curl)
-#install.packages("curl", type = "source")
-```
-
-```{r}
-#FB <- fb_tbl("ecology")
-```
-
-Error: 
-
-  `Error in curl::curl_fetch_memory(file, handle): SSL certificate problem: certificate has expired
-  Error in curl::curl_fetch_memory(file, handle): SSL certificate problem: certificate has expired
-  Error in curl::curl_fetch_memory(file, handle): SSL certificate problem: certificate has expired
-  Error in curl::curl_fetch_memory(file, handle): SSL certificate problem: certificate has expired
-  Warning in curl::curl_fetch_memory(url, handle = handle) :
-    SSL certificate problem: certificate has expired
-  Warning in curl::curl_fetch_memory(url, handle = handle) :
-    SSL certificate problem: certificate has expired
-  Error in rbind(deparse.level, ...) : 
-    numbers of columns of arguments do not match`
-    
-
 ### Biomass per trap collected
 
 1.) Expand df by # of fish so that each row is a fish observation.    
@@ -1197,8 +885,7 @@ List of species to ask Fishbase for a and b.
 Profit data from Gilligan's sheet. 
 
 ```{r}
-gilligan_profit <- read.csv("data/SpeciesData_GatedTraps_Galligan_edited.csv", header=TRUE, sep = ",") %>%
-  dplyr::select(Species, Bycatch, Price_KSHPerkg) %>% dplyr::rename(scientific_name = Species)
+
 
 ## species df for profit analysis 
 species_df_forprofit <- species_df %>% select(survey_id, month, scientific_name, trap_type) %>% distinct()

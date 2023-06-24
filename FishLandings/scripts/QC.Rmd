@@ -853,6 +853,13 @@ filter_sppcatch_composition <- data.frame(filter_out_species) %>%
 catch_composition <- catch_composition %>% 
   filter(!scientific_name %in% filter_sppcatch_composition$scientific_name)
 
+catch_composition <- catch_composition %>% filter(!scientific_name == "Octopus cyanea") %>% 
+  filter(!scientific_name == "Gymnothorax griseus") %>% 
+  filter(!scientific_name == "Gymnothorax favagineus") %>% 
+  filter(!scientific_name == "Strophidon sathete") %>%
+  filter(!scientific_name == "Gymnothorax flavimarginatus") %>% 
+  filter(!scientific_name == "Leptoscarus variegatus") 
+
 # checking this was removed
 unique(sort(catch_composition$scientific_name))
 ```
