@@ -40,6 +40,7 @@ library(lme4)
 library(car)
 library(forcats)
 library(ggstatsplot)
+library(ggridges)
 ```
 
 ## Read in the data frame that is the output of the QC script. 
@@ -403,6 +404,12 @@ TukeyHSD(richness_aov)
 
 ## Calculating maturity 
 
+**Control traps**:  
+- 6,492 mature fish caught (42.2%) and 8,890 immature fish caught (57.8%)
+
+**Experimental traps**:  
+- 1,561 mature fish caught (64.3%) and 867 immature fish caught (35.7%)
+
 ```{r}
 ## data2 pre merge = 4,498 x 31
 ## data2 post merge = 4,498 x 78 [with left join this only keep metadata for fish found in our surveys]
@@ -411,11 +418,100 @@ data2 <- left_join(data2, metadata, by = "scientific_name")
 
 ## We have Lmat from Galligan and Lmat from Fishbase -- confirm with Austin which one to use 
 data2 <- data2 %>% 
+  ### categorizing mature or immature 
   mutate(maturity = if_else(median_length >= Lmat_fishbase, "mature", "immature")) %>%
-  subset(trap_type == "Experimental" | trap_type == "Control") %>% #subsetting to only the modified and unmodified traps 
-  select(survey_id, year, scientific_name, trap_type, maturity, total_traps_collected, 
-         length_corrected, median_length, number_of_fish, Lm) %>%
-  mutate(nofish_pertrap = number_of_fish/total_traps_collected) 
+  ### calculating distance from Lmat
+  mutate(length_dist = median_length-Lmat_fishbase) 
+
+## calculating total numbers for stats above 
+data2 %>% dplyr::select(survey_id, trap_type, scientific_name, number_of_fish, maturity) %>% 
+  group_by(trap_type, maturity) %>% 
+  filter(!is.na(maturity)) %>%
+  mutate(sum = sum(number_of_fish)) %>%
+  dplyr::select(trap_type, maturity, sum) %>% distinct()
+
+## calculating stats for distance from maturity 
+data2_maturity <- data2 %>% dplyr::select(survey_id, trap_type, scientific_name, number_of_fish, maturity, length_dist) %>%
+  tidyr::uncount(., number_of_fish, .remove = TRUE) %>% 
+  filter(!is.na(length_dist))
+```
+
+### Calculating statistics for distance from maturity 
+
+```{r}
+exp_maturity <- data2_maturity %>% subset(trap_type == "Experimental") ## 2,428 data points (many fish per survey)
+con_maturity <- data2_maturity %>% subset(trap_type == "Control") ## 15,386 data points (many fish per survey)
+
+var.test(exp_maturity$length_dist, con_maturity$length_dist) 
+## p-value < 2.2e-16; ratio = 0.7075884
+
+data2_maturity_mature <- data2_maturity %>% subset(maturity == "mature")
+data2_maturity_immature <- data2_maturity %>% subset(maturity == "immature")
+
+t.test(length_dist~trap_type, data = data2_maturity_mature, var.equal = FALSE)
+## p-value < 2.2e-16
+t.test(length_dist~trap_type, data = data2_maturity_immature, var.equal = FALSE)
+
+maturity_stats <- summarySE(data2_maturity, measurevar = c("length_dist"), 
+                            groupvars = c("trap_type", "scientific_name")) %>%
+  filter(!N<3)
+```
+
+### Constructing maturity figure
+
+```{r}
+maturity_plot <- maturity_stats %>%
+  # filters out the observations aren't in both categories 
+  # (takes out species that only have 1 unique mean dist value so only 1 trap type)
+  group_by(scientific_name) %>%
+  dplyr::filter(n_distinct(length_dist) >= 2) %>% 
+  ungroup() %>%
+  ggplot(., aes(x=fct_rev(scientific_name), y=length_dist, fill=trap_type)) + 
+  coord_flip() +
+  scale_fill_manual(values = c("black", "white")) +
+  geom_hline(yintercept = 0, lty = "dotted") +
+  theme(axis.text.x = element_text(face = "italic"),
+        axis.text.y = element_text(margin = margin(t = 0, r = 10, b = 0, l = 0))) +
+  geom_line(aes(group = scientific_name), color="grey14") +
+  geom_point(size=2, shape=21) + theme_bw() + 
+  #geom_errorbar(aes(x=trap_type, y=length_dist, ymin=length_dist-se, ymax=length_dist+se)) +
+  labs(y="Distance from Lmat (cm)", x="", fill="Trap Type") 
+
+ggsave(file="output/Maturity.png", maturity_plot, width = 7, height = 6, units = c("in"))
+```
+
+## Calculating length frequency distribution 
+
+```{r}
+# re factoring the length column 
+data2$length_corrected <- factor(data2$length_corrected, levels=c("0-10", "11-15","16-20","21-25","26-30",
+                                                                        "31-35","36-40","41-45", "46-50", "51-60",
+                                                                        "61-70", "71-80", "81-90", ">90"))
+
+## creating dataframe for length frequency 
+data2_length_frequency <- data2 %>% 
+  select(survey_id, trap_type, scientific_name, number_of_fish, length_corrected) %>%
+  filter(!is.na(length_corrected)) %>%
+  group_by(length_corrected, scientific_name, trap_type) %>%
+  mutate(count.per.bin = sum(number_of_fish)) %>%
+  ungroup()
+
+data2_length_frequency %>%
+  ggplot(., aes(x=length_corrected, fill=trap_type, color=trap_type)) + 
+  theme_bw() + xlab("Length (cm)") + ylab("Frequency") +
+  theme(axis.text.x.bottom = element_text(colour = 'black', angle = 60, hjust = 1),
+        axis.text.y = element_text(colour = 'black', size = 8, face = 'italic')) + 
+  theme(panel.border = element_blank(),
+   panel.grid.major = element_blank(),
+   panel.grid.minor = element_blank(),
+   strip.text.x = element_text(size = 9, color = "black", face = "bold.italic"),
+   axis.line = element_line(colour = "black")) +
+  theme(axis.title.y = element_text(size = 12, face = "bold", margin = margin(t = 0, r = 10, b = 0, l = 0))) +
+  theme(axis.title.x = element_text(size = 12, face = "bold", margin = margin(t = 10, r = 0, b = 0, l = 0))) +
+  facet_grid(scientific_name~trap_type, scales = "free_y") +
+  geom_bar(position = position_dodge(), alpha=0.5) +
+  scale_fill_manual(values = c("gray60", "white")) +
+  scale_color_manual(values = c("black", "black"))
 ```
 
 
@@ -461,104 +557,6 @@ dev.off()
 
 
 
-## <a name="maturity"></a> **Catch per unit effort for top species by maturity**
-
-**Total mature fish catch per unit effort between modified and traditional traps. This will have to be for the top 3-5 species separately. Go to Fishbase and find the length at first maturity for that particular species, then assign each fish a "mature" or "immature" status in the data and calculate.**
-
-Data pulled from Fishbase and put in the datasheet `fishbase.xlsx`. 
-
-```{r}
-
-
-maturity <- full_join(data, fishbase, by = "scientific_name") %>% # joining maturity reproduction info with main dataframe
-  filter(!is.na(Lm)) # taking out observations that don't have an Lm value so only the top species 
-
-
-```
-
-Immaure and mature fish catch comparison
-
-```{r}
-maturity %>% select(number_of_fish, trap_type, maturity, scientific_name, 
-                    total_traps_collected, nofish_pertrap) %>% 
-  na.omit() %>% 
-  ggplot(., aes(x=scientific_name, y=nofish_pertrap, color=maturity)) +
-  geom_boxplot() + theme_classic() + 
-  theme(axis.text.x = element_text(angle=60, hjust=1)) +
-  xlab("Species") +
-  ylab("Abundance (number of individuals per trap collected)")
-
-maturity %>% select(number_of_fish, trap_type, maturity, scientific_name, total_traps_collected, nofish_pertrap) %>% 
-  na.omit() %>%  
-  ggplot(., aes(x=maturity, y=nofish_pertrap, color=trap_type)) +
-  geom_boxplot() + theme_classic() + 
-  facet_wrap(~trap_type, scales = "free_y") +
-  #theme(axis.text.x = element_text(angle=60, hjust=1)) +
-  xlab("Maturity") +
-  ylab("Abundance (number of individuals per trap collected)")
-```
-
-Statistics on the above... 
-
-Circle back to the padj values coming out to "0.000000e+00". 
-
-Double check `trap_type+maturity` vs `trap_type*maturity`.  
-
-```{r}
-nofish_maturity_aov <- aov(number_of_fish ~ trap_type*maturity, data = maturity)
-summary(nofish_maturity_aov)
-
-nofish_maturity_tukey <- TukeyHSD(nofish_maturity_aov)
-nofish_maturity_tukey$`trap_type:maturity`
-```
-
-## <a name="length"></a> **Catch and length data of mature fish**
-
-**Average length of catch versus length at first maturity (Lmat). Take the difference for each fish in the data against its length at first maturity and then calculate a weighted value for modified versus traditional traps where a value above 0 represents a fish above Lmat and a value below represents a fish below Lmat.**
-
-Transform count value to that number of observations: https://stackoverflow.com/questions/70759069/transform-count-column-into-number-of-rows. 
-
-```{r}
-maturity_dist <- maturity %>% 
-  mutate(number_of_fish = if_else(is.na(number_of_fish), 1, number_of_fish)) %>% # replacing NAs with the value of 1
-  tidyr::uncount(., number_of_fish, .remove = TRUE) %>% # expanding number of fish to number of observations
-  mutate(length_dist = median_length-Lm) %>%
-  filter(!is.na(length_dist)) %>%
-  group_by(scientific_name, trap_type) %>%
-  mutate(avg_length_dist = mean(length_dist)) %>% #### a positive value here = mature; a negative value = immature 
-  ungroup() %>% 
-  filter(scientific_name %in% species_keep$scientific_name) %>%
-  mutate(scientific_name = factor(scientific_name, levels = c("Siganus sutor", "Lethrinus nebulosus",
-                                                              "Scarus ghobban", "Siganus canaliculatus",
-                                                              "Leptoscarus vaigiensis", "Parupeneus indicus",
-                                                              "Acanthurus dussumieri", "Chaetodon selene",
-                                                              "Parupeneus macronemus", "Scarus rubroviolaceus",
-                                                              "Scarus russelii", "Scarus psittacus",
-                                                              "Naso annulatus", "Plectorhinchus vittatus",
-                                                              "Plectorhinchus sordidus", "Plectorhinchus gaterinus",
-                                                              "Lethrinus harak", "Siganus stellatus",
-                                                              "Chaetodon auriga", "Lethrinus mahsena"))) 
-maturity_dist$scientific_name <- fct_rev(maturity_dist$scientific_name)
-
-maturity_dist_plot <- maturity_dist %>%
-  filter(!is.na(scientific_name)) %>%
-  group_by(scientific_name) %>%
-  filter(., n_distinct(avg_length_dist) >= 2) %>% # filters out the observations aren't in both categories (takes out species that only have 1 unique mean dist value so only 1 trap type)
-  ungroup() %>%
-  ggplot(., aes(x=scientific_name, y=avg_length_dist, fill=trap_type)) + 
-  coord_flip() +
-  scale_fill_manual(values = c("black", "white")) +
-  geom_hline(yintercept = 0, lty = "dotted") +
-  theme(axis.text.y = element_text(face = "italic")) +
-  geom_line(aes(group = scientific_name), color="grey14") +
-  geom_point(size=2, shape=21) + theme_bw() + 
-  theme(axis.title.y = element_text(margin = margin(t = 0, r = 10, b = 0, l = 0))) +
-  labs(y="Distance from Lmat (cm)", x="", fill="Trap Type") 
-
-ggsave(file="output/Maturity.png", maturity_dist_plot, width = 7, height = 6, units = c("in"))
-```
-
-
 
 ## <a name="freq_plots"></a> **Length Frequency plots of top species**
 
@@ -575,17 +573,14 @@ Siganus canaliculatus	= 23173
 Leptoscarus vaigiensis	= 15758	  
 
 ```{r}
-library(ggridges)
+
 
 # the column we want to plot: maturity$length_corrected
 maturity$length_corrected <- factor(maturity$length_corrected, levels=c("0-10", "11-15","16-20","21-25","26-30",
                                                                         "31-35","36-40","41-45", "46-50", "51-60",
                                                                         "61-70", "71-80", "81-90", ">90"))
 
-maturity <- maturity %>% filter(!is.na(length_corrected)) %>%
-  group_by(length_corrected, scientific_name, trap_type) %>%
-  mutate(count.per.bin = sum(number_of_fish)) %>%
-  ungroup()
+
 
 maturity_topspp <- maturity %>% #subset(year=="2022") %>% 
   subset(scientific_name == "Siganus sutor" | scientific_name == "Lethrinus nebulosus" |
