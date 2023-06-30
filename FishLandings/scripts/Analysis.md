@@ -26,6 +26,7 @@ library(car)
 library(forcats)
 library(ggstatsplot)
 library(ggridges)
+library(ggbreak)
 ```
 
 ## Read in the data frame that is the output of the QC script.
@@ -773,11 +774,9 @@ range(data2$CPUE) ## 0.25 - 16.00 fish per trap
     ## [1]  0.25 16.00
 
 ``` r
-CPUE_plot <- data2 %>% dplyr::select(survey_id, trap_type, CPUE) %>% distinct() %>%
-  ggplot(., aes(x=trap_type, y=CPUE)) + geom_boxplot(outlier.shape = NA) + 
-  geom_jitter(alpha=0.2, size=0.6, width=0.25, color="gray50") + theme_bw()
-
-ggsave(file="output/CPUE.png", CPUE_plot, width = 3, height = 3.5, units = c("in"))
+# data2 %>% dplyr::select(survey_id, trap_type, CPUE) %>% distinct() %>%
+#   ggplot(., aes(x=trap_type, y=CPUE)) + geom_boxplot(outlier.shape = NA) +
+#   geom_jitter(alpha=0.2, size=0.6, width=0.25, color="gray50") + theme_bw()
 ```
 
 ### Statistics on the above.
@@ -792,7 +791,7 @@ we include var.equal = FALSE in below ttest. If p \> 0.05 then we
 include var.equal = TRUE in below ttest.
 
 ``` r
-data2_CPUE <- data2 %>% dplyr::select(survey_id, trap_type, CPUE) %>% distinct()
+data2_CPUE <- data2 %>% dplyr::select(survey_id, BMU, trap_type, CPUE) %>% distinct()
 
 exp_CPUE <- data2_CPUE %>% subset(trap_type == "Experimental") ## 150 data points
 con_CPUE <- data2_CPUE %>% subset(trap_type == "Control") ## 591 data points 
@@ -832,15 +831,32 @@ t.test(CPUE~trap_type, data = data2_CPUE, var.equal = FALSE)
 ``` r
 ## p-value = 0.5434 
 
-CPUE_per_trap_stats <- summarySE(data2_CPUE, measurevar = c("CPUE"), groupvars = c("trap_type"))
+CPUE_per_trap_stats <- summarySE(data2_CPUE, measurevar = c("CPUE"), groupvars = c("trap_type", "BMU"))
+CPUE_per_trap_stats2 <- summarySE(data2_CPUE, measurevar = c("CPUE"), groupvars = c("trap_type"))
 
-# CPUE_plot2 <- data2_CPUE %>% 
-#   ggplot(., aes(x=trap_type, y=CPUE)) + 
-#   geom_jitter(size=1, alpha=0.5, width=0.2) + theme_classic() + #ylim(2.5,3.5) +
-#   geom_point(data=CPUE_per_trap_stats, aes(x=trap_type, y=CPUE), size=4) +
-#   geom_errorbar(data=CPUE_per_trap_stats, aes(ymin=CPUE-se, ymax=CPUE+se), size=0.5, width=.2)
-# 
-# ggsave(file="output/CPUE2.png", CPUE_plot2, width = 3, height = 3.5, units = c("in"))
+CPUE_plot <- CPUE_per_trap_stats %>%
+  ggplot(., aes(x=BMU, y=CPUE, fill=trap_type, group=trap_type)) + theme_bw() +
+  geom_errorbar(aes(x=BMU, y=CPUE, ymin=CPUE-se, ymax=CPUE+se), 
+                position=position_dodge(0.3), alpha=0.9, size=0.5, width=0.1) +
+  geom_point(size=2, shape=21, position=position_dodge(0.3)) + scale_fill_manual(values = c("black", "white"))
+```
+
+    ## Warning: Using `size` aesthetic for lines was deprecated in ggplot2 3.4.0.
+    ## ℹ Please use `linewidth` instead.
+    ## This warning is displayed once every 8 hours.
+    ## Call `lifecycle::last_lifecycle_warnings()` to see where this warning was
+    ## generated.
+
+``` r
+ggsave(file="output/CPUE.png", CPUE_plot, width = 4, height = 3.5, units = c("in"))
+
+CPUE_plot2 <- CPUE_per_trap_stats2 %>%
+  ggplot(., aes(x=trap_type, y=CPUE, fill=trap_type, group=trap_type)) + theme_bw() +
+  geom_errorbar(aes(x=trap_type, y=CPUE, ymin=CPUE-se, ymax=CPUE+se), 
+                position=position_dodge(0.3), alpha=0.9, size=0.5, width=0.2) + ylim(2.85,3.6) +
+  geom_point(size=3, shape=21, position=position_dodge(0.3)) + scale_fill_manual(values = c("black", "white"))
+
+ggsave(file="output/CPUE2.png", CPUE_plot2, width = 4, height = 3.5, units = c("in"))
 ```
 
 ## Calculating (reported) yield per trap
@@ -856,18 +872,10 @@ range(data2$yield_kg_trap) ## 0.057 kg - 5.25 kg
 
     ## [1] 0.05714286 5.25000000
 
-``` r
-yield_kg_plot <- data2 %>% dplyr::select(survey_id, trap_type, yield_kg_trap) %>% distinct() %>%
-  ggplot(., aes(x=trap_type, y=yield_kg_trap)) + geom_boxplot(outlier.shape = NA) + 
-  geom_jitter(alpha=0.2, size=0.6, width=0.25, color="gray50") + theme_bw()
-
-ggsave(file="output/Yield.png", yield_kg_plot, width = 3, height = 3.5, units = c("in"))
-```
-
 ### Statistics on the above.
 
 ``` r
-data2_yieldkg <- data2 %>% dplyr::select(survey_id, trap_type, yield_kg_trap) %>% distinct()
+data2_yieldkg <- data2 %>% dplyr::select(survey_id, BMU, trap_type, yield_kg_trap) %>% distinct()
 
 exp_yieldkg <- data2_yieldkg %>% subset(trap_type == "Experimental") ## 150 data points
 con_yieldkg <- data2_yieldkg %>% subset(trap_type == "Control") ## 591 data points 
@@ -908,6 +916,23 @@ t.test(yield_kg_trap~trap_type, data = data2_yieldkg, var.equal = TRUE)
 ## p-value = 0.0433 
 
 yieldkg_per_trap_stats <- summarySE(data2_yieldkg, measurevar = c("yield_kg_trap"), groupvars = c("trap_type"))
+yieldkg_per_trap_stats2 <- summarySE(data2_yieldkg, measurevar = c("yield_kg_trap"), groupvars = c("trap_type", "BMU"))
+
+yield_kg_plot <- yieldkg_per_trap_stats %>%
+  ggplot(., aes(x=trap_type, y=yield_kg_trap, fill=trap_type, group=trap_type)) + theme_bw() +
+  geom_errorbar(aes(x=trap_type, y=yield_kg_trap, ymin=yield_kg_trap-se, ymax=yield_kg_trap+se), 
+                position=position_dodge(0.3), alpha=0.9, size=0.5, width=0.1) +
+  geom_point(size=4, shape=21, position=position_dodge(0.3)) + scale_fill_manual(values = c("black", "white"))
+
+ggsave(file="output/Yield.png", yield_kg_plot, width = 4, height = 3.5, units = c("in"))
+
+yield_kg_plot2 <- yieldkg_per_trap_stats2 %>%
+  ggplot(., aes(x=BMU, y=yield_kg_trap, fill=trap_type, group=trap_type)) + theme_bw() +
+  geom_errorbar(aes(x=BMU, y=yield_kg_trap, ymin=yield_kg_trap-se, ymax=yield_kg_trap+se), 
+                position=position_dodge(0.3), alpha=0.9, size=0.5, width=0.2) + 
+  geom_point(size=2, shape=21, position=position_dodge(0.3)) + scale_fill_manual(values = c("black", "white"))
+
+ggsave(file="output/Yield2.png", yield_kg_plot2, width = 4, height = 3.5, units = c("in"))
 ```
 
 ## Calculating (reported) value per trap
@@ -923,19 +948,10 @@ range(data2$value_KES_trap) ## 11.42 KES - 1150 KES
 
     ## [1]   11.42857 1150.00000
 
-``` r
-value_KES_plot <- data2 %>% dplyr::select(survey_id, trap_type, value_KES_trap) %>% distinct() %>%
-  filter(value_KES_trap < 1000) %>%
-  ggplot(., aes(x=trap_type, y=value_KES_trap)) + geom_boxplot(outlier.shape = NA) + 
-  geom_jitter(alpha=0.2, size=0.6, width=0.25, color="gray50") + theme_bw()
-
-ggsave(file="output/Value.png", value_KES_plot, width = 3, height = 3.5, units = c("in"))
-```
-
 ### Statistics on the above.
 
 ``` r
-data2_valueKES <- data2 %>% dplyr::select(survey_id, trap_type, value_KES_trap) %>% distinct()
+data2_valueKES <- data2 %>% dplyr::select(survey_id, BMU, trap_type, value_KES_trap) %>% distinct()
 
 exp_valueKES <- data2_valueKES %>% subset(trap_type == "Experimental") ## 150 data points
 con_valueKES <- data2_valueKES %>% subset(trap_type == "Control") ## 591 data points 
@@ -976,6 +992,23 @@ t.test(value_KES_trap~trap_type, data = data2_valueKES, var.equal = TRUE)
 ## p-value = 0.03236 
 
 valueKES_per_trap_stats <- summarySE(data2_valueKES, measurevar = c("value_KES_trap"), groupvars = c("trap_type"))
+valueKES_per_trap_stats2 <- summarySE(data2_valueKES, measurevar = c("value_KES_trap"), groupvars = c("trap_type", "BMU"))
+
+value_KES_plot <- valueKES_per_trap_stats %>%
+  ggplot(., aes(x=trap_type, y=value_KES_trap, fill=trap_type, group=trap_type)) + theme_bw() +
+  geom_errorbar(aes(x=trap_type, y=value_KES_trap, ymin=value_KES_trap-se, ymax=value_KES_trap+se), 
+                position=position_dodge(0.3), alpha=0.9, size=0.5, width=0.1) +
+  geom_point(size=4, shape=21, position=position_dodge(0.3)) + scale_fill_manual(values = c("black", "white"))
+
+ggsave(file="output/Value.png", value_KES_plot, width = 4, height = 3.5, units = c("in"))
+
+value_KES_plot2 <- valueKES_per_trap_stats2 %>%
+  ggplot(., aes(x=BMU, y=value_KES_trap, fill=trap_type, group=trap_type)) + theme_bw() +
+  geom_errorbar(aes(x=BMU, y=value_KES_trap, ymin=value_KES_trap-se, ymax=value_KES_trap+se), 
+                position=position_dodge(0.3), alpha=0.9, size=0.5, width=0.2) + 
+  geom_point(size=2, shape=21, position=position_dodge(0.3)) + scale_fill_manual(values = c("black", "white"))
+
+ggsave(file="output/Value2.png", value_KES_plot2, width = 4, height = 3.5, units = c("in"))
 ```
 
 ## Calculating median length
@@ -1004,19 +1037,10 @@ hist(data2$median_length) ## majority fall within 10-40 cm
 
 ![](Analysis_files/figure-gfm/unnamed-chunk-13-1.png)<!-- -->
 
-``` r
-length_plot <- data2 %>%
-  dplyr::select(survey_id, trap_type, median_length) %>% distinct() %>%
-  ggplot(., aes(x=trap_type, y=median_length)) + geom_boxplot(outlier.shape = NA) + theme_bw()
- # geom_point(alpha=0.1, size=0.4, color="gray50") 
-
-ggsave(file="output/Length.png", length_plot, width = 3, height = 3.5, units = c("in"))
-```
-
 ### Statistics on the above.
 
 ``` r
-data2_length <- data2 %>% dplyr::select(survey_id, trap_type, scientific_name, number_of_fish, median_length) %>% 
+data2_length <- data2 %>% dplyr::select(survey_id, BMU, trap_type, scientific_name, number_of_fish, median_length) %>% 
   ### transforms so that e.g. 14 siganus sutor is now 14 rows
   tidyr::uncount(., number_of_fish, .remove = TRUE) %>% 
   filter(!is.na(median_length))
@@ -1060,6 +1084,24 @@ t.test(median_length~trap_type, data = data2_length, var.equal = FALSE)
 ## p-value < 2.2e-16
 
 length_stats <- summarySE(data2_length, measurevar = c("median_length"), groupvars = c("trap_type"))
+length_stats2 <- summarySE(data2_length, measurevar = c("median_length"), groupvars = c("trap_type", "BMU"))
+
+length_plot <- length_stats %>%
+  ggplot(., aes(x=trap_type, y=median_length, fill=trap_type, group=trap_type)) + theme_bw() +
+  geom_errorbar(aes(x=trap_type, y=median_length, ymin=median_length-se, ymax=median_length+se), 
+                position=position_dodge(0.3), alpha=0.9, size=0.5, width=0.1) + 
+  scale_y_break(c(25.45, 29.5)) + ylim(25.15,29.85) +
+  geom_point(size=3, shape=21, position=position_dodge(0.3)) + scale_fill_manual(values = c("black", "white"))
+
+ggsave(file="output/Length.png", length_plot, width = 4.5, height = 3.5, units = c("in"))
+
+length_plot2 <- length_stats2 %>%
+  ggplot(., aes(x=BMU, y=median_length, fill=trap_type, group=trap_type)) + theme_bw() +
+  geom_errorbar(aes(x=BMU, y=median_length, ymin=median_length-se, ymax=median_length+se), 
+                position=position_dodge(0.3), alpha=0.9, size=0.5, width=0.1) +
+  geom_point(size=1, shape=21, position=position_dodge(0.3)) + scale_fill_manual(values = c("black", "white"))
+
+ggsave(file="output/Length2.png", length_plot2, width = 4, height = 3.5, units = c("in"))
 ```
 
 ## Calculating take home metrics
@@ -1070,10 +1112,11 @@ data2 <- data2 %>% dplyr::group_by(survey_id, destination) %>%
          percent_perdestination = no_perdestination/total_catch*100)
 
 data2_takehome <- data2 %>% 
-  dplyr::select(survey_id, trap_type, destination, percent_perdestination) %>% 
+  dplyr::select(survey_id, BMU, trap_type, destination, percent_perdestination) %>% 
   distinct() %>% subset(destination == "HOME")
 
 takehome_stats <- summarySE(data2_takehome, measurevar = c("percent_perdestination"), groupvars = c("trap_type"))
+takehome_stats2 <- summarySE(data2_takehome, measurevar = c("percent_perdestination"), groupvars = c("trap_type", "BMU"))
 
 exp_takehome <- data2_takehome %>% subset(trap_type == "Experimental") ## 40 data points (multiple destinations)
 con_takehome <- data2_takehome %>% subset(trap_type == "Control") ## 352 data points (multiple destinations)
@@ -1113,11 +1156,20 @@ t.test(percent_perdestination~trap_type, data = data2_takehome, var.equal = FALS
 ``` r
 ## p-value 0.002949
 
-takehome_plot <- data2_takehome %>% 
-  ggplot(., aes(x=trap_type, y=percent_perdestination)) + geom_boxplot(outlier.shape = NA) + 
-  geom_jitter(alpha=0.2, size=0.6, width=0.25, color="gray50") + theme_bw()
+takehome_plot <- takehome_stats %>%
+  ggplot(., aes(x=trap_type, y=percent_perdestination, fill=trap_type, group=trap_type)) + theme_bw() +
+  geom_errorbar(aes(x=trap_type, y=percent_perdestination, ymin=percent_perdestination-se, ymax=percent_perdestination+se), 
+                position=position_dodge(0.3), alpha=0.9, size=0.5, width=0.1) + ylim(15,33) +
+  geom_point(size=3, shape=21, position=position_dodge(0.3)) + scale_fill_manual(values = c("black", "white"))
 
-ggsave(file="output/Take_Home.png", takehome_plot, width = 3, height = 3.5, units = c("in"))
+takehome_plot2 <- takehome_stats2 %>%
+  ggplot(., aes(x=BMU, y=percent_perdestination, fill=trap_type, group=trap_type)) + theme_bw() +
+  geom_errorbar(aes(x=BMU, y=percent_perdestination, ymin=percent_perdestination-se, ymax=percent_perdestination+se), 
+                position=position_dodge(0.3), alpha=0.9, size=0.5, width=0.1) +
+  geom_point(size=2, shape=21, position=position_dodge(0.3)) + scale_fill_manual(values = c("black", "white"))
+
+ggsave(file="output/Take_Home.png", takehome_plot, width = 4, height = 3.5, units = c("in"))
+ggsave(file="output/Take_Home2.png", takehome_plot2, width = 4, height = 3.5, units = c("in"))
 ```
 
 ## Calculating species data
@@ -1177,6 +1229,9 @@ galligan <- read.csv("data/SpeciesData_GatedTraps_Galligan_edited.csv", header=T
 ## I think this is OK b/c all species have 113 or lower than 40 total catch
 
 metadata <- full_join(fishbase, galligan, by = "scientific_name")
+
+Lmat_check <- metadata %>% dplyr::select(scientific_name, Lmat_fishbase, Lmat_cm) %>%
+  mutate(Lmat_difference = Lmat_fishbase-Lmat_cm) 
 ```
 
 ### Calculating number of families that appear in each type of trap
@@ -1248,23 +1303,25 @@ range(data2$richness) ## 1 - 14 different species in one survey
 
 ``` r
 richnessdf <- data2 %>% dplyr::select(survey_id, BMU, trap_type, richness) %>% distinct()
-length_stats <- summarySE(richnessdf, measurevar = c("richness"), groupvars = c("trap_type", "BMU"))
 
-richness_plot <- length_stats %>%
-  ggplot(., aes(x=trap_type, y=richness, color=BMU)) + theme_bw() +
-  geom_point(size=2) +
-  #geom_bar(stat="identity", position = "dodge") +
-  geom_errorbar(aes(x=trap_type, y=richness, ymin=richness-se, ymax=richness+se), alpha=0.9, size=0.5, width=0.1)
-```
+richness_stats <- summarySE(richnessdf, measurevar = c("richness"), groupvars = c("trap_type"))
+richness_stats2 <- summarySE(richnessdf, measurevar = c("richness"), groupvars = c("trap_type", "BMU"))
 
-    ## Warning: Using `size` aesthetic for lines was deprecated in ggplot2 3.4.0.
-    ## ℹ Please use `linewidth` instead.
-    ## This warning is displayed once every 8 hours.
-    ## Call `lifecycle::last_lifecycle_warnings()` to see where this warning was
-    ## generated.
+richness_plot <- richness_stats %>%
+  ggplot(., aes(x=trap_type, y=richness, fill=trap_type, group=trap_type)) + theme_bw() +
+  geom_errorbar(aes(x=trap_type, y=richness, ymin=richness-se, ymax=richness+se), 
+                position=position_dodge(0.3), alpha=0.9, size=0.5, width=0.1) + ylim(2.5,5) +
+  geom_point(size=3, shape=21, position=position_dodge(0.3)) + scale_fill_manual(values = c("black", "white"))
 
-``` r
-ggsave(file="output/Richness.png", richness_plot, width = 5, height = 3.5, units = c("in"))
+ggsave(file="output/Richness.png", richness_plot, width = 4, height = 3.5, units = c("in"))
+
+richness_plot2 <- richness_stats2 %>%
+  ggplot(., aes(x=BMU, y=richness, fill=trap_type, group=trap_type)) + theme_bw() +
+  geom_errorbar(aes(x=BMU, y=richness, ymin=richness-se, ymax=richness+se), 
+                position=position_dodge(0.3), alpha=0.9, size=0.5, width=0.1) +
+  geom_point(size=2, shape=21, position=position_dodge(0.3)) + scale_fill_manual(values = c("black", "white"))
+
+ggsave(file="output/Richness2.png", richness_plot2, width = 4, height = 3.5, units = c("in"))
 
 richness_aov <- aov(richness~trap_type*BMU, data=richnessdf)
 summary(richness_aov)
@@ -1311,14 +1368,57 @@ TukeyHSD(richness_aov)
     ## Experimental:UYOMBO-Experimental:MAYUNGU 0.0142602
     ## Experimental:UYOMBO-Control:UYOMBO       0.0005875
 
+``` r
+exp_richness <- richnessdf %>% subset(trap_type == "Experimental") ## 150 data points (multiple destinations)
+con_richness <- richnessdf %>% subset(trap_type == "Control") ## 591 data points (multiple destinations)
+
+var.test(exp_richness$richness, con_richness$richness) 
+```
+
+    ## 
+    ##  F test to compare two variances
+    ## 
+    ## data:  exp_richness$richness and con_richness$richness
+    ## F = 0.80844, num df = 149, denom df = 590, p-value = 0.1146
+    ## alternative hypothesis: true ratio of variances is not equal to 1
+    ## 95 percent confidence interval:
+    ##  0.6327055 1.0534357
+    ## sample estimates:
+    ## ratio of variances 
+    ##          0.8084355
+
+``` r
+## p-value = 0.1146; ratio = 0.8084355
+t.test(richness~trap_type, data = richnessdf, var.equal = TRUE)
+```
+
+    ## 
+    ##  Two Sample t-test
+    ## 
+    ## data:  richness by trap_type
+    ## t = 7.6338, df = 739, p-value = 7.052e-14
+    ## alternative hypothesis: true difference in means between group Control and group Experimental is not equal to 0
+    ## 95 percent confidence interval:
+    ##  1.083075 1.833000
+    ## sample estimates:
+    ##      mean in group Control mean in group Experimental 
+    ##                   4.424704                   2.966667
+
+``` r
+## p-value 7.052e-14
+```
+
 ## Calculating maturity
 
 **Control traps**:  
-- 6,492 mature fish caught (42.2%) and 8,890 immature fish caught
-(57.8%)
+- 8,335 mature fish caught (54.19%) and 7,047 immature fish caught
+(45.81%)  
+- 15,382 total
 
 **Experimental traps**:  
-- 1,561 mature fish caught (64.3%) and 867 immature fish caught (35.7%)
+- 1,775 mature fish caught (73.11%) and 653 immature fish caught
+(26.89%)  
+- 2,428 total
 
 ``` r
 ## data2 pre merge = 4,498 x 31
@@ -1326,12 +1426,14 @@ TukeyHSD(richness_aov)
 ## metadata 227 x 48 columns 
 data2 <- left_join(data2, metadata, by = "scientific_name")
 
-## We have Lmat from Galligan and Lmat from Fishbase -- confirm with Austin which one to use 
+## Lmaturity 
 data2 <- data2 %>% 
+  ### use Lmat_cm from Galligan 
+  mutate(Lmat_corrected = if_else(is.na(Lmat_cm), Lmat_fishbase, Lmat_cm)) %>%
   ### categorizing mature or immature 
-  mutate(maturity = if_else(median_length >= Lmat_fishbase, "mature", "immature")) %>%
+  mutate(maturity = if_else(median_length >= Lmat_corrected, "mature", "immature")) %>%
   ### calculating distance from Lmat
-  mutate(length_dist = median_length-Lmat_fishbase) 
+  mutate(length_dist = median_length-Lmat_corrected) 
 
 ## calculating total numbers for stats above 
 data2 %>% dplyr::select(survey_id, trap_type, scientific_name, number_of_fish, maturity) %>% 
@@ -1345,10 +1447,10 @@ data2 %>% dplyr::select(survey_id, trap_type, scientific_name, number_of_fish, m
     ## # Groups:   trap_type, maturity [4]
     ##   trap_type    maturity   sum
     ##   <chr>        <chr>    <dbl>
-    ## 1 Control      mature    6492
-    ## 2 Control      immature  8890
-    ## 3 Experimental mature    1561
-    ## 4 Experimental immature   867
+    ## 1 Control      mature    8335
+    ## 2 Control      immature  7047
+    ## 3 Experimental mature    1775
+    ## 4 Experimental immature   653
 
 ``` r
 ## calculating stats for distance from maturity 
@@ -1361,7 +1463,7 @@ data2_maturity <- data2 %>% dplyr::select(survey_id, trap_type, scientific_name,
 
 ``` r
 exp_maturity <- data2_maturity %>% subset(trap_type == "Experimental") ## 2,428 data points (many fish per survey)
-con_maturity <- data2_maturity %>% subset(trap_type == "Control") ## 15,386 data points (many fish per survey)
+con_maturity <- data2_maturity %>% subset(trap_type == "Control") ## 15,382 data points (many fish per survey)
 
 var.test(exp_maturity$length_dist, con_maturity$length_dist) 
 ```
@@ -1370,16 +1472,16 @@ var.test(exp_maturity$length_dist, con_maturity$length_dist)
     ##  F test to compare two variances
     ## 
     ## data:  exp_maturity$length_dist and con_maturity$length_dist
-    ## F = 0.70759, num df = 2427, denom df = 15381, p-value < 2.2e-16
+    ## F = 0.71107, num df = 2427, denom df = 15381, p-value < 2.2e-16
     ## alternative hypothesis: true ratio of variances is not equal to 1
     ## 95 percent confidence interval:
-    ##  0.6664645 0.7522660
+    ##  0.6697397 0.7559628
     ## sample estimates:
     ## ratio of variances 
-    ##          0.7075884
+    ##          0.7110657
 
 ``` r
-## p-value < 2.2e-16; ratio = 0.7075884
+## p-value < 2.2e-16; ratio = 0.7110657
 
 data2_maturity_mature <- data2_maturity %>% subset(maturity == "mature")
 data2_maturity_immature <- data2_maturity %>% subset(maturity == "immature")
@@ -1391,16 +1493,16 @@ t.test(length_dist~trap_type, data = data2_maturity_mature, var.equal = FALSE)
     ##  Welch Two Sample t-test
     ## 
     ## data:  length_dist by trap_type
-    ## t = -10.625, df = 2347, p-value < 2.2e-16
+    ## t = -1.7179, df = 2610.3, p-value = 0.08593
     ## alternative hypothesis: true difference in means between group Control and group Experimental is not equal to 0
     ## 95 percent confidence interval:
-    ##  -1.3398114 -0.9223247
+    ##  -0.48986929  0.03235536
     ## sample estimates:
     ##      mean in group Control mean in group Experimental 
-    ##                   4.633826                   5.764894
+    ##                   7.065542                   7.294299
 
 ``` r
-## p-value < 2.2e-16
+## p-value 0.08593
 t.test(length_dist~trap_type, data = data2_maturity_immature, var.equal = FALSE)
 ```
 
@@ -1408,21 +1510,44 @@ t.test(length_dist~trap_type, data = data2_maturity_immature, var.equal = FALSE)
     ##  Welch Two Sample t-test
     ## 
     ## data:  length_dist by trap_type
-    ## t = -15.57, df = 1221.9, p-value < 2.2e-16
+    ## t = -15.671, df = 956.81, p-value < 2.2e-16
     ## alternative hypothesis: true difference in means between group Control and group Experimental is not equal to 0
     ## 95 percent confidence interval:
-    ##  -2.587288 -2.008219
+    ##  -2.169874 -1.686901
     ## sample estimates:
     ##      mean in group Control mean in group Experimental 
-    ##                  -7.174454                  -4.876701
+    ##                  -5.774060                  -3.845672
 
 ``` r
+## p-value < 2.2e-16
+
+t.test(length_dist~trap_type, data = data2_maturity, var.equal = FALSE)
+```
+
+    ## 
+    ##  Welch Two Sample t-test
+    ## 
+    ## data:  length_dist by trap_type
+    ## t = -20.592, df = 3596.2, p-value < 2.2e-16
+    ## alternative hypothesis: true difference in means between group Control and group Experimental is not equal to 0
+    ## 95 percent confidence interval:
+    ##  -3.411541 -2.818367
+    ## sample estimates:
+    ##      mean in group Control mean in group Experimental 
+    ##                   1.183298                   4.298252
+
+``` r
+## p-value < 2.2e-16
+
 maturity_stats <- summarySE(data2_maturity, measurevar = c("length_dist"), 
-                            groupvars = c("trap_type", "scientific_name")) %>%
-  filter(!N<3)
+                            groupvars = c("trap_type", "scientific_name")) %>% filter(!N<3)
 ```
 
     ## Warning in qt(conf.interval/2 + 0.5, datac$N - 1): NaNs produced
+
+``` r
+maturity_stats2 <- summarySE(data2_maturity, measurevar = c("length_dist"), groupvars = c("trap_type"))
+```
 
 ### Constructing maturity figure
 
@@ -1433,6 +1558,7 @@ maturity_plot <- maturity_stats %>%
   group_by(scientific_name) %>%
   dplyr::filter(n_distinct(length_dist) >= 2) %>% 
   ungroup() %>%
+  mutate(scientific_name = fct_reorder(scientific_name, desc(N))) %>%
   ggplot(., aes(x=fct_rev(scientific_name), y=length_dist, fill=trap_type)) + 
   coord_flip() +
   scale_fill_manual(values = c("black", "white")) +
@@ -1458,28 +1584,38 @@ data2$length_corrected <- factor(data2$length_corrected, levels=c("0-10", "11-15
 ## creating dataframe for length frequency 
 data2_length_frequency <- data2 %>% 
   select(survey_id, trap_type, scientific_name, number_of_fish, length_corrected, median_length, 
-         maturity, Lmat_fishbase) %>%
-  subset(trap_type == "Control") %>%
+         maturity, Lmat_corrected) %>%
+  #subset(trap_type == "Control") %>%
   #subset(trap_type == "Experimental") %>%
   subset(scientific_name == "Siganus sutor" | 
            scientific_name == "Scarus ghobban" |
            scientific_name == "Lethrinus nebulosus" |
            scientific_name == "Scarus rubroviolaceus" |
            scientific_name == "Siganus canaliculatus") %>% 
-  tidyr::uncount(., number_of_fish, .remove = TRUE) %>% 
   group_by(scientific_name) %>%
+  mutate(n = sum(number_of_fish)) %>%
   #dplyr::filter(n_distinct(trap_type) >= 2) %>% 
-  ungroup()
+  ungroup() %>%
+  tidyr::uncount(., number_of_fish, .remove = TRUE) 
 
-length_frequency_plot <- data2_length_frequency %>% 
-  ggplot(aes(x=length_corrected, fill=trap_type)) +
+species_list_order <- data2_length_frequency %>% dplyr::select(scientific_name, n) %>% distinct()
+
+data2_length_frequency$scientific_name <- factor(data2_length_frequency$scientific_name, 
+                                                 levels = c("Siganus sutor", 
+                                                            "Scarus ghobban",
+                                                            "Lethrinus nebulosus",
+                                                            "Scarus rubroviolaceus",
+                                                            "Siganus canaliculatus")) 
+  
+length_frequency_plot <- data2_length_frequency %>% subset(trap_type == "Experimental") %>%
+  ggplot(., aes(x=length_corrected, fill=trap_type)) +
     geom_histogram(color="black", alpha=0.6, position = 'identity', stat="count") +
-    scale_fill_manual(values=c("grey80")) + ### grey60 for control; white for experimental 
+    scale_fill_manual(values=c("white")) + ### grey80 for control; white for experimental 
     theme_classic() +
     labs(fill="") +
-    facet_grid(scientific_name~trap_type, scales = "free") +
+    facet_grid(scientific_name~trap_type, scales = "free_y") +
     theme_bw() + xlab("Length (cm)") + ylab("Frequency") +
-  theme(axis.text.x.bottom = element_text(colour = 'black', angle = 60, hjust = 1),
+    theme(axis.text.x.bottom = element_text(colour = 'black', angle = 60, hjust = 1),
         axis.text.y = element_text(colour = 'black', size = 8, face = 'italic'),
         panel.border = element_blank(),
           panel.grid.major = element_blank(),
@@ -1494,7 +1630,7 @@ length_frequency_plot <- data2_length_frequency %>%
     ## : Ignoring unknown parameters: `binwidth`, `bins`, and `pad`
 
 ``` r
-ggsave(file="output/Length_frequency_control.png", length_frequency_plot, width = 5, height = 8, units = c("in"))
+ggsave(file="output/Length_frequency_experimental.png", length_frequency_plot, width = 5, height = 8, units = c("in"))
 ```
 
 ### Calculating % fish underneath Lm and sample size per trap type for the figure below
@@ -1506,11 +1642,11 @@ ggsave(file="output/Length_frequency_control.png", length_frequency_plot, width 
 **Siganus canaliculatus**: - Control: 12.98% immature (below Lmat) -
 Experimental: 0% immature (below Lmat)
 
-**Scarus rubroviolaceus**: - Control: 55.42% immature (below Lmat) -
-Experimental: 5.88% immature (below Lmat)
+**Scarus rubroviolaceus**: - Control: 25.49% immature (below Lmat) -
+Experimental: 0% immature (below Lmat)
 
-**Scarus ghobban**: - Control: 91.36% immature (below Lmat) -
-Experimental: 92.74% immature (below Lmat)
+**Scarus ghobban**: - Control: 16.79% immature (below Lmat) -
+Experimental: 0% immature (below Lmat)
 
 **Lethrinus nebulosus**: - Control: 99.53% immature (below Lmat) -
 Experimental: 98.23% immature (below Lmat)
@@ -1519,9 +1655,9 @@ Experimental: 98.23% immature (below Lmat)
 maturity_calcs <- data2_length_frequency %>%
   group_by(scientific_name, trap_type) %>%
   mutate(sample_size = n(),
-         count_below = sum(median_length <= Lmat_fishbase, na.rm=TRUE),
+         count_below = sum(median_length <= Lmat_corrected, na.rm=TRUE),
          percent_below = (count_below/sample_size)*100) %>%
- select(scientific_name, trap_type, sample_size, 
+ select(scientific_name, Lmat_corrected, trap_type, sample_size, 
          count_below, percent_below) %>% 
   ungroup() %>% distinct()
 
@@ -1571,6 +1707,12 @@ data3 <- data2 %>% ungroup() %>%
     ## ! NAs introduced by coercion
     ## ℹ Run `dplyr::last_dplyr_warnings()` to see the 1 remaining warning.
 
+``` r
+range(data3$calculated_biomass_pertrap) ## 0.03890296 kg - 23.11299675 kg 
+```
+
+    ## [1]  0.03890296 23.11299675
+
 ### Comparing reported vs. calculated
 
 ``` r
@@ -1585,26 +1727,10 @@ data3 %>%
 
 ![](Analysis_files/figure-gfm/unnamed-chunk-26-1.png)<!-- -->
 
-### Calculated biomass values per trap
-
-``` r
-range(data3$calculated_biomass_pertrap) ## 0.03890296 kg - 23.11299675 kg 
-```
-
-    ## [1]  0.03890296 23.11299675
-
-``` r
-calculated_kg_plot <- data3 %>% dplyr::select(survey_id, trap_type, calculated_biomass_pertrap) %>% distinct() %>%
-  ggplot(., aes(x=trap_type, y=calculated_biomass_pertrap)) + geom_boxplot(outlier.shape = NA) + 
-  geom_jitter(alpha=0.2, size=0.6, width=0.25, color="gray50") + theme_bw()
-
-ggsave(file="output/Yield_calculated.png", calculated_kg_plot, width = 3, height = 3.5, units = c("in"))
-```
-
 ### Statistics on the above.
 
 ``` r
-data3_calculated_yield <- data3 %>% dplyr::select(survey_id, trap_type, calculated_biomass_pertrap) %>% distinct()
+data3_calculated_yield <- data3 %>% dplyr::select(survey_id, BMU, trap_type, calculated_biomass_pertrap) %>% distinct()
 
 exp_calculated_yield <- data3_calculated_yield %>% subset(trap_type == "Experimental") ## 150 data points
 con_calculated_yield <- data3_calculated_yield %>% subset(trap_type == "Control") ## 591 data points 
@@ -1646,6 +1772,27 @@ t.test(calculated_biomass_pertrap~trap_type, data = data3_calculated_yield, var.
 
 calculated_yield_per_trap_stats <- summarySE(data3_calculated_yield, 
                                      measurevar = c("calculated_biomass_pertrap"), groupvars = c("trap_type"))
+
+calculated_yield_per_trap_stats2 <- summarySE(data3_calculated_yield, 
+                                     measurevar = c("calculated_biomass_pertrap"), groupvars = c("trap_type", "BMU"))
+
+calculated_kg_plot <- calculated_yield_per_trap_stats %>%
+  ggplot(., aes(x=trap_type, y=calculated_biomass_pertrap, fill=trap_type, group=trap_type)) + theme_bw() +
+  geom_errorbar(aes(x=trap_type, y=calculated_biomass_pertrap, 
+                    ymin=calculated_biomass_pertrap-se, ymax=calculated_biomass_pertrap+se), 
+                position=position_dodge(0.3), alpha=0.9, size=0.5, width=0.1) + ylim(0.9,2.4) +
+  #scale_y_break(c(1.1, 1.75)) + ylim(0.9,2.4) +
+  geom_point(size=2, shape=21, position=position_dodge(0.3)) + scale_fill_manual(values = c("black", "white"))
+
+ggsave(file="output/Yield_calculated.png", calculated_kg_plot, width = 4, height = 3.5, units = c("in"))
+
+calculated_kg_plot2 <- calculated_yield_per_trap_stats2 %>%
+  ggplot(., aes(x=BMU, y=calculated_biomass_pertrap, fill=trap_type, group=trap_type)) + theme_bw() +
+  geom_errorbar(aes(x=BMU, y=calculated_biomass_pertrap, ymin=calculated_biomass_pertrap-se, ymax=calculated_biomass_pertrap+se), 
+                position=position_dodge(0.3), alpha=0.9, size=0.5, width=0.1) +
+  geom_point(size=2, shape=21, position=position_dodge(0.3)) + scale_fill_manual(values = c("black", "white"))
+
+ggsave(file="output/Yield_calculated2.png", calculated_kg_plot2, width = 4, height = 3.5, units = c("in"))
 ```
 
 ## Calculating economic data
@@ -1667,19 +1814,11 @@ range(data3$KSHpertrap) ## 7.404932 KES - 3644.143016 KES
 
     ## [1]    7.404932 3644.143016
 
-``` r
-calculated_value_plot <- data3 %>% dplyr::select(survey_id, trap_type, KSHpertrap) %>% distinct() %>%
-  filter(KSHpertrap < 1000) %>%
-  ggplot(., aes(x=trap_type, y=KSHpertrap)) + geom_boxplot(outlier.shape = NA) + 
-  geom_jitter(alpha=0.2, size=0.6, width=0.25, color="gray50") + theme_bw()
-
-ggsave(file="output/Value_calculated.png", calculated_value_plot, width = 3, height = 3.5, units = c("in"))
-```
-
 ### Statistics on the above.
 
 ``` r
-data3_calculated_value <- data3 %>% dplyr::select(survey_id, month, trap_type, KSHpertrap) %>% distinct()
+data3_calculated_value <- data3 %>% ungroup() %>%
+  dplyr::select(survey_id, BMU, month, trap_type, KSHpertrap) %>% distinct()
 
 exp_calculated_value <- data3_calculated_value %>% subset(trap_type == "Experimental") ## 150 data points
 con_calculated_value <- data3_calculated_value %>% subset(trap_type == "Control") ## 591 data points 
@@ -1722,6 +1861,33 @@ t.test(KSHpertrap~trap_type, data = data3_calculated_value, var.equal = FALSE)
 calculated_value_per_trap_stats <- summarySE(data3_calculated_value, 
                                      measurevar = c("KSHpertrap"), groupvars = c("trap_type"))
 
+calculated_value_per_trap_stats2 <- summarySE(data3_calculated_value, 
+                                     measurevar = c("KSHpertrap"), groupvars = c("trap_type", "BMU"))
+
+calculated_value_plot <- calculated_value_per_trap_stats %>%
+  ggplot(., aes(x=trap_type, y=KSHpertrap, fill=trap_type, group=trap_type)) + theme_bw() +
+  geom_errorbar(aes(x=trap_type, y=KSHpertrap, ymin=KSHpertrap-se, ymax=KSHpertrap+se), 
+                position=position_dodge(0.3), alpha=0.9, size=0.5, width=0.1) + ylim(140,340) +
+  geom_point(size=2, shape=21, position=position_dodge(0.3)) + scale_fill_manual(values = c("black", "white"))
+
+ggsave(file="output/Value_calculated.png", calculated_value_plot, width = 4, height = 3.5, units = c("in"))
+```
+
+    ## Warning: Removed 1 rows containing missing values (`geom_point()`).
+
+``` r
+calculated_value_plot2 <- calculated_value_per_trap_stats2 %>%
+  ggplot(., aes(x=BMU, y=KSHpertrap, fill=trap_type, group=trap_type)) + theme_bw() +
+  geom_errorbar(aes(x=BMU, y=KSHpertrap, ymin=KSHpertrap-se, ymax=KSHpertrap+se), 
+                position=position_dodge(0.3), alpha=0.9, size=0.5, width=0.1) +
+  geom_point(size=2, shape=21, position=position_dodge(0.3)) + scale_fill_manual(values = c("black", "white"))
+
+ggsave(file="output/Value_calculated2.png", calculated_value_plot2, width = 4, height = 3.5, units = c("in"))
+```
+
+Calculating per month data
+
+``` r
 calculated_value_per_trap_stats_permonth <- summarySE(data3_calculated_value, 
                                      measurevar = c("KSHpertrap"), groupvars = c("trap_type", "month"))
 
@@ -1772,14 +1938,27 @@ data3 <- data3 %>%
 ### Plotting individual nutrients
 
 ``` r
-nutrient_individual_plot <- data3 %>% dplyr::select(survey_id, trap_type, pertrap_Protein) %>% 
-  distinct() %>%
-  ggplot(., aes(x=trap_type, y=pertrap_Protein)) + 
-  geom_boxplot(outlier.shape = NA) + 
-  geom_jitter(alpha=0.2, size=0.6, width=0.25, color="gray50") + 
-  theme_bw()
+nutrient_df <- data3 %>% 
+  dplyr::select(survey_id, trap_type, pertrap_Zinc) %>%  ###CHANGE NAME HERE
+  distinct() %>% 
+  dplyr::rename(nutrient = pertrap_Zinc) ###CHANGE NAME HERE
 
-ggsave(file="output/Nutrient_Protein.png", nutrient_individual_plot, width = 3, height = 3.5, units = c("in"))
+nutrient_stats <- summarySE(nutrient_df, measurevar = c("nutrient"), groupvars = c("trap_type"))
+  
+nutrient_individual_plot <- nutrient_stats %>% 
+  ggplot(., aes(x=trap_type, y=nutrient, fill=trap_type, group=trap_type)) + theme_bw() +
+  geom_errorbar(aes(x=trap_type, y=nutrient, ymin=nutrient-se, ymax=nutrient+se), 
+                position=position_dodge(0.3), alpha=0.9, size=0.5, width=0.1) + ylab("Zinc") + ###CHANGE NAME HERE
+  #ylim(160,360) + ##protein
+  #ylim(375,800) + ## calcium
+  #ylim(7,17) + ##iron 
+  #ylim(1.75,4.5) + ##omega3
+  #ylim(300,650) + ##vitaminA
+  #ylim(250,540) + ##selenium
+  ylim(16,36) + ##zinc
+  geom_point(size=3, shape=21, position=position_dodge(0.3)) + scale_fill_manual(values = c("black", "white"))
+
+ggsave(file="output/Nutrient_Zinc.png", nutrient_individual_plot, width = 4, height = 3.5, units = c("in")) ###CHANGE NAME HERE
 ```
 
 ### Statistics on the above
@@ -1790,8 +1969,35 @@ nutrient_stats <- data3 %>%
          pertrap_Protein, pertrap_VitaminA, pertrap_Selenium, pertrap_Zinc, trap_type) %>% 
   distinct() %>% na.omit()
 
+exp_nutrient_stats <- nutrient_stats %>% subset(trap_type == "Experimental") ## 144 data points
+con_nutrient_stats <- nutrient_stats %>% subset(trap_type == "Control") ## 588 data points 
+
+var.test(exp_nutrient_stats$pertrap_Zinc, con_nutrient_stats$pertrap_Zinc)  ### CHANGE NUTRIENT HERE
+```
+
+    ## 
+    ##  F test to compare two variances
+    ## 
+    ## data:  exp_nutrient_stats$pertrap_Zinc and con_nutrient_stats$pertrap_Zinc
+    ## F = 2.667, num df = 143, denom df = 587, p-value = 4.441e-16
+    ## alternative hypothesis: true ratio of variances is not equal to 1
+    ## 95 percent confidence interval:
+    ##  2.079209 3.492397
+    ## sample estimates:
+    ## ratio of variances 
+    ##           2.666976
+
+``` r
+## CALCIUM == p-value = 2.445e-13; ratio = 2.430049
+## IRON == p-value = 3.997e-15; ratio = 2.581823
+## OMEGA3 == p-value < 2.2e-16; ratio = 2.80394
+## PROTEIN == p-value < 2.2e-16; ratio = 2.705249
+## VITAMIN A == p-value = 1.776e-15; ratio = 2.608675
+## SELENIUM == p-value = 3.997e-15; ratio = 2.58167
+## ZINC == p-value = 4.441e-16; ratio = 2.666976
+
 ### replace variable name below for each t.test 
-t.test(pertrap_Zinc~trap_type, data = nutrient_stats, var.equal = FALSE)
+t.test(pertrap_Zinc~trap_type, data = nutrient_stats, var.equal = FALSE) ### CHANGE NUTRIENT HERE
 ```
 
     ## 
@@ -1818,9 +2024,9 @@ zinc_stats <- summarySE(nutrient_stats, measurevar = c("pertrap_Zinc"), groupvar
 
 ## Calculating bycatch
 
-399 instances of bycatch (% of total catch). 85% of that bycatch occured
-in controlled traps (341 bycatch fish caught in control and 58 in
-experimental).
+399 instances of bycatch (2.36% of total catch). 85% of that bycatch
+occured in controlled traps (341 bycatch fish caught in control and 58
+in experimental).
 
 17 species of bycatch fish caught: - *Acanthurus triostegus*,
 *Acanthurus nigricauda*, *Acanthurus nigrofuscus*, *Abudefduf
@@ -1858,26 +2064,125 @@ data3 %>% dplyr::select(survey_id, scientific_name, number_of_fish, trap_type, B
     ## 10 Balistapus undulatus          Yes     Experiment…   399    58           0.145
     ## # ℹ 12 more rows
 
-## Creating a variable correlation plot
+``` r
+### total (16517+399) = 16916
+### total non bycatch 16,517 
+### 14,297 control
+### 2,220 experimental
 
-CPUE Length Reported value (KES) Reported yield (kg) Protein Nutrient
-components Richness
+bycatchdf <- data2 %>% dplyr::group_by(survey_id, Bycatch) %>%
+  mutate(no_bycatch = sum(number_of_fish),
+         bycatch_trap = no_bycatch/total_traps_collected) %>%
+  dplyr::select(survey_id, trap_type, Bycatch, bycatch_trap) %>% 
+  distinct() %>% subset(Bycatch == "Yes")
 
-## correlation plot
+bycatchdf_stats <- summarySE(bycatchdf, measurevar = c("bycatch_trap"), groupvars = c("trap_type"))
+### I think this is higher because experimental traps catch more Naso annulatus
+
+bycatch_plot <- bycatchdf_stats %>%
+  ggplot(., aes(x=trap_type, y=bycatch_trap, fill=trap_type, group=trap_type)) + theme_bw() +
+  geom_errorbar(aes(x=trap_type, y=bycatch_trap, ymin=bycatch_trap-se, ymax=bycatch_trap+se), 
+                position=position_dodge(0.3), alpha=0.9, size=0.5, width=0.1) + 
+  ylim(0.3,1.1) +  
+  geom_point(size=3, shape=21, position=position_dodge(0.3)) + scale_fill_manual(values = c("black", "white"))
+
+ggsave(file="output/Bycatch.png", bycatch_plot, width = 4, height = 3.5, units = c("in")) 
+
+### replace variable name below for each t.test 
+t.test(bycatch_trap~trap_type, data = bycatchdf, var.equal = FALSE)
+```
+
+    ## 
+    ##  Welch Two Sample t-test
+    ## 
+    ## data:  bycatch_trap by trap_type
+    ## t = -1.4977, df = 20.603, p-value = 0.1494
+    ## alternative hypothesis: true difference in means between group Control and group Experimental is not equal to 0
+    ## 95 percent confidence interval:
+    ##  -0.8542691  0.1394611
+    ## sample estimates:
+    ##      mean in group Control mean in group Experimental 
+    ##                  0.4648999                  0.8223039
 
 ``` r
-# correlation <- data %>% 
-#   select(survey_id, catch_per_trap, kg_per_trap, total_traps_collected, total_biomass_kg, 
-#          total_value_KES, total_catch, value_per_trap, scientific_name) %>%
-#   group_by(survey_id) %>%
-#         mutate(., richness = n_distinct(scientific_name), 
-#                richness_trap = richness/total_traps_collected) %>% 
-#   select(-scientific_name) %>% distinct() %>% ungroup() %>%
-#   na.omit() %>% select(-survey_id)
+### 17 / 150 surveys (11.33%) experimental have bycatch
+### 93 / 591 (15.73%) control surveys have bycatch
+
+exp_bycatchdf <- bycatchdf %>% subset(trap_type == "Experimental") ## 17 data points
+con_bycatchdf <- bycatchdf %>% subset(trap_type == "Control") ## 93 data points 
+
+var.test(exp_bycatchdf$bycatch_trap, con_bycatchdf$bycatch_trap) 
+```
+
+    ## 
+    ##  F test to compare two variances
+    ## 
+    ## data:  exp_bycatchdf$bycatch_trap and con_bycatchdf$bycatch_trap
+    ## F = 1.3381, num df = 16, denom df = 92, p-value = 0.3835
+    ## alternative hypothesis: true ratio of variances is not equal to 1
+    ## 95 percent confidence interval:
+    ##  0.6857632 3.2152622
+    ## sample estimates:
+    ## ratio of variances 
+    ##           1.338097
+
+Creating pie charts
+
+``` r
+# piechart_df <- data.frame(category = c("bycatch", "non-bycatch"), value = c(399, 16517))
 # 
-# library(corrplot)
-# png(height = 1400, width = 1400, file="output/response-correlation-matrix.png")
-# corrplot(cor(correlation), addCoef.col = 1,    # Change font size of correlation coefficients
-#          number.cex = 1.3, cl.cex = 2.5, tl.col="black", tl.cex = 2)
-# dev.off()
+# piechart1 <- ggplot(piechart_df, aes(x="", y=value, fill=category)) +
+#   geom_bar(stat="identity", width=1, color="black") +
+#   coord_polar("y", start=0) +
+#   theme_void() + 
+#   scale_fill_manual(values = c("grey90", "white")) +
+#   theme(legend.position="none")
+# 
+# ggsave(file="output/Bycatch_total.png", piechart1, width = 4, height = 4, units = c("in"))
+# 
+# piechart_df2 <- data.frame(category = c("control", "experimental"), value = c(341, 58))
+# 
+# piechart2 <- ggplot(piechart_df2, aes(x="", y=value, fill=category)) +
+#   geom_bar(stat="identity", width=1, color="black") +
+#   coord_polar("y", start=0) +
+#   theme_void() + 
+#   scale_fill_manual(values = c("grey90", "white")) +
+#   theme(legend.position="none")
+# 
+# ggsave(file="output/Bycatch_traptype.png", piechart2, width = 4, height = 4, units = c("in"))
+```
+
+### Exporting analyzed dataframes
+
+``` r
+pertrap_final_df <- data3 %>% dplyr::select(survey_id, BMU, landing_site, fisher_id, household_id, 
+                                            trap_type, total_traps_collected, date_set_dd_mm_yyyy, 
+                                            date_collected_dd_mm_yyyy, year, month, day,
+                                            total_biomass_kg, take_home_weight_kg, total_value_KES,
+                                            take_home_value_KES, `No. of fishers in crew`, 
+                                            date_time_set, date_time_collected, total_catch, 
+                                            CPUE, yield_kg_trap, value_KES_trap, richness,
+                                            calculated_biomass_pertrap, KSHpertrap, pertrap_Calcium, 
+                                            pertrap_Iron, pertrap_Omega3, pertrap_Protein, pertrap_VitaminA, 
+                                            pertrap_Selenium, pertrap_Zinc) %>% distinct()
+
+perspp_final_df <- data3 %>% dplyr::select(survey_id, BMU, trap_type, Kiswahili_name, scientific_name,
+                                           number_of_fish, destination, length_corrected, median_length,
+                                           no_perdestination, percent_perdestination, a,
+                                           b, Family, FishGroups, EnglishName, KiswahiliName, 
+                                           Bycatch, Price_KSHPerkg, FunGr_Diet, TrophLevel, 
+                                           SE_TrophLevel, Vulnerability, Lmat_corrected, Lopt_cm, Linf_cm,
+                                           SizeCategory, Diet, Mobility, Active, Schooling, Position,
+                                           TempPrefMin_degC, TempPrefMean_degC, TempPrefMax_degC, Calcium_mgPer100g,
+                                           Calicum_L95, Calcium_U95, Iron_mgPer100g, Iron_L95, Iron_U95,
+                                           Omega3_gPer100g, Omega3_L95, Omega3_U95, Protein_gPer100g,
+                                           Protein_L95, Protein_U95, VitaminA_ugPer100g, VitaminA_L95,
+                                           VitaminA_U95, Selenium_ugPer100g, Selenium_L95, Selenium_U95, Zinc_mgPer100g,
+                                           Zinc_L95, Zinc_U95, maturity, length_dist, W_g, W_kg, spp_Calcium,
+                                           spp_Iron, spp_Omega3, spp_Protein, spp_VitaminA, spp_Selenium, spp_Zinc)
+
+pertrap_final_df %>% write.csv("output/pertrap_final_df.csv")
+
+### this is too big to save to github
+#perspp_final_df %>% write.csv("output/perspp_final_df.csv")
 ```
