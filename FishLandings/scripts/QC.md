@@ -1615,11 +1615,21 @@ fishing_operation2 <- fishing_operation2 %>%
 ### in this case, if the duplicate_surveyid column states TRUE, there are 2 rows with the same survey id
 ### because one row will have info for modified traps used, and one row will have info for unmodified traps used 
 ### if true, these surveys have mixed modified and unmodified trap sets 
+```
 
+Last point where other trap types are included in analyses.
+
+``` r
+### I need to create this df before filtering out those with no trap # 
+fishing_operation_alt <- fishing_operation2
+```
+
+``` r
 fishing_operation2 <- fishing_operation2 %>% 
   ## remove survey trips that did not write down the total number of traps collected 
 ## PRE FILTER = 4,660
 ## POST FILTER = 1,916 
+  #### also filters out fishing gear that are not modified and unmodified traps 
   filter(!is.na(total_traps_collected)) 
 
 fishing_operation2 <- fishing_operation2 %>%
@@ -1743,4 +1753,99 @@ df2export <- df2 %>% select(-keep_traptype, -multiple_fishermen, -duplicate_surv
                             -date_id, -Operation_date, -`gear type`, -length_cm, -length_calc)
 
 write_xlsx(df2export, "data/cleaned-Fishlandings-data-FEB 2023 JMCC.xlsx")
+```
+
+### Alternate dataset for collaborators
+
+``` r
+unique(catch_composition2$`gear type`)
+```
+
+    ## [1] "UNMODIFIED"               "MODIFIED"                
+    ## [3] "SPEAR"                    "OTHER (SPECIFY IN NOTES)"
+    ## [5] "MONOFILAMENT"
+
+``` r
+catch_composition_alt <- catch_composition2 %>% 
+  subset(!`gear type` == "MODIFIED") %>%
+  subset(!`gear type` == "UNMODIFIED") %>% 
+  mutate(`gear type` = gsub("SPEAR", "SPEARGUN", `gear type`))
+```
+
+``` r
+## 4,660 total pre-filter
+## 2,175 surveys for all types of traps not just modified and unmodified 
+fishing_operation_alt <- fishing_operation_alt %>% 
+  mutate(., multiple_fishermen = if_else((duplicated(fishing_operation_alt[c("BMU",
+                                                                  "total_traps_collected",
+                                                                  "total_biomass_kg",
+                                                                  "total_value_KES",
+                                                                  "No. of fishers in crew")])), TRUE, FALSE)) %>%
+  filter(!multiple_fishermen == "TRUE") %>%
+  dplyr::select(-`time_in_water (effort)`, -general_notes,
+                -`time_set_24hh:mm`, -`time_collected_24hh:mm`)
+
+unique(fishing_operation_alt$trap_type)
+```
+
+    ## [1] "UNMODIFIED"             "MODIFIED"               "SPEARGUN"              
+    ## [4] "SEINE NET"              "OCTOPUS HOOK"           "HANDLINE"              
+    ## [7] "MONOFILAMENT"           "GILLNET"                "SPEARGUN AND SEINE NET"
+
+``` r
+## 2,156 rows x 30 columns after joining 
+alt_df <- inner_join(fishing_operation_alt, catch_composition_alt, 
+                  by = c("Operation_date", "fisher_id")) %>%
+  ### remove duplicated rows (likely due to typing errors)
+  distinct() %>% 
+  ### keeping only those that match gear type and trap type columns 
+  ### creating and new column and then filtering out let's me visual check it worked before filtering 
+  mutate(keep_traptype = if_else(trap_type == `gear type`, TRUE, FALSE)) %>%
+  filter(!keep_traptype == "FALSE") %>%
+  subset(!trap_type == "MODIFIED") %>%
+  subset(!trap_type == "UNMODIFIED") %>% dplyr::select(-total_traps_collected)
+```
+
+    ## Warning in inner_join(fishing_operation_alt, catch_composition_alt, by = c("Operation_date", : Detected an unexpected many-to-many relationship between `x` and `y`.
+    ## ℹ Row 469 of `x` matches multiple rows in `y`.
+    ## ℹ Row 907 of `y` matches multiple rows in `x`.
+    ## ℹ If a many-to-many relationship is expected, set `relationship =
+    ##   "many-to-many"` to silence this warning.
+
+``` r
+## 652 surveys in alternate df (speargun and monofilament)
+alt_df %>% select(survey_id) %>% distinct()
+```
+
+    ## # A tibble: 628 × 1
+    ##    survey_id                           
+    ##    <chr>                               
+    ##  1 2021-07-23 11:30:00 SS/KUR/SG/092/FF
+    ##  2 2021-07-23 11:30:00 SS/KUR/SG/020/FF
+    ##  3 2021-07-23 11:30:00 SS/KUR/SG/081/FF
+    ##  4 2021-07-23 11:30:00 SS/KUR/SG/086/FF
+    ##  5 2021-07-24 12:00:00 SS/KUR/SG/081/FF
+    ##  6 2021-07-24 12:00:00 SS/KUR/SG/029/FF
+    ##  7 2021-07-24 12:00:00 SS/KUR/SG/020/FF
+    ##  8 2021-07-25 13:30:00 SS/KUR/SG/029/FF
+    ##  9 2021-07-25 13:30:00 SS/KUR/SG/020/FF
+    ## 10 2021-07-26 14:00:00 SS/KUR/SG/020/FF
+    ## # ℹ 618 more rows
+
+``` r
+## KURUWITU = 382 surveys 
+## KANAMAI = 141 surveys 
+## TAKAUNGU = 105 surveys 
+### all three other sites used spearguns 
+### TAKAUNGU used monofilament 
+
+#alt_df %>% subset(`gear type` == "MONOFILAMENT") %>% select(BMU) %>% distinct()
+
+unique(alt_df$BMU)
+```
+
+    ## [1] "KURUWITU" "KANAMAI"  "TAKAUNGU"
+
+``` r
+alt_df %>% write.csv("output/alternate_fishing.csv")
 ```

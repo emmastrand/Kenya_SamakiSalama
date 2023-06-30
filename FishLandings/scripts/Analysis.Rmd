@@ -97,8 +97,8 @@ unmodified_metadata <- data %>% subset(trap_type == "UNMODIFIED") %>%
 modified_metadata <- data %>% subset(trap_type == "MODIFIED") %>%
   unite(yearmonth, year, month, sep = " ", remove = FALSE)
 
-unique(modified_metadata$destination)
-unique(unmodified_metadata$survey_id)
+# unique(modified_metadata$destination)
+# unique(unmodified_metadata$survey_id)
 ```
 
 
