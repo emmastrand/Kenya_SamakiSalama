@@ -17,31 +17,6 @@ editor_options:
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-## Contents 
-
-- [**Protocol to run this with a future xlsx file**](#protocol)   
-- [**Load all libraries**](#libraries)  
-- [**Create dataframe**](#df)  
-- [**Quality Control: enumerator**](#Enumerator)  
-- [**Quality Control: landing_site and BMU**](#Landing_site)  
-- [**Quality Control: fisher information**](#fisher_info)  
-- [**Quality Control: trap information**](#trap)  
-- [**Quality Control: catch information**](#catch)  
-- [**Gear type, and fish numbers/final destination**](#gear)  
-- [**Quality Control: final check for notes written by field team**](#notes)   
-- [**Exporting cleaned dataset**](#export)  
-
-## <a name="protocol"></a> **Protocol to run this with a future xlsx file**
-
-1. In the toolbar above, hit the arrow next to `Knit`. Scroll down to `Knit Directory` and select the option `Project Directory`.    
-2. **In `Create dataframe` code chunk**: Replace raw data file name in the function that creates the following variables: fishing_operation, catch_composition, and validation_lists.    
-3. **In `Enumerator`, `Landing_site`, and `BMU` code chunks**: Run the unique() function and double check that this list is the correct names.  
-4. **In Trap information**, run code chunk functions for `trap_type` and `total_traps_collected` sections and double check the output is as expected.  
-5. **In catch information**, run code chunk functions for `weight and value measures`, `number of fishers in crew`, and `Kiswahili_name` and double check the output is as expected.  
-6. **In Species/Scientific name**, run code chunk functions and check output to make sure it is as expected.  
-7. **In length, gear type, number of fish, and desintation sections**, run code chunk to double check the output of ranges is as expected.  
-8. In the export section, rename the new datafile excel file.  
-
 ## <a name="libraries"></a> **Load all libraries**
 
 ```{r, message=FALSE, warning=FALSE}
