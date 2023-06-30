@@ -509,8 +509,10 @@ ggsave(file="output/Length2.png", length_plot2, width = 4, height = 3.5, units =
 
 ## Calculating take home metrics
 
+Use 2021-08-13 12:13:00 SS/MAY/SB/026/FF to double check calculations
+
 ``` r
-data2 <- data2 %>% dplyr::group_by(survey_id, destination) %>%
+data2 <- data2 %>% dplyr::group_by(survey_id, trap_type, destination) %>%   
   mutate(no_perdestination = sum(number_of_fish),
          percent_perdestination = no_perdestination/total_catch*100)
 
@@ -531,16 +533,16 @@ var.test(exp_takehome$percent_perdestination, con_takehome$percent_perdestinatio
     ##  F test to compare two variances
     ## 
     ## data:  exp_takehome$percent_perdestination and con_takehome$percent_perdestination
-    ## F = 3.3865, num df = 39, denom df = 351, p-value = 1.53e-09
+    ## F = 3.4214, num df = 39, denom df = 351, p-value = 1.068e-09
     ## alternative hypothesis: true ratio of variances is not equal to 1
     ## 95 percent confidence interval:
-    ##  2.206285 5.687269
+    ##  2.229023 5.745881
     ## sample estimates:
     ## ratio of variances 
-    ##           3.386456
+    ##           3.421355
 
 ``` r
-## p-value < 2.2e-16; ratio = 3.386456
+## p-value = 1.068e-09; ratio = 3.421355
 t.test(percent_perdestination~trap_type, data = data2_takehome, var.equal = FALSE)
 ```
 
@@ -548,16 +550,16 @@ t.test(percent_perdestination~trap_type, data = data2_takehome, var.equal = FALS
     ##  Welch Two Sample t-test
     ## 
     ## data:  percent_perdestination by trap_type
-    ## t = -3.1585, df = 41.656, p-value = 0.002949
+    ## t = -3.0569, df = 41.629, p-value = 0.003897
     ## alternative hypothesis: true difference in means between group Control and group Experimental is not equal to 0
     ## 95 percent confidence interval:
-    ##  -17.735354  -3.905069
+    ##  -17.485794  -3.576978
     ## sample estimates:
     ##      mean in group Control mean in group Experimental 
-    ##                   16.36440                   27.18461
+    ##                   16.34073                   26.87211
 
 ``` r
-## p-value 0.002949
+## p-value 0.003897
 
 takehome_plot <- takehome_stats %>%
   ggplot(., aes(x=trap_type, y=percent_perdestination, fill=trap_type, group=trap_type)) + theme_bw() +
@@ -695,9 +697,12 @@ left_join(spp_df_mod, metadata, by = "scientific_name") %>%
 
 ### Calculating species richness
 
+Use 2021-08-13 12:13:00 SS/MAY/SB/026/FF to double check calculationss
+
 ``` r
-data2 <- data2 %>% group_by(survey_id) %>%
-  mutate(richness = n_distinct(scientific_name))
+data2 <- data2 %>% group_by(survey_id, trap_type) %>%
+  mutate(richness = n_distinct(scientific_name),
+         richness_trap = richness/total_traps_collected)
 
 range(data2$richness) ## 1 - 14 different species in one survey 
 ```
@@ -705,16 +710,26 @@ range(data2$richness) ## 1 - 14 different species in one survey
     ## [1]  1 14
 
 ``` r
-richnessdf <- data2 %>% dplyr::select(survey_id, BMU, trap_type, richness) %>% distinct()
+range(data2$richness_trap) ## 0.0625 - 6.0000 different species in one survey 
+```
+
+    ## [1] 0.0625 6.0000
+
+``` r
+richnessdf <- data2 %>% dplyr::select(survey_id, BMU, trap_type, richness, richness_trap) %>% distinct()
 
 richness_stats <- summarySE(richnessdf, measurevar = c("richness"), groupvars = c("trap_type"))
 richness_stats2 <- summarySE(richnessdf, measurevar = c("richness"), groupvars = c("trap_type", "BMU"))
 
+richness_trap_stats <- summarySE(richnessdf, measurevar = c("richness_trap"), groupvars = c("trap_type"))
+richness_trap_stats2 <- summarySE(richnessdf, measurevar = c("richness_trap"), groupvars = c("trap_type", "BMU"))
+
+#### RICHNESS 
 richness_plot <- richness_stats %>%
   ggplot(., aes(x=trap_type, y=richness, fill=trap_type, group=trap_type)) + theme_bw() +
   geom_errorbar(aes(x=trap_type, y=richness, ymin=richness-se, ymax=richness+se), 
-                position=position_dodge(0.3), alpha=0.9, size=0.5, width=0.1) + ylim(2.5,5) +
-  geom_point(size=3, shape=21, position=position_dodge(0.3)) + scale_fill_manual(values = c("black", "white"))
+                position=position_dodge(0.3), alpha=0.9, size=0.5, width=0.1) + ylim(1.8,4.7) +
+  geom_point(size=2, shape=21, position=position_dodge(0.3)) + scale_fill_manual(values = c("black", "white"))
 
 ggsave(file="output/Richness.png", richness_plot, width = 4, height = 3.5, units = c("in"))
 
@@ -726,52 +741,27 @@ richness_plot2 <- richness_stats2 %>%
 
 ggsave(file="output/Richness2.png", richness_plot2, width = 4, height = 3.5, units = c("in"))
 
-richness_aov <- aov(richness~trap_type*BMU, data=richnessdf)
-summary(richness_aov)
-```
+#### RICHNESS PER TRAP 
+richness_trap_plot <- richness_trap_stats %>%
+  ggplot(., aes(x=trap_type, y=richness_trap, fill=trap_type, group=trap_type)) + theme_bw() +
+  geom_errorbar(aes(x=trap_type, y=richness_trap, ymin=richness_trap-se, ymax=richness_trap+se), 
+                position=position_dodge(0.3), alpha=0.9, size=0.5, width=0.1) + ylim(0.4,0.65) +
+  geom_point(size=3, shape=21, position=position_dodge(0.3)) + scale_fill_manual(values = c("black", "white"))
 
-    ##                Df Sum Sq Mean Sq F value   Pr(>F)    
-    ## trap_type       1  254.3  254.33  61.380 1.64e-14 ***
-    ## BMU             1  171.2  171.20  41.318 2.32e-10 ***
-    ## trap_type:BMU   1    0.2    0.23   0.055    0.815    
-    ## Residuals     737 3053.8    4.14                     
-    ## ---
-    ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+ggsave(file="output/Richness_trap.png", richness_trap_plot, width = 4, height = 3.5, units = c("in"))
 
-``` r
-TukeyHSD(richness_aov)
-```
+richness_trap_plot2 <- richness_trap_stats2 %>%
+  ggplot(., aes(x=BMU, y=richness_trap, fill=trap_type, group=trap_type)) + theme_bw() +
+  geom_errorbar(aes(x=BMU, y=richness_trap, ymin=richness_trap-se, ymax=richness_trap+se), 
+                position=position_dodge(0.3), alpha=0.9, size=0.5, width=0.1) +
+  geom_point(size=2, shape=21, position=position_dodge(0.3)) + scale_fill_manual(values = c("black", "white"))
 
-    ##   Tukey multiple comparisons of means
-    ##     95% family-wise confidence level
-    ## 
-    ## Fit: aov(formula = richness ~ trap_type * BMU, data = richnessdf)
-    ## 
-    ## $trap_type
-    ##                           diff       lwr      upr p adj
-    ## Experimental-Control -1.458037 -1.823395 -1.09268     0
-    ## 
-    ## $BMU
-    ##                     diff       lwr      upr p adj
-    ## UYOMBO-MAYUNGU 0.9469592 0.6530221 1.240896     0
-    ## 
-    ## $`trap_type:BMU`
-    ##                                                diff        lwr        upr
-    ## Experimental:MAYUNGU-Control:MAYUNGU     -1.2763906 -1.8993383 -0.6534429
-    ## Control:UYOMBO-Control:MAYUNGU            0.9608543  0.5255416  1.3961671
-    ## Experimental:UYOMBO-Control:MAYUNGU      -0.2245852 -1.0221111  0.5729407
-    ## Control:UYOMBO-Experimental:MAYUNGU       2.2372449  1.6355040  2.8389858
-    ## Experimental:UYOMBO-Experimental:MAYUNGU  1.0518053  0.1525598  1.9510509
-    ## Experimental:UYOMBO-Control:UYOMBO       -1.1854396 -1.9665131 -0.4043660
-    ##                                              p adj
-    ## Experimental:MAYUNGU-Control:MAYUNGU     0.0000010
-    ## Control:UYOMBO-Control:MAYUNGU           0.0000001
-    ## Experimental:UYOMBO-Control:MAYUNGU      0.8870680
-    ## Control:UYOMBO-Experimental:MAYUNGU      0.0000000
-    ## Experimental:UYOMBO-Experimental:MAYUNGU 0.0142602
-    ## Experimental:UYOMBO-Control:UYOMBO       0.0005875
+ggsave(file="output/Richness_trap2.png", richness_trap_plot2, width = 4, height = 3.5, units = c("in"))
 
-``` r
+# richness_aov <- aov(richness~trap_type*BMU, data=richnessdf)
+# summary(richness_aov)
+# TukeyHSD(richness_aov)
+
 exp_richness <- richnessdf %>% subset(trap_type == "Experimental") ## 150 data points (multiple destinations)
 con_richness <- richnessdf %>% subset(trap_type == "Control") ## 591 data points (multiple destinations)
 
@@ -782,30 +772,30 @@ var.test(exp_richness$richness, con_richness$richness)
     ##  F test to compare two variances
     ## 
     ## data:  exp_richness$richness and con_richness$richness
-    ## F = 0.80844, num df = 149, denom df = 590, p-value = 0.1146
+    ## F = 0.29305, num df = 149, denom df = 590, p-value < 2.2e-16
     ## alternative hypothesis: true ratio of variances is not equal to 1
     ## 95 percent confidence interval:
-    ##  0.6327055 1.0534357
+    ##  0.2293500 0.3818608
     ## sample estimates:
     ## ratio of variances 
-    ##          0.8084355
+    ##          0.2930505
 
 ``` r
-## p-value = 0.1146; ratio = 0.8084355
-t.test(richness~trap_type, data = richnessdf, var.equal = TRUE)
+## p-value < 2.2e-16; ratio = 0.2930505
+t.test(richness~trap_type, data = richnessdf, var.equal = FALSE)
 ```
 
     ## 
-    ##  Two Sample t-test
+    ##  Welch Two Sample t-test
     ## 
     ## data:  richness by trap_type
-    ## t = 7.6338, df = 739, p-value = 7.052e-14
+    ## t = 18.173, df = 436.22, p-value < 2.2e-16
     ## alternative hypothesis: true difference in means between group Control and group Experimental is not equal to 0
     ## 95 percent confidence interval:
-    ##  1.083075 1.833000
+    ##  2.071149 2.573453
     ## sample estimates:
     ##      mean in group Control mean in group Experimental 
-    ##                   4.424704                   2.966667
+    ##                   4.375635                   2.053333
 
 ``` r
 ## p-value 7.052e-14
@@ -857,7 +847,8 @@ data2 %>% dplyr::select(survey_id, trap_type, scientific_name, number_of_fish, m
 
 ``` r
 ## calculating stats for distance from maturity 
-data2_maturity <- data2 %>% dplyr::select(survey_id, trap_type, scientific_name, number_of_fish, maturity, length_dist) %>%
+data2_maturity <- data2 %>% 
+  dplyr::select(survey_id, trap_type, scientific_name, number_of_fish, maturity, length_dist) %>%
   tidyr::uncount(., number_of_fish, .remove = TRUE) %>% 
   filter(!is.na(length_dist))
 ```
@@ -1096,7 +1087,7 @@ data3 <- data2 %>% ungroup() %>%
   mutate_at(c('a', 'b'), as.numeric) %>%
   mutate(W_g = (a*(median_length^b))*number_of_fish,
          W_kg = W_g/1000) %>%
-  group_by(survey_id) %>%
+  group_by(survey_id, trap_type) %>%
   filter(!is.na(W_kg)) %>%
   mutate(calculated_total_biomass = sum(W_kg),
          calculated_biomass_pertrap = calculated_total_biomass/total_traps_collected) %>% 
@@ -1111,10 +1102,10 @@ data3 <- data2 %>% ungroup() %>%
     ## ℹ Run `dplyr::last_dplyr_warnings()` to see the 1 remaining warning.
 
 ``` r
-range(data3$calculated_biomass_pertrap) ## 0.03890296 kg - 23.11299675 kg 
+range(data3$calculated_biomass_pertrap) ## 0.03890296 kg - 5.97829841 kg 
 ```
 
-    ## [1]  0.03890296 23.11299675
+    ## [1] 0.03890296 5.97829841
 
 ### Comparing reported vs. calculated
 
@@ -1145,16 +1136,16 @@ var.test(exp_calculated_yield$calculated_biomass_pertrap, con_calculated_yield$c
     ##  F test to compare two variances
     ## 
     ## data:  exp_calculated_yield$calculated_biomass_pertrap and con_calculated_yield$calculated_biomass_pertrap
-    ## F = 6.9776, num df = 149, denom df = 590, p-value < 2.2e-16
+    ## F = 1.535, num df = 149, denom df = 590, p-value = 0.0005297
     ## alternative hypothesis: true ratio of variances is not equal to 1
     ## 95 percent confidence interval:
-    ##  5.460891 9.092220
+    ##  1.201322 2.000164
     ## sample estimates:
     ## ratio of variances 
-    ##            6.97762
+    ##           1.534981
 
 ``` r
-## p-value < 2.2e-16; ratio = 6.97762
+## p-value = 0.0005297; ratio = 1.534981
 t.test(calculated_biomass_pertrap~trap_type, data = data3_calculated_yield, var.equal = FALSE)
 ```
 
@@ -1162,16 +1153,16 @@ t.test(calculated_biomass_pertrap~trap_type, data = data3_calculated_yield, var.
     ##  Welch Two Sample t-test
     ## 
     ## data:  calculated_biomass_pertrap by trap_type
-    ## t = -5.1447, df = 159.98, p-value = 7.753e-07
+    ## t = -3.264, df = 200.96, p-value = 0.001291
     ## alternative hypothesis: true difference in means between group Control and group Experimental is not equal to 0
     ## 95 percent confidence interval:
-    ##  -1.4477090 -0.6445524
+    ##  -0.4663454 -0.1150902
     ## sample estimates:
     ##      mean in group Control mean in group Experimental 
-    ##                   1.006897                   2.053028
+    ##                   0.957042                   1.247760
 
 ``` r
-## p-value = 7.753e-07
+## p-value = 0.001291
 
 calculated_yield_per_trap_stats <- summarySE(data3_calculated_yield, 
                                      measurevar = c("calculated_biomass_pertrap"), groupvars = c("trap_type"))
@@ -1183,9 +1174,9 @@ calculated_kg_plot <- calculated_yield_per_trap_stats %>%
   ggplot(., aes(x=trap_type, y=calculated_biomass_pertrap, fill=trap_type, group=trap_type)) + theme_bw() +
   geom_errorbar(aes(x=trap_type, y=calculated_biomass_pertrap, 
                     ymin=calculated_biomass_pertrap-se, ymax=calculated_biomass_pertrap+se), 
-                position=position_dodge(0.3), alpha=0.9, size=0.5, width=0.1) + ylim(0.9,2.4) +
+                position=position_dodge(0.3), alpha=0.9, size=0.5, width=0.1) + ylim(0.9,1.4) +
   #scale_y_break(c(1.1, 1.75)) + ylim(0.9,2.4) +
-  geom_point(size=2, shape=21, position=position_dodge(0.3)) + scale_fill_manual(values = c("black", "white"))
+  geom_point(size=3, shape=21, position=position_dodge(0.3)) + scale_fill_manual(values = c("black", "white"))
 
 ggsave(file="output/Yield_calculated.png", calculated_kg_plot, width = 4, height = 3.5, units = c("in"))
 
@@ -1205,17 +1196,17 @@ Each species group has a KSH per kg value.
 ``` r
 data3 <- data3 %>% 
   ### 1. calculate each species group price 
-  mutate(KSHperspp = Price_KSHPerkg*W_kg) %>% group_by(survey_id) %>%
+  mutate(KSHperspp = Price_KSHPerkg*W_kg) %>% group_by(survey_id, trap_type) %>%
   filter(!is.na(KSHperspp)) %>%
   ### 2. calculate total value per survey 
   mutate(KSHpersurvey = sum(KSHperspp), na.rm=TRUE) %>% ungroup() %>%
   ### 3. Divide by total traps collected in that survey to get per trap 
   mutate(KSHpertrap = KSHpersurvey/total_traps_collected, na.rm=TRUE)
 
-range(data3$KSHpertrap) ## 7.404932 KES - 3644.143016 KES 
+range(data3$KSHpertrap) ## 7.404932 KES - 932.642487 KES 
 ```
 
-    ## [1]    7.404932 3644.143016
+    ## [1]   7.404932 932.642487
 
 ### Statistics on the above.
 
@@ -1233,16 +1224,16 @@ var.test(exp_calculated_value$KSHpertrap, con_calculated_value$KSHpertrap)
     ##  F test to compare two variances
     ## 
     ## data:  exp_calculated_value$KSHpertrap and con_calculated_value$KSHpertrap
-    ## F = 6.4993, num df = 149, denom df = 590, p-value < 2.2e-16
+    ## F = 1.489, num df = 149, denom df = 590, p-value = 0.001318
     ## alternative hypothesis: true ratio of variances is not equal to 1
     ## 95 percent confidence interval:
-    ##  5.086529 8.468918
+    ##  1.165301 1.940192
     ## sample estimates:
     ## ratio of variances 
-    ##           6.499281
+    ##           1.488957
 
 ``` r
-## p-value < 2.2e-16; ratio = 6.499281
+## p-value = 0.001318; ratio = 1.488957
 t.test(KSHpertrap~trap_type, data = data3_calculated_value, var.equal = FALSE)
 ```
 
@@ -1250,16 +1241,16 @@ t.test(KSHpertrap~trap_type, data = data3_calculated_value, var.equal = FALSE)
     ##  Welch Two Sample t-test
     ## 
     ## data:  KSHpertrap by trap_type
-    ## t = -5.8942, df = 160.8, p-value = 2.145e-08
+    ## t = -4.876, df = 202.64, p-value = 2.184e-06
     ## alternative hypothesis: true difference in means between group Control and group Experimental is not equal to 0
     ## 95 percent confidence interval:
-    ##  -257.8612 -128.4352
+    ##  -100.13900  -42.47089
     ## sample estimates:
     ##      mean in group Control mean in group Experimental 
-    ##                   162.5293                   355.6775
+    ##                   153.4384                   224.7434
 
 ``` r
-## p-value = 2.145e-08
+## p-value = 2.184e-06
 
 calculated_value_per_trap_stats <- summarySE(data3_calculated_value, 
                                      measurevar = c("KSHpertrap"), groupvars = c("trap_type"))
@@ -1270,15 +1261,11 @@ calculated_value_per_trap_stats2 <- summarySE(data3_calculated_value,
 calculated_value_plot <- calculated_value_per_trap_stats %>%
   ggplot(., aes(x=trap_type, y=KSHpertrap, fill=trap_type, group=trap_type)) + theme_bw() +
   geom_errorbar(aes(x=trap_type, y=KSHpertrap, ymin=KSHpertrap-se, ymax=KSHpertrap+se), 
-                position=position_dodge(0.3), alpha=0.9, size=0.5, width=0.1) + ylim(140,340) +
-  geom_point(size=2, shape=21, position=position_dodge(0.3)) + scale_fill_manual(values = c("black", "white"))
+                position=position_dodge(0.3), alpha=0.9, size=0.5, width=0.1) + ylim(140,250) +
+  geom_point(size=3, shape=21, position=position_dodge(0.3)) + scale_fill_manual(values = c("black", "white"))
 
 ggsave(file="output/Value_calculated.png", calculated_value_plot, width = 4, height = 3.5, units = c("in"))
-```
 
-    ## Warning: Removed 1 rows containing missing values (`geom_point()`).
-
-``` r
 calculated_value_plot2 <- calculated_value_per_trap_stats2 %>%
   ggplot(., aes(x=BMU, y=KSHpertrap, fill=trap_type, group=trap_type)) + theme_bw() +
   geom_errorbar(aes(x=BMU, y=KSHpertrap, ymin=KSHpertrap-se, ymax=KSHpertrap+se), 
@@ -1324,7 +1311,7 @@ data3 <- data3 %>%
          spp_Selenium = (W_g/100)*Selenium_ugPer100g,
          spp_Zinc = (W_g/100)*Zinc_mgPer100g) %>% 
   # calculating total nutrient for each survey 
-  dplyr::group_by(survey_id) %>%
+  dplyr::group_by(survey_id, trap_type) %>%
   mutate(pertrap_Calcium = sum(spp_Calcium)/total_traps_collected,
          pertrap_Iron = sum(spp_Iron)/total_traps_collected,
          pertrap_Omega3 = sum(spp_Omega3)/total_traps_collected,
@@ -1352,13 +1339,13 @@ nutrient_individual_plot <- nutrient_stats %>%
   ggplot(., aes(x=trap_type, y=nutrient, fill=trap_type, group=trap_type)) + theme_bw() +
   geom_errorbar(aes(x=trap_type, y=nutrient, ymin=nutrient-se, ymax=nutrient+se), 
                 position=position_dodge(0.3), alpha=0.9, size=0.5, width=0.1) + ylab("Zinc") + ###CHANGE NAME HERE
-  #ylim(160,360) + ##protein
-  #ylim(375,800) + ## calcium
-  #ylim(7,17) + ##iron 
-  #ylim(1.75,4.5) + ##omega3
-  #ylim(300,650) + ##vitaminA
-  #ylim(250,540) + ##selenium
-  ylim(16,36) + ##zinc
+  #ylim(160,240) + ##protein
+  #ylim(375,550) + ## calcium
+  #ylim(7.25,12) + ##iron 
+  #ylim(1.75,3.25) + ##omega3
+  #ylim(300,425) + ##vitaminA
+  #ylim(265,350) + ##selenium
+  ylim(16,24) + ##zinc
   geom_point(size=3, shape=21, position=position_dodge(0.3)) + scale_fill_manual(values = c("black", "white"))
 
 ggsave(file="output/Nutrient_Zinc.png", nutrient_individual_plot, width = 4, height = 3.5, units = c("in")) ###CHANGE NAME HERE
@@ -1382,22 +1369,22 @@ var.test(exp_nutrient_stats$pertrap_Zinc, con_nutrient_stats$pertrap_Zinc)  ### 
     ##  F test to compare two variances
     ## 
     ## data:  exp_nutrient_stats$pertrap_Zinc and con_nutrient_stats$pertrap_Zinc
-    ## F = 2.667, num df = 143, denom df = 587, p-value = 4.441e-16
+    ## F = 1.3252, num df = 146, denom df = 589, p-value = 0.0252
     ## alternative hypothesis: true ratio of variances is not equal to 1
     ## 95 percent confidence interval:
-    ##  2.079209 3.492397
+    ##  1.035229 1.731025
     ## sample estimates:
     ## ratio of variances 
-    ##           2.666976
+    ##           1.325243
 
 ``` r
-## CALCIUM == p-value = 2.445e-13; ratio = 2.430049
-## IRON == p-value = 3.997e-15; ratio = 2.581823
-## OMEGA3 == p-value < 2.2e-16; ratio = 2.80394
-## PROTEIN == p-value < 2.2e-16; ratio = 2.705249
-## VITAMIN A == p-value = 1.776e-15; ratio = 2.608675
-## SELENIUM == p-value = 3.997e-15; ratio = 2.58167
-## ZINC == p-value = 4.441e-16; ratio = 2.666976
+## CALCIUM == p-value = 0.1332; ratio = 1.208592
+## IRON == p-value = 0.02413; ratio = 1.327981
+## OMEGA3 == p-value = 0.006829; ratio = 1.403781
+## PROTEIN == p-value = 0.04991; ratio = 1.280264
+## VITAMIN A == p-value = 0.7941; ratio = 0.962974
+## SELENIUM == p-value = 0.1717; ratio = 1.188199
+## ZINC == p-value = 0.0252; ratio = 1.325243
 
 ### replace variable name below for each t.test 
 t.test(pertrap_Zinc~trap_type, data = nutrient_stats, var.equal = FALSE) ### CHANGE NUTRIENT HERE
@@ -1407,13 +1394,13 @@ t.test(pertrap_Zinc~trap_type, data = nutrient_stats, var.equal = FALSE) ### CHA
     ##  Welch Two Sample t-test
     ## 
     ## data:  pertrap_Zinc by trap_type
-    ## t = -5.5336, df = 170.12, p-value = 1.167e-07
+    ## t = -2.4092, df = 204.27, p-value = 0.01687
     ## alternative hypothesis: true difference in means between group Control and group Experimental is not equal to 0
     ## 95 percent confidence interval:
-    ##  -17.232126  -8.170272
+    ##  -7.049412 -0.704111
     ## sample estimates:
     ##      mean in group Control mean in group Experimental 
-    ##                    17.6974                    30.3986
+    ##                   17.21354                   21.09030
 
 ``` r
 calcium_stats <- summarySE(nutrient_stats, measurevar = c("pertrap_Calcium"), groupvars = c("trap_type"))
@@ -1455,16 +1442,16 @@ data3 %>% dplyr::select(survey_id, scientific_name, number_of_fish, trap_type, B
     ## # Groups:   trap_type [2]
     ##    scientific_name               Bycatch trap_type     sum count percent_bycatch
     ##    <chr>                         <chr>   <chr>       <dbl> <dbl>           <dbl>
-    ##  1 Naso hexacanthus              Yes     Control       399   341           0.855
-    ##  2 Heniochus acuminatus          Yes     Control       399   341           0.855
-    ##  3 Novaculichthys taeniourus     Yes     Control       399   341           0.855
-    ##  4 Acanthurus triostegus         Yes     Control       399   341           0.855
-    ##  5 Abudefduf sexfasciatus        Yes     Control       399   341           0.855
-    ##  6 Naso brachycentron            Yes     Control       399   341           0.855
-    ##  7 Acanthurus nigrofuscus        Yes     Control       399   341           0.855
-    ##  8 Plectorhinchus flavomaculatus Yes     Control       399   341           0.855
-    ##  9 Acanthurus nigricauda         Yes     Control       399   341           0.855
-    ## 10 Balistapus undulatus          Yes     Experiment…   399    58           0.145
+    ##  1 Naso hexacanthus              Yes     Control       415   349           0.841
+    ##  2 Heniochus acuminatus          Yes     Control       415   349           0.841
+    ##  3 Novaculichthys taeniourus     Yes     Control       415   349           0.841
+    ##  4 Acanthurus triostegus         Yes     Control       415   349           0.841
+    ##  5 Abudefduf sexfasciatus        Yes     Control       415   349           0.841
+    ##  6 Naso brachycentron            Yes     Control       415   349           0.841
+    ##  7 Acanthurus nigrofuscus        Yes     Control       415   349           0.841
+    ##  8 Plectorhinchus flavomaculatus Yes     Control       415   349           0.841
+    ##  9 Acanthurus nigricauda         Yes     Control       415   349           0.841
+    ## 10 Balistapus undulatus          Yes     Experiment…   415    66           0.159
     ## # ℹ 12 more rows
 
 ``` r
@@ -1473,7 +1460,7 @@ data3 %>% dplyr::select(survey_id, scientific_name, number_of_fish, trap_type, B
 ### 14,297 control
 ### 2,220 experimental
 
-bycatchdf <- data2 %>% dplyr::group_by(survey_id, Bycatch) %>%
+bycatchdf <- data2 %>% dplyr::group_by(survey_id, trap_type, Bycatch) %>%
   mutate(no_bycatch = sum(number_of_fish),
          bycatch_trap = no_bycatch/total_traps_collected) %>%
   dplyr::select(survey_id, trap_type, Bycatch, bycatch_trap) %>% 
@@ -1486,7 +1473,7 @@ bycatch_plot <- bycatchdf_stats %>%
   ggplot(., aes(x=trap_type, y=bycatch_trap, fill=trap_type, group=trap_type)) + theme_bw() +
   geom_errorbar(aes(x=trap_type, y=bycatch_trap, ymin=bycatch_trap-se, ymax=bycatch_trap+se), 
                 position=position_dodge(0.3), alpha=0.9, size=0.5, width=0.1) + 
-  ylim(0.3,1.1) +  
+  ylim(0.3,0.9) +  
   geom_point(size=3, shape=21, position=position_dodge(0.3)) + scale_fill_manual(values = c("black", "white"))
 
 ggsave(file="output/Bycatch.png", bycatch_plot, width = 4, height = 3.5, units = c("in")) 
@@ -1499,13 +1486,13 @@ t.test(bycatch_trap~trap_type, data = bycatchdf, var.equal = FALSE)
     ##  Welch Two Sample t-test
     ## 
     ## data:  bycatch_trap by trap_type
-    ## t = -1.4977, df = 20.603, p-value = 0.1494
+    ## t = -1.7276, df = 27.717, p-value = 0.09519
     ## alternative hypothesis: true difference in means between group Control and group Experimental is not equal to 0
     ## 95 percent confidence interval:
-    ##  -0.8542691  0.1394611
+    ##  -0.57117947  0.04865488
     ## sample estimates:
     ##      mean in group Control mean in group Experimental 
-    ##                  0.4648999                  0.8223039
+    ##                  0.4433946                  0.7046569
 
 ``` r
 ### 17 / 150 surveys (11.33%) experimental have bycatch
@@ -1521,13 +1508,17 @@ var.test(exp_bycatchdf$bycatch_trap, con_bycatchdf$bycatch_trap)
     ##  F test to compare two variances
     ## 
     ## data:  exp_bycatchdf$bycatch_trap and con_bycatchdf$bycatch_trap
-    ## F = 1.3381, num df = 16, denom df = 92, p-value = 0.3835
+    ## F = 0.55651, num df = 16, denom df = 92, p-value = 0.1842
     ## alternative hypothesis: true ratio of variances is not equal to 1
     ## 95 percent confidence interval:
-    ##  0.6857632 3.2152622
+    ##  0.2852074 1.3372204
     ## sample estimates:
     ## ratio of variances 
-    ##           1.338097
+    ##          0.5565117
+
+``` r
+### p-value = 0.1842; ratio = 0.5565117
+```
 
 Creating pie charts
 

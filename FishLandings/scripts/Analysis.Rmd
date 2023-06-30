@@ -346,8 +346,10 @@ ggsave(file="output/Length2.png", length_plot2, width = 4, height = 3.5, units =
 
 ## Calculating take home metrics 
 
+Use 2021-08-13 12:13:00 SS/MAY/SB/026/FF to double check calculations
+
 ```{r}
-data2 <- data2 %>% dplyr::group_by(survey_id, destination) %>%
+data2 <- data2 %>% dplyr::group_by(survey_id, trap_type, destination) %>%   
   mutate(no_perdestination = sum(number_of_fish),
          percent_perdestination = no_perdestination/total_catch*100)
 
@@ -362,9 +364,9 @@ exp_takehome <- data2_takehome %>% subset(trap_type == "Experimental") ## 40 dat
 con_takehome <- data2_takehome %>% subset(trap_type == "Control") ## 352 data points (multiple destinations)
 
 var.test(exp_takehome$percent_perdestination, con_takehome$percent_perdestination) 
-## p-value < 2.2e-16; ratio = 3.386456
+## p-value = 1.068e-09; ratio = 3.421355
 t.test(percent_perdestination~trap_type, data = data2_takehome, var.equal = FALSE)
-## p-value 0.002949
+## p-value 0.003897
 
 takehome_plot <- takehome_stats %>%
   ggplot(., aes(x=trap_type, y=percent_perdestination, fill=trap_type, group=trap_type)) + theme_bw() +
@@ -462,22 +464,30 @@ left_join(spp_df_mod, metadata, by = "scientific_name") %>%
 
 ### Calculating species richness 
 
+Use 2021-08-13 12:13:00 SS/MAY/SB/026/FF to double check calculationss
+
 ```{r}
-data2 <- data2 %>% group_by(survey_id) %>%
-  mutate(richness = n_distinct(scientific_name))
+data2 <- data2 %>% group_by(survey_id, trap_type) %>%
+  mutate(richness = n_distinct(scientific_name),
+         richness_trap = richness/total_traps_collected)
 
 range(data2$richness) ## 1 - 14 different species in one survey 
+range(data2$richness_trap) ## 0.0625 - 6.0000 different species in one survey 
 
-richnessdf <- data2 %>% dplyr::select(survey_id, BMU, trap_type, richness) %>% distinct()
+richnessdf <- data2 %>% dplyr::select(survey_id, BMU, trap_type, richness, richness_trap) %>% distinct()
 
 richness_stats <- summarySE(richnessdf, measurevar = c("richness"), groupvars = c("trap_type"))
 richness_stats2 <- summarySE(richnessdf, measurevar = c("richness"), groupvars = c("trap_type", "BMU"))
 
+richness_trap_stats <- summarySE(richnessdf, measurevar = c("richness_trap"), groupvars = c("trap_type"))
+richness_trap_stats2 <- summarySE(richnessdf, measurevar = c("richness_trap"), groupvars = c("trap_type", "BMU"))
+
+#### RICHNESS 
 richness_plot <- richness_stats %>%
   ggplot(., aes(x=trap_type, y=richness, fill=trap_type, group=trap_type)) + theme_bw() +
   geom_errorbar(aes(x=trap_type, y=richness, ymin=richness-se, ymax=richness+se), 
-                position=position_dodge(0.3), alpha=0.9, size=0.5, width=0.1) + ylim(2.5,5) +
-  geom_point(size=3, shape=21, position=position_dodge(0.3)) + scale_fill_manual(values = c("black", "white"))
+                position=position_dodge(0.3), alpha=0.9, size=0.5, width=0.1) + ylim(1.8,4.7) +
+  geom_point(size=2, shape=21, position=position_dodge(0.3)) + scale_fill_manual(values = c("black", "white"))
 
 ggsave(file="output/Richness.png", richness_plot, width = 4, height = 3.5, units = c("in"))
 
@@ -489,16 +499,33 @@ richness_plot2 <- richness_stats2 %>%
 
 ggsave(file="output/Richness2.png", richness_plot2, width = 4, height = 3.5, units = c("in"))
 
-richness_aov <- aov(richness~trap_type*BMU, data=richnessdf)
-summary(richness_aov)
-TukeyHSD(richness_aov)
+#### RICHNESS PER TRAP 
+richness_trap_plot <- richness_trap_stats %>%
+  ggplot(., aes(x=trap_type, y=richness_trap, fill=trap_type, group=trap_type)) + theme_bw() +
+  geom_errorbar(aes(x=trap_type, y=richness_trap, ymin=richness_trap-se, ymax=richness_trap+se), 
+                position=position_dodge(0.3), alpha=0.9, size=0.5, width=0.1) + ylim(0.4,0.65) +
+  geom_point(size=3, shape=21, position=position_dodge(0.3)) + scale_fill_manual(values = c("black", "white"))
+
+ggsave(file="output/Richness_trap.png", richness_trap_plot, width = 4, height = 3.5, units = c("in"))
+
+richness_trap_plot2 <- richness_trap_stats2 %>%
+  ggplot(., aes(x=BMU, y=richness_trap, fill=trap_type, group=trap_type)) + theme_bw() +
+  geom_errorbar(aes(x=BMU, y=richness_trap, ymin=richness_trap-se, ymax=richness_trap+se), 
+                position=position_dodge(0.3), alpha=0.9, size=0.5, width=0.1) +
+  geom_point(size=2, shape=21, position=position_dodge(0.3)) + scale_fill_manual(values = c("black", "white"))
+
+ggsave(file="output/Richness_trap2.png", richness_trap_plot2, width = 4, height = 3.5, units = c("in"))
+
+# richness_aov <- aov(richness~trap_type*BMU, data=richnessdf)
+# summary(richness_aov)
+# TukeyHSD(richness_aov)
 
 exp_richness <- richnessdf %>% subset(trap_type == "Experimental") ## 150 data points (multiple destinations)
 con_richness <- richnessdf %>% subset(trap_type == "Control") ## 591 data points (multiple destinations)
 
 var.test(exp_richness$richness, con_richness$richness) 
-## p-value = 0.1146; ratio = 0.8084355
-t.test(richness~trap_type, data = richnessdf, var.equal = TRUE)
+## p-value < 2.2e-16; ratio = 0.2930505
+t.test(richness~trap_type, data = richnessdf, var.equal = FALSE)
 ## p-value 7.052e-14
 ```
 
@@ -535,7 +562,8 @@ data2 %>% dplyr::select(survey_id, trap_type, scientific_name, number_of_fish, m
   dplyr::select(trap_type, maturity, sum) %>% distinct()
 
 ## calculating stats for distance from maturity 
-data2_maturity <- data2 %>% dplyr::select(survey_id, trap_type, scientific_name, number_of_fish, maturity, length_dist) %>%
+data2_maturity <- data2 %>% 
+  dplyr::select(survey_id, trap_type, scientific_name, number_of_fish, maturity, length_dist) %>%
   tidyr::uncount(., number_of_fish, .remove = TRUE) %>% 
   filter(!is.na(length_dist))
 ```
@@ -705,13 +733,13 @@ data3 <- data2 %>% ungroup() %>%
   mutate_at(c('a', 'b'), as.numeric) %>%
   mutate(W_g = (a*(median_length^b))*number_of_fish,
          W_kg = W_g/1000) %>%
-  group_by(survey_id) %>%
+  group_by(survey_id, trap_type) %>%
   filter(!is.na(W_kg)) %>%
   mutate(calculated_total_biomass = sum(W_kg),
          calculated_biomass_pertrap = calculated_total_biomass/total_traps_collected) %>% 
   ungroup()
 
-range(data3$calculated_biomass_pertrap) ## 0.03890296 kg - 23.11299675 kg 
+range(data3$calculated_biomass_pertrap) ## 0.03890296 kg - 5.97829841 kg 
 ```
 
 ### Comparing reported vs. calculated 
@@ -735,9 +763,9 @@ exp_calculated_yield <- data3_calculated_yield %>% subset(trap_type == "Experime
 con_calculated_yield <- data3_calculated_yield %>% subset(trap_type == "Control") ## 591 data points 
 
 var.test(exp_calculated_yield$calculated_biomass_pertrap, con_calculated_yield$calculated_biomass_pertrap) 
-## p-value < 2.2e-16; ratio = 6.97762
+## p-value = 0.0005297; ratio = 1.534981
 t.test(calculated_biomass_pertrap~trap_type, data = data3_calculated_yield, var.equal = FALSE)
-## p-value = 7.753e-07
+## p-value = 0.001291
 
 calculated_yield_per_trap_stats <- summarySE(data3_calculated_yield, 
                                      measurevar = c("calculated_biomass_pertrap"), groupvars = c("trap_type"))
@@ -749,9 +777,9 @@ calculated_kg_plot <- calculated_yield_per_trap_stats %>%
   ggplot(., aes(x=trap_type, y=calculated_biomass_pertrap, fill=trap_type, group=trap_type)) + theme_bw() +
   geom_errorbar(aes(x=trap_type, y=calculated_biomass_pertrap, 
                     ymin=calculated_biomass_pertrap-se, ymax=calculated_biomass_pertrap+se), 
-                position=position_dodge(0.3), alpha=0.9, size=0.5, width=0.1) + ylim(0.9,2.4) +
+                position=position_dodge(0.3), alpha=0.9, size=0.5, width=0.1) + ylim(0.9,1.4) +
   #scale_y_break(c(1.1, 1.75)) + ylim(0.9,2.4) +
-  geom_point(size=2, shape=21, position=position_dodge(0.3)) + scale_fill_manual(values = c("black", "white"))
+  geom_point(size=3, shape=21, position=position_dodge(0.3)) + scale_fill_manual(values = c("black", "white"))
 
 ggsave(file="output/Yield_calculated.png", calculated_kg_plot, width = 4, height = 3.5, units = c("in"))
 
@@ -771,14 +799,14 @@ Each species group has a KSH per kg value.
 ```{r}
 data3 <- data3 %>% 
   ### 1. calculate each species group price 
-  mutate(KSHperspp = Price_KSHPerkg*W_kg) %>% group_by(survey_id) %>%
+  mutate(KSHperspp = Price_KSHPerkg*W_kg) %>% group_by(survey_id, trap_type) %>%
   filter(!is.na(KSHperspp)) %>%
   ### 2. calculate total value per survey 
   mutate(KSHpersurvey = sum(KSHperspp), na.rm=TRUE) %>% ungroup() %>%
   ### 3. Divide by total traps collected in that survey to get per trap 
   mutate(KSHpertrap = KSHpersurvey/total_traps_collected, na.rm=TRUE)
 
-range(data3$KSHpertrap) ## 7.404932 KES - 3644.143016 KES 
+range(data3$KSHpertrap) ## 7.404932 KES - 932.642487 KES 
 ```
 
 ### Statistics on the above. 
@@ -791,9 +819,9 @@ exp_calculated_value <- data3_calculated_value %>% subset(trap_type == "Experime
 con_calculated_value <- data3_calculated_value %>% subset(trap_type == "Control") ## 591 data points 
 
 var.test(exp_calculated_value$KSHpertrap, con_calculated_value$KSHpertrap) 
-## p-value < 2.2e-16; ratio = 6.499281
+## p-value = 0.001318; ratio = 1.488957
 t.test(KSHpertrap~trap_type, data = data3_calculated_value, var.equal = FALSE)
-## p-value = 2.145e-08
+## p-value = 2.184e-06
 
 calculated_value_per_trap_stats <- summarySE(data3_calculated_value, 
                                      measurevar = c("KSHpertrap"), groupvars = c("trap_type"))
@@ -804,8 +832,8 @@ calculated_value_per_trap_stats2 <- summarySE(data3_calculated_value,
 calculated_value_plot <- calculated_value_per_trap_stats %>%
   ggplot(., aes(x=trap_type, y=KSHpertrap, fill=trap_type, group=trap_type)) + theme_bw() +
   geom_errorbar(aes(x=trap_type, y=KSHpertrap, ymin=KSHpertrap-se, ymax=KSHpertrap+se), 
-                position=position_dodge(0.3), alpha=0.9, size=0.5, width=0.1) + ylim(140,340) +
-  geom_point(size=2, shape=21, position=position_dodge(0.3)) + scale_fill_manual(values = c("black", "white"))
+                position=position_dodge(0.3), alpha=0.9, size=0.5, width=0.1) + ylim(140,250) +
+  geom_point(size=3, shape=21, position=position_dodge(0.3)) + scale_fill_manual(values = c("black", "white"))
 
 ggsave(file="output/Value_calculated.png", calculated_value_plot, width = 4, height = 3.5, units = c("in"))
 
@@ -854,7 +882,7 @@ data3 <- data3 %>%
          spp_Selenium = (W_g/100)*Selenium_ugPer100g,
          spp_Zinc = (W_g/100)*Zinc_mgPer100g) %>% 
   # calculating total nutrient for each survey 
-  dplyr::group_by(survey_id) %>%
+  dplyr::group_by(survey_id, trap_type) %>%
   mutate(pertrap_Calcium = sum(spp_Calcium)/total_traps_collected,
          pertrap_Iron = sum(spp_Iron)/total_traps_collected,
          pertrap_Omega3 = sum(spp_Omega3)/total_traps_collected,
@@ -882,13 +910,13 @@ nutrient_individual_plot <- nutrient_stats %>%
   ggplot(., aes(x=trap_type, y=nutrient, fill=trap_type, group=trap_type)) + theme_bw() +
   geom_errorbar(aes(x=trap_type, y=nutrient, ymin=nutrient-se, ymax=nutrient+se), 
                 position=position_dodge(0.3), alpha=0.9, size=0.5, width=0.1) + ylab("Zinc") + ###CHANGE NAME HERE
-  #ylim(160,360) + ##protein
-  #ylim(375,800) + ## calcium
-  #ylim(7,17) + ##iron 
-  #ylim(1.75,4.5) + ##omega3
-  #ylim(300,650) + ##vitaminA
-  #ylim(250,540) + ##selenium
-  ylim(16,36) + ##zinc
+  #ylim(160,240) + ##protein
+  #ylim(375,550) + ## calcium
+  #ylim(7.25,12) + ##iron 
+  #ylim(1.75,3.25) + ##omega3
+  #ylim(300,425) + ##vitaminA
+  #ylim(265,350) + ##selenium
+  ylim(16,24) + ##zinc
   geom_point(size=3, shape=21, position=position_dodge(0.3)) + scale_fill_manual(values = c("black", "white"))
 
 ggsave(file="output/Nutrient_Zinc.png", nutrient_individual_plot, width = 4, height = 3.5, units = c("in")) ###CHANGE NAME HERE
@@ -906,13 +934,13 @@ exp_nutrient_stats <- nutrient_stats %>% subset(trap_type == "Experimental") ## 
 con_nutrient_stats <- nutrient_stats %>% subset(trap_type == "Control") ## 588 data points 
 
 var.test(exp_nutrient_stats$pertrap_Zinc, con_nutrient_stats$pertrap_Zinc)  ### CHANGE NUTRIENT HERE
-## CALCIUM == p-value = 2.445e-13; ratio = 2.430049
-## IRON == p-value = 3.997e-15; ratio = 2.581823
-## OMEGA3 == p-value < 2.2e-16; ratio = 2.80394
-## PROTEIN == p-value < 2.2e-16; ratio = 2.705249
-## VITAMIN A == p-value = 1.776e-15; ratio = 2.608675
-## SELENIUM == p-value = 3.997e-15; ratio = 2.58167
-## ZINC == p-value = 4.441e-16; ratio = 2.666976
+## CALCIUM == p-value = 0.1332; ratio = 1.208592
+## IRON == p-value = 0.02413; ratio = 1.327981
+## OMEGA3 == p-value = 0.006829; ratio = 1.403781
+## PROTEIN == p-value = 0.04991; ratio = 1.280264
+## VITAMIN A == p-value = 0.7941; ratio = 0.962974
+## SELENIUM == p-value = 0.1717; ratio = 1.188199
+## ZINC == p-value = 0.0252; ratio = 1.325243
 
 ### replace variable name below for each t.test 
 t.test(pertrap_Zinc~trap_type, data = nutrient_stats, var.equal = FALSE) ### CHANGE NUTRIENT HERE
@@ -951,7 +979,7 @@ data3 %>% dplyr::select(survey_id, scientific_name, number_of_fish, trap_type, B
 ### 14,297 control
 ### 2,220 experimental
 
-bycatchdf <- data2 %>% dplyr::group_by(survey_id, Bycatch) %>%
+bycatchdf <- data2 %>% dplyr::group_by(survey_id, trap_type, Bycatch) %>%
   mutate(no_bycatch = sum(number_of_fish),
          bycatch_trap = no_bycatch/total_traps_collected) %>%
   dplyr::select(survey_id, trap_type, Bycatch, bycatch_trap) %>% 
@@ -964,7 +992,7 @@ bycatch_plot <- bycatchdf_stats %>%
   ggplot(., aes(x=trap_type, y=bycatch_trap, fill=trap_type, group=trap_type)) + theme_bw() +
   geom_errorbar(aes(x=trap_type, y=bycatch_trap, ymin=bycatch_trap-se, ymax=bycatch_trap+se), 
                 position=position_dodge(0.3), alpha=0.9, size=0.5, width=0.1) + 
-  ylim(0.3,1.1) +  
+  ylim(0.3,0.9) +  
   geom_point(size=3, shape=21, position=position_dodge(0.3)) + scale_fill_manual(values = c("black", "white"))
 
 ggsave(file="output/Bycatch.png", bycatch_plot, width = 4, height = 3.5, units = c("in")) 
@@ -979,6 +1007,7 @@ exp_bycatchdf <- bycatchdf %>% subset(trap_type == "Experimental") ## 17 data po
 con_bycatchdf <- bycatchdf %>% subset(trap_type == "Control") ## 93 data points 
 
 var.test(exp_bycatchdf$bycatch_trap, con_bycatchdf$bycatch_trap) 
+### p-value = 0.1842; ratio = 0.5565117
 ```
 
 Creating pie charts 
