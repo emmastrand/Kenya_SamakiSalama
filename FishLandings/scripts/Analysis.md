@@ -27,6 +27,7 @@ library(forcats)
 library(ggstatsplot)
 library(ggridges)
 library(ggbreak)
+library(emmeans)
 ```
 
 ## Read in the data frame that is the output of the QC script.
@@ -1294,6 +1295,54 @@ revenue_plot <- calculated_value_per_trap_stats_permonth %>%
 ggsave(file="output/Revenue.png", revenue_plot, width = 5.5, height = 3.5, units = c("in"))
 ```
 
+Statistics on per month
+
+- `fixed-effect model matrix is rank deficient so dropping 5 columns / coefficients`
+
+``` r
+data3_calculated_value_subset <- data3_calculated_value %>% subset(month == "Aug")
+t.test(KSHpertrap ~ trap_type, data = data3_calculated_value_subset)
+```
+
+    ## 
+    ##  Welch Two Sample t-test
+    ## 
+    ## data:  KSHpertrap by trap_type
+    ## t = -2.9683, df = 31.638, p-value = 0.005666
+    ## alternative hypothesis: true difference in means between group Control and group Experimental is not equal to 0
+    ## 95 percent confidence interval:
+    ##  -167.37664  -31.10946
+    ## sample estimates:
+    ##      mean in group Control mean in group Experimental 
+    ##                    107.790                    207.033
+
+``` r
+revenue_LMER <- lmer(log(KSHpertrap) ~ trap_type*month + (1|BMU), na.action=na.omit, data=data3_calculated_value) 
+```
+
+    ## fixed-effect model matrix is rank deficient so dropping 5 columns / coefficients
+
+``` r
+qqPlot(residuals(revenue_LMER)) 
+```
+
+![](Analysis_files/figure-gfm/unnamed-chunk-31-1.png)<!-- -->
+
+    ## [1] 294 267
+
+``` r
+hist(residuals(revenue_LMER)) 
+```
+
+![](Analysis_files/figure-gfm/unnamed-chunk-31-2.png)<!-- -->
+
+``` r
+revenue_anova <- Anova(revenue_LMER, ddf="lme4", type='III') 
+revenue_tukey <- emmeans(revenue_LMER, list(pairwise ~ trap_type*month), adjust = "tukey")
+revenue_tukey_significant <- as.data.frame(revenue_tukey$`pairwise differences of trap_type, month`) %>% 
+  na.omit(.) %>% filter(p.value < 0.06)
+```
+
 ## Calculating nutritional yield
 
 ``` r
@@ -1418,6 +1467,8 @@ zinc_stats <- summarySE(nutrient_stats, measurevar = c("pertrap_Zinc"), groupvar
 occured in controlled traps (341 bycatch fish caught in control and 58
 in experimental).
 
+Control traps account for 79.76% of surveys
+
 17 species of bycatch fish caught: - *Acanthurus triostegus*,
 *Acanthurus nigricauda*, *Acanthurus nigrofuscus*, *Abudefduf
 sexfasciatus*, *Balistapus undulatus*  
@@ -1523,27 +1574,46 @@ var.test(exp_bycatchdf$bycatch_trap, con_bycatchdf$bycatch_trap)
 Creating pie charts
 
 ``` r
-# piechart_df <- data.frame(category = c("bycatch", "non-bycatch"), value = c(399, 16517))
-# 
-# piechart1 <- ggplot(piechart_df, aes(x="", y=value, fill=category)) +
-#   geom_bar(stat="identity", width=1, color="black") +
-#   coord_polar("y", start=0) +
-#   theme_void() + 
-#   scale_fill_manual(values = c("grey90", "white")) +
-#   theme(legend.position="none")
-# 
-# ggsave(file="output/Bycatch_total.png", piechart1, width = 4, height = 4, units = c("in"))
-# 
-# piechart_df2 <- data.frame(category = c("control", "experimental"), value = c(341, 58))
-# 
-# piechart2 <- ggplot(piechart_df2, aes(x="", y=value, fill=category)) +
-#   geom_bar(stat="identity", width=1, color="black") +
-#   coord_polar("y", start=0) +
-#   theme_void() + 
-#   scale_fill_manual(values = c("grey90", "white")) +
-#   theme(legend.position="none")
-# 
-# ggsave(file="output/Bycatch_traptype.png", piechart2, width = 4, height = 4, units = c("in"))
+piechart_exp_df <- data.frame(category = c("bycatch", "non-bycatch"), value = c(17, 150))
+piechart_con_df <- data.frame(category = c("bycatch", "non-bycatch"), value = c(93, 591))
+
+experimental_piechart <- ggplot(piechart_exp_df, aes(x="", y=value, fill=category)) +
+  geom_bar(stat="identity", width=1, color="black") +
+  coord_polar("y", start=0) +
+  theme_void() +
+  scale_fill_manual(values = c("grey90", "white")) +
+  theme(legend.position="none")
+ggsave(file="output/Bycatch_experimental.png", experimental_piechart, width = 4, height = 4, units = c("in"))
+
+control_piechart <- ggplot(piechart_con_df, aes(x="", y=value, fill=category)) +
+  geom_bar(stat="identity", width=1, color="black") +
+  coord_polar("y", start=0) +
+  theme_void() +
+  scale_fill_manual(values = c("grey90", "white")) +
+  theme(legend.position="none")
+ggsave(file="output/Bycatch_control.png", control_piechart, width = 4, height = 4, units = c("in"))
+
+piechart_df <- data.frame(category = c("bycatch", "non-bycatch"), value = c(399, 16517))
+
+piechart1 <- ggplot(piechart_df, aes(x="", y=value, fill=category)) +
+  geom_bar(stat="identity", width=1, color="black") +
+  coord_polar("y", start=0) +
+  theme_void() +
+  scale_fill_manual(values = c("grey90", "white")) +
+  theme(legend.position="none")
+
+ggsave(file="output/Bycatch_total.png", piechart1, width = 4, height = 4, units = c("in"))
+
+piechart_df2 <- data.frame(category = c("control", "experimental"), value = c(341, 58))
+
+piechart2 <- ggplot(piechart_df2, aes(x="", y=value, fill=category)) +
+  geom_bar(stat="identity", width=1, color="black") +
+  coord_polar("y", start=0) +
+  theme_void() +
+  scale_fill_manual(values = c("grey90", "white")) +
+  theme(legend.position="none")
+
+ggsave(file="output/Bycatch_traptype.png", piechart2, width = 4, height = 4, units = c("in"))
 ```
 
 ### Exporting analyzed dataframes

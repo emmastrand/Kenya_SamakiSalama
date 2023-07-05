@@ -1803,7 +1803,8 @@ alt_df <- inner_join(fishing_operation_alt, catch_composition_alt,
   mutate(keep_traptype = if_else(trap_type == `gear type`, TRUE, FALSE)) %>%
   filter(!keep_traptype == "FALSE") %>%
   subset(!trap_type == "MODIFIED") %>%
-  subset(!trap_type == "UNMODIFIED") %>% dplyr::select(-total_traps_collected)
+  subset(!trap_type == "UNMODIFIED") %>% 
+  dplyr::select(-total_traps_collected)
 ```
 
     ## Warning in inner_join(fishing_operation_alt, catch_composition_alt, by = c("Operation_date", : Detected an unexpected many-to-many relationship between `x` and `y`.
@@ -1833,13 +1834,19 @@ alt_df %>% select(survey_id) %>% distinct()
     ## # ℹ 618 more rows
 
 ``` r
+unique(alt_df$trap_type)
+```
+
+    ## [1] "SPEARGUN"     "MONOFILAMENT"
+
+``` r
 ## KURUWITU = 382 surveys 
 ## KANAMAI = 141 surveys 
 ## TAKAUNGU = 105 surveys 
 ### all three other sites used spearguns 
 ### TAKAUNGU used monofilament 
 
-#alt_df %>% subset(`gear type` == "MONOFILAMENT") %>% select(BMU) %>% distinct()
+#alt_df %>% subset(`gear type` == "SPEARGUN") %>% select(BMU) %>% distinct()
 
 unique(alt_df$BMU)
 ```
@@ -1847,5 +1854,9 @@ unique(alt_df$BMU)
     ## [1] "KURUWITU" "KANAMAI"  "TAKAUNGU"
 
 ``` r
-alt_df %>% write.csv("output/alternate_fishing.csv")
+alt_df %>% write.csv("output/alternate_fishing.csv") 
+
+# timeframe <- alt_df %>% separate(date_collected_dd_mm_yyyy, c("year", "month", "day"), remove = FALSE)
+# timeframe %>% subset(BMU == "TAKAUNGU") %>% #select(year, month) %>% distinct() 
+#   subset(month == "05") %>% select(month, survey_id) %>% distinct()
 ```
