@@ -238,11 +238,19 @@ t.test(CPUE~trap_type, data = data2_CPUE, var.equal = FALSE)
 CPUE_per_trap_stats <- summarySE(data2_CPUE, measurevar = c("CPUE"), groupvars = c("trap_type", "BMU"))
 CPUE_per_trap_stats2 <- summarySE(data2_CPUE, measurevar = c("CPUE"), groupvars = c("trap_type"))
 
-CPUE_plot <- CPUE_per_trap_stats %>%
-  ggplot(., aes(x=BMU, y=CPUE, fill=trap_type, group=trap_type)) + theme_bw() +
-  geom_errorbar(aes(x=BMU, y=CPUE, ymin=CPUE-se, ymax=CPUE+se), 
-                position=position_dodge(0.3), alpha=0.9, size=0.5, width=0.1) +
-  geom_point(size=2, shape=21, position=position_dodge(0.3)) + scale_fill_manual(values = c("black", "white"))
+# CPUE_plot <- CPUE_per_trap_stats %>%
+#   ggplot(., aes(x=BMU, y=CPUE, fill=trap_type, group=trap_type)) + theme_bw() +
+#   geom_errorbar(aes(x=BMU, y=CPUE, ymin=CPUE-se, ymax=CPUE+se), 
+#                 position=position_dodge(0.3), alpha=0.9, size=0.5, width=0.1) +
+#   geom_point(size=2, shape=21, position=position_dodge(0.3)) + scale_fill_manual(values = c("black", "white"))
+# 
+# ggsave(file="output/CPUE.png", CPUE_plot, width = 4, height = 3.5, units = c("in"))
+
+CPUE_plot2 <- CPUE_per_trap_stats2 %>%
+  ggplot(., aes(x=trap_type, y=CPUE, fill=trap_type, group=trap_type)) + theme_bw() +
+  geom_errorbar(aes(x=trap_type, y=CPUE, ymin=CPUE-se, ymax=CPUE+se), 
+                position=position_dodge(0.3), alpha=0.9, size=0.5, width=0.2) + ylim(2.85,3.6) +
+  geom_point(size=3, shape=21, position=position_dodge(0.3)) + scale_fill_manual(values = c("black", "white"))
 ```
 
     ## Warning: Using `size` aesthetic for lines was deprecated in ggplot2 3.4.0.
@@ -252,14 +260,6 @@ CPUE_plot <- CPUE_per_trap_stats %>%
     ## generated.
 
 ``` r
-ggsave(file="output/CPUE.png", CPUE_plot, width = 4, height = 3.5, units = c("in"))
-
-CPUE_plot2 <- CPUE_per_trap_stats2 %>%
-  ggplot(., aes(x=trap_type, y=CPUE, fill=trap_type, group=trap_type)) + theme_bw() +
-  geom_errorbar(aes(x=trap_type, y=CPUE, ymin=CPUE-se, ymax=CPUE+se), 
-                position=position_dodge(0.3), alpha=0.9, size=0.5, width=0.2) + ylim(2.85,3.6) +
-  geom_point(size=3, shape=21, position=position_dodge(0.3)) + scale_fill_manual(values = c("black", "white"))
-
 ggsave(file="output/CPUE2.png", CPUE_plot2, width = 4, height = 3.5, units = c("in"))
 ```
 
@@ -329,14 +329,14 @@ yield_kg_plot <- yieldkg_per_trap_stats %>%
   geom_point(size=4, shape=21, position=position_dodge(0.3)) + scale_fill_manual(values = c("black", "white"))
 
 ggsave(file="output/Yield.png", yield_kg_plot, width = 4, height = 3.5, units = c("in"))
-
-yield_kg_plot2 <- yieldkg_per_trap_stats2 %>%
-  ggplot(., aes(x=BMU, y=yield_kg_trap, fill=trap_type, group=trap_type)) + theme_bw() +
-  geom_errorbar(aes(x=BMU, y=yield_kg_trap, ymin=yield_kg_trap-se, ymax=yield_kg_trap+se), 
-                position=position_dodge(0.3), alpha=0.9, size=0.5, width=0.2) + 
-  geom_point(size=2, shape=21, position=position_dodge(0.3)) + scale_fill_manual(values = c("black", "white"))
-
-ggsave(file="output/Yield2.png", yield_kg_plot2, width = 4, height = 3.5, units = c("in"))
+# 
+# yield_kg_plot2 <- yieldkg_per_trap_stats2 %>%
+#   ggplot(., aes(x=BMU, y=yield_kg_trap, fill=trap_type, group=trap_type)) + theme_bw() +
+#   geom_errorbar(aes(x=BMU, y=yield_kg_trap, ymin=yield_kg_trap-se, ymax=yield_kg_trap+se), 
+#                 position=position_dodge(0.3), alpha=0.9, size=0.5, width=0.2) + 
+#   geom_point(size=2, shape=21, position=position_dodge(0.3)) + scale_fill_manual(values = c("black", "white"))
+# 
+# ggsave(file="output/Yield2.png", yield_kg_plot2, width = 4, height = 3.5, units = c("in"))
 ```
 
 ## Calculating (reported) value per trap
@@ -406,13 +406,13 @@ value_KES_plot <- valueKES_per_trap_stats %>%
 
 ggsave(file="output/Value.png", value_KES_plot, width = 4, height = 3.5, units = c("in"))
 
-value_KES_plot2 <- valueKES_per_trap_stats2 %>%
-  ggplot(., aes(x=BMU, y=value_KES_trap, fill=trap_type, group=trap_type)) + theme_bw() +
-  geom_errorbar(aes(x=BMU, y=value_KES_trap, ymin=value_KES_trap-se, ymax=value_KES_trap+se), 
-                position=position_dodge(0.3), alpha=0.9, size=0.5, width=0.2) + 
-  geom_point(size=2, shape=21, position=position_dodge(0.3)) + scale_fill_manual(values = c("black", "white"))
-
-ggsave(file="output/Value2.png", value_KES_plot2, width = 4, height = 3.5, units = c("in"))
+# value_KES_plot2 <- valueKES_per_trap_stats2 %>%
+#   ggplot(., aes(x=BMU, y=value_KES_trap, fill=trap_type, group=trap_type)) + theme_bw() +
+#   geom_errorbar(aes(x=BMU, y=value_KES_trap, ymin=value_KES_trap-se, ymax=value_KES_trap+se), 
+#                 position=position_dodge(0.3), alpha=0.9, size=0.5, width=0.2) + 
+#   geom_point(size=2, shape=21, position=position_dodge(0.3)) + scale_fill_manual(values = c("black", "white"))
+# 
+# ggsave(file="output/Value2.png", value_KES_plot2, width = 4, height = 3.5, units = c("in"))
 ```
 
 ## Calculating median length
@@ -499,13 +499,13 @@ length_plot <- length_stats %>%
 
 ggsave(file="output/Length.png", length_plot, width = 4.5, height = 3.5, units = c("in"))
 
-length_plot2 <- length_stats2 %>%
-  ggplot(., aes(x=BMU, y=median_length, fill=trap_type, group=trap_type)) + theme_bw() +
-  geom_errorbar(aes(x=BMU, y=median_length, ymin=median_length-se, ymax=median_length+se), 
-                position=position_dodge(0.3), alpha=0.9, size=0.5, width=0.1) +
-  geom_point(size=1, shape=21, position=position_dodge(0.3)) + scale_fill_manual(values = c("black", "white"))
-
-ggsave(file="output/Length2.png", length_plot2, width = 4, height = 3.5, units = c("in"))
+# length_plot2 <- length_stats2 %>%
+#   ggplot(., aes(x=BMU, y=median_length, fill=trap_type, group=trap_type)) + theme_bw() +
+#   geom_errorbar(aes(x=BMU, y=median_length, ymin=median_length-se, ymax=median_length+se), 
+#                 position=position_dodge(0.3), alpha=0.9, size=0.5, width=0.1) +
+#   geom_point(size=1, shape=21, position=position_dodge(0.3)) + scale_fill_manual(values = c("black", "white"))
+# 
+# ggsave(file="output/Length2.png", length_plot2, width = 4, height = 3.5, units = c("in"))
 ```
 
 ## Calculating take home metrics
@@ -568,14 +568,14 @@ takehome_plot <- takehome_stats %>%
                 position=position_dodge(0.3), alpha=0.9, size=0.5, width=0.1) + ylim(15,33) +
   geom_point(size=3, shape=21, position=position_dodge(0.3)) + scale_fill_manual(values = c("black", "white"))
 
-takehome_plot2 <- takehome_stats2 %>%
-  ggplot(., aes(x=BMU, y=percent_perdestination, fill=trap_type, group=trap_type)) + theme_bw() +
-  geom_errorbar(aes(x=BMU, y=percent_perdestination, ymin=percent_perdestination-se, ymax=percent_perdestination+se), 
-                position=position_dodge(0.3), alpha=0.9, size=0.5, width=0.1) +
-  geom_point(size=2, shape=21, position=position_dodge(0.3)) + scale_fill_manual(values = c("black", "white"))
+# takehome_plot2 <- takehome_stats2 %>%
+#   ggplot(., aes(x=BMU, y=percent_perdestination, fill=trap_type, group=trap_type)) + theme_bw() +
+#   geom_errorbar(aes(x=BMU, y=percent_perdestination, ymin=percent_perdestination-se, ymax=percent_perdestination+se), 
+#                 position=position_dodge(0.3), alpha=0.9, size=0.5, width=0.1) +
+#   geom_point(size=2, shape=21, position=position_dodge(0.3)) + scale_fill_manual(values = c("black", "white"))
 
 ggsave(file="output/Take_Home.png", takehome_plot, width = 4, height = 3.5, units = c("in"))
-ggsave(file="output/Take_Home2.png", takehome_plot2, width = 4, height = 3.5, units = c("in"))
+#ggsave(file="output/Take_Home2.png", takehome_plot2, width = 4, height = 3.5, units = c("in"))
 ```
 
 ## Calculating species data
@@ -734,13 +734,13 @@ richness_plot <- richness_stats %>%
 
 ggsave(file="output/Richness.png", richness_plot, width = 4, height = 3.5, units = c("in"))
 
-richness_plot2 <- richness_stats2 %>%
-  ggplot(., aes(x=BMU, y=richness, fill=trap_type, group=trap_type)) + theme_bw() +
-  geom_errorbar(aes(x=BMU, y=richness, ymin=richness-se, ymax=richness+se), 
-                position=position_dodge(0.3), alpha=0.9, size=0.5, width=0.1) +
-  geom_point(size=2, shape=21, position=position_dodge(0.3)) + scale_fill_manual(values = c("black", "white"))
-
-ggsave(file="output/Richness2.png", richness_plot2, width = 4, height = 3.5, units = c("in"))
+# richness_plot2 <- richness_stats2 %>%
+#   ggplot(., aes(x=BMU, y=richness, fill=trap_type, group=trap_type)) + theme_bw() +
+#   geom_errorbar(aes(x=BMU, y=richness, ymin=richness-se, ymax=richness+se), 
+#                 position=position_dodge(0.3), alpha=0.9, size=0.5, width=0.1) +
+#   geom_point(size=2, shape=21, position=position_dodge(0.3)) + scale_fill_manual(values = c("black", "white"))
+# 
+# ggsave(file="output/Richness2.png", richness_plot2, width = 4, height = 3.5, units = c("in"))
 
 #### RICHNESS PER TRAP 
 richness_trap_plot <- richness_trap_stats %>%
@@ -751,13 +751,13 @@ richness_trap_plot <- richness_trap_stats %>%
 
 ggsave(file="output/Richness_trap.png", richness_trap_plot, width = 4, height = 3.5, units = c("in"))
 
-richness_trap_plot2 <- richness_trap_stats2 %>%
-  ggplot(., aes(x=BMU, y=richness_trap, fill=trap_type, group=trap_type)) + theme_bw() +
-  geom_errorbar(aes(x=BMU, y=richness_trap, ymin=richness_trap-se, ymax=richness_trap+se), 
-                position=position_dodge(0.3), alpha=0.9, size=0.5, width=0.1) +
-  geom_point(size=2, shape=21, position=position_dodge(0.3)) + scale_fill_manual(values = c("black", "white"))
-
-ggsave(file="output/Richness_trap2.png", richness_trap_plot2, width = 4, height = 3.5, units = c("in"))
+# richness_trap_plot2 <- richness_trap_stats2 %>%
+#   ggplot(., aes(x=BMU, y=richness_trap, fill=trap_type, group=trap_type)) + theme_bw() +
+#   geom_errorbar(aes(x=BMU, y=richness_trap, ymin=richness_trap-se, ymax=richness_trap+se), 
+#                 position=position_dodge(0.3), alpha=0.9, size=0.5, width=0.1) +
+#   geom_point(size=2, shape=21, position=position_dodge(0.3)) + scale_fill_manual(values = c("black", "white"))
+# 
+# ggsave(file="output/Richness_trap2.png", richness_trap_plot2, width = 4, height = 3.5, units = c("in"))
 
 # richness_aov <- aov(richness~trap_type*BMU, data=richnessdf)
 # summary(richness_aov)
@@ -841,10 +841,10 @@ data2 %>% dplyr::select(survey_id, trap_type, scientific_name, number_of_fish, m
     ## # Groups:   trap_type, maturity [4]
     ##   trap_type    maturity   sum
     ##   <chr>        <chr>    <dbl>
-    ## 1 Control      mature    8335
-    ## 2 Control      immature  7047
-    ## 3 Experimental mature    1775
-    ## 4 Experimental immature   653
+    ## 1 Control      mature    9071
+    ## 2 Control      immature  6311
+    ## 3 Experimental mature    1879
+    ## 4 Experimental immature   549
 
 ``` r
 ## calculating stats for distance from maturity 
@@ -867,13 +867,13 @@ var.test(exp_maturity$length_dist, con_maturity$length_dist)
     ##  F test to compare two variances
     ## 
     ## data:  exp_maturity$length_dist and con_maturity$length_dist
-    ## F = 0.71107, num df = 2427, denom df = 15381, p-value < 2.2e-16
+    ## F = 0.72732, num df = 2427, denom df = 15381, p-value < 2.2e-16
     ## alternative hypothesis: true ratio of variances is not equal to 1
     ## 95 percent confidence interval:
-    ##  0.6697397 0.7559628
+    ##  0.6850535 0.7732482
     ## sample estimates:
     ## ratio of variances 
-    ##          0.7110657
+    ##          0.7273244
 
 ``` r
 ## p-value < 2.2e-16; ratio = 0.7110657
@@ -888,13 +888,13 @@ t.test(length_dist~trap_type, data = data2_maturity_mature, var.equal = FALSE)
     ##  Welch Two Sample t-test
     ## 
     ## data:  length_dist by trap_type
-    ## t = -1.7179, df = 2610.3, p-value = 0.08593
+    ## t = -3.1147, df = 2752.9, p-value = 0.00186
     ## alternative hypothesis: true difference in means between group Control and group Experimental is not equal to 0
     ## 95 percent confidence interval:
-    ##  -0.48986929  0.03235536
+    ##  -0.6496376 -0.1476914
     ## sample estimates:
     ##      mean in group Control mean in group Experimental 
-    ##                   7.065542                   7.294299
+    ##                   6.705857                   7.104522
 
 ``` r
 ## p-value 0.08593
@@ -905,13 +905,13 @@ t.test(length_dist~trap_type, data = data2_maturity_immature, var.equal = FALSE)
     ##  Welch Two Sample t-test
     ## 
     ## data:  length_dist by trap_type
-    ## t = -15.671, df = 956.81, p-value < 2.2e-16
+    ## t = -13.974, df = 753.5, p-value < 2.2e-16
     ## alternative hypothesis: true difference in means between group Control and group Experimental is not equal to 0
     ## 95 percent confidence interval:
-    ##  -2.169874 -1.686901
+    ##  -1.997338 -1.505285
     ## sample estimates:
     ##      mean in group Control mean in group Experimental 
-    ##                  -5.774060                  -3.845672
+    ##                  -5.306561                  -3.555250
 
 ``` r
 ## p-value < 2.2e-16
@@ -923,13 +923,13 @@ t.test(length_dist~trap_type, data = data2_maturity, var.equal = FALSE)
     ##  Welch Two Sample t-test
     ## 
     ## data:  length_dist by trap_type
-    ## t = -20.592, df = 3596.2, p-value < 2.2e-16
+    ## t = -20.315, df = 3568.2, p-value < 2.2e-16
     ## alternative hypothesis: true difference in means between group Control and group Experimental is not equal to 0
     ## 95 percent confidence interval:
-    ##  -3.411541 -2.818367
+    ##  -3.198384 -2.635365
     ## sample estimates:
     ##      mean in group Control mean in group Experimental 
-    ##                   1.183298                   4.298252
+    ##                   1.777345                   4.694219
 
 ``` r
 ## p-value < 2.2e-16
@@ -942,6 +942,22 @@ maturity_stats <- summarySE(data2_maturity, measurevar = c("length_dist"),
 
 ``` r
 maturity_stats2 <- summarySE(data2_maturity, measurevar = c("length_dist"), groupvars = c("trap_type"))
+
+
+Maturity_distance_plot <- maturity_stats2 %>%
+  ggplot(., aes(x=trap_type, y=length_dist, fill=trap_type, group=trap_type)) + theme_bw() +
+  geom_errorbar(aes(x=trap_type, y=length_dist, ymin=length_dist-se, ymax=length_dist+se), 
+                position=position_dodge(0.3), alpha=0.9, size=0.5, width=0.2) + 
+  ylim(1.65,5) +
+  scale_y_break(c(1.9, 4.45)) + ylim(1.6,5) +
+  geom_point(size=3, shape=21, position=position_dodge(0.3)) + scale_fill_manual(values = c("black", "white"))
+```
+
+    ## Scale for y is already present.
+    ## Adding another scale for y, which will replace the existing scale.
+
+``` r
+ggsave(file="output/Maturity_distance.png", Maturity_distance_plot, width = 4.1, height = 3.25, units = c("in"))
 ```
 
 ### Constructing maturity figure
@@ -983,10 +999,10 @@ data2_length_frequency <- data2 %>%
   #subset(trap_type == "Control") %>%
   #subset(trap_type == "Experimental") %>%
   subset(scientific_name == "Siganus sutor" | 
-           scientific_name == "Scarus ghobban" |
            scientific_name == "Lethrinus nebulosus" |
+           scientific_name == "Scarus ghobban" |
            scientific_name == "Scarus rubroviolaceus" |
-           scientific_name == "Siganus canaliculatus") %>% 
+           scientific_name == "Acanthurus dussumieri") %>% 
   group_by(scientific_name) %>%
   mutate(n = sum(number_of_fish)) %>%
   #dplyr::filter(n_distinct(trap_type) >= 2) %>% 
@@ -997,15 +1013,16 @@ species_list_order <- data2_length_frequency %>% dplyr::select(scientific_name, 
 
 data2_length_frequency$scientific_name <- factor(data2_length_frequency$scientific_name, 
                                                  levels = c("Siganus sutor", 
-                                                            "Scarus ghobban",
                                                             "Lethrinus nebulosus",
+                                                            "Scarus ghobban",
                                                             "Scarus rubroviolaceus",
-                                                            "Siganus canaliculatus")) 
+                                                            "Acanthurus dussumieri")) 
   
-length_frequency_plot <- data2_length_frequency %>% subset(trap_type == "Experimental") %>%
+length_frequency_plot <- data2_length_frequency %>% 
+  subset(trap_type == "Experimental") %>% #### CHANGE TRAP TYPE HERE
   ggplot(., aes(x=length_corrected, fill=trap_type)) +
     geom_histogram(color="black", alpha=0.6, position = 'identity', stat="count") +
-    scale_fill_manual(values=c("white")) + ### grey80 for control; white for experimental 
+    scale_fill_manual(values=c("white")) + ### grey80 for control; white for experimental #### CHANGE TRAP TYPE HERE
     theme_classic() +
     labs(fill="") +
     facet_grid(scientific_name~trap_type, scales = "free_y") +
@@ -1025,7 +1042,8 @@ length_frequency_plot <- data2_length_frequency %>% subset(trap_type == "Experim
     ## : Ignoring unknown parameters: `binwidth`, `bins`, and `pad`
 
 ``` r
-ggsave(file="output/Length_frequency_experimental.png", length_frequency_plot, width = 5, height = 8, units = c("in"))
+ #### CHANGE TRAP TYPE BELOW 
+ggsave(file="output/Length_frequency_Experimental.png", length_frequency_plot, width = 5, height = 8, units = c("in"))
 ```
 
 ### Calculating % fish underneath Lm and sample size per trap type for the figure below
@@ -1181,13 +1199,13 @@ calculated_kg_plot <- calculated_yield_per_trap_stats %>%
 
 ggsave(file="output/Yield_calculated.png", calculated_kg_plot, width = 4, height = 3.5, units = c("in"))
 
-calculated_kg_plot2 <- calculated_yield_per_trap_stats2 %>%
-  ggplot(., aes(x=BMU, y=calculated_biomass_pertrap, fill=trap_type, group=trap_type)) + theme_bw() +
-  geom_errorbar(aes(x=BMU, y=calculated_biomass_pertrap, ymin=calculated_biomass_pertrap-se, ymax=calculated_biomass_pertrap+se), 
-                position=position_dodge(0.3), alpha=0.9, size=0.5, width=0.1) +
-  geom_point(size=2, shape=21, position=position_dodge(0.3)) + scale_fill_manual(values = c("black", "white"))
-
-ggsave(file="output/Yield_calculated2.png", calculated_kg_plot2, width = 4, height = 3.5, units = c("in"))
+# calculated_kg_plot2 <- calculated_yield_per_trap_stats2 %>%
+#   ggplot(., aes(x=BMU, y=calculated_biomass_pertrap, fill=trap_type, group=trap_type)) + theme_bw() +
+#   geom_errorbar(aes(x=BMU, y=calculated_biomass_pertrap, ymin=calculated_biomass_pertrap-se, ymax=calculated_biomass_pertrap+se), 
+#                 position=position_dodge(0.3), alpha=0.9, size=0.5, width=0.1) +
+#   geom_point(size=2, shape=21, position=position_dodge(0.3)) + scale_fill_manual(values = c("black", "white"))
+# 
+# ggsave(file="output/Yield_calculated2.png", calculated_kg_plot2, width = 4, height = 3.5, units = c("in"))
 ```
 
 ## Calculating economic data
@@ -1267,13 +1285,13 @@ calculated_value_plot <- calculated_value_per_trap_stats %>%
 
 ggsave(file="output/Value_calculated.png", calculated_value_plot, width = 4, height = 3.5, units = c("in"))
 
-calculated_value_plot2 <- calculated_value_per_trap_stats2 %>%
-  ggplot(., aes(x=BMU, y=KSHpertrap, fill=trap_type, group=trap_type)) + theme_bw() +
-  geom_errorbar(aes(x=BMU, y=KSHpertrap, ymin=KSHpertrap-se, ymax=KSHpertrap+se), 
-                position=position_dodge(0.3), alpha=0.9, size=0.5, width=0.1) +
-  geom_point(size=2, shape=21, position=position_dodge(0.3)) + scale_fill_manual(values = c("black", "white"))
-
-ggsave(file="output/Value_calculated2.png", calculated_value_plot2, width = 4, height = 3.5, units = c("in"))
+# calculated_value_plot2 <- calculated_value_per_trap_stats2 %>%
+#   ggplot(., aes(x=BMU, y=KSHpertrap, fill=trap_type, group=trap_type)) + theme_bw() +
+#   geom_errorbar(aes(x=BMU, y=KSHpertrap, ymin=KSHpertrap-se, ymax=KSHpertrap+se), 
+#                 position=position_dodge(0.3), alpha=0.9, size=0.5, width=0.1) +
+#   geom_point(size=2, shape=21, position=position_dodge(0.3)) + scale_fill_manual(values = c("black", "white"))
+# 
+# ggsave(file="output/Value_calculated2.png", calculated_value_plot2, width = 4, height = 3.5, units = c("in"))
 ```
 
 Calculating per month data
@@ -1397,7 +1415,8 @@ nutrient_individual_plot <- nutrient_stats %>%
   ylim(16,24) + ##zinc
   geom_point(size=3, shape=21, position=position_dodge(0.3)) + scale_fill_manual(values = c("black", "white"))
 
-ggsave(file="output/Nutrient_Zinc.png", nutrient_individual_plot, width = 4, height = 3.5, units = c("in")) ###CHANGE NAME HERE
+ggsave(file="output/Nutrient_Zinc.png", nutrient_individual_plot, width = 4, height = 3.5, units = c("in")) 
+###CHANGE NAME HERE
 ```
 
 ### Statistics on the above
