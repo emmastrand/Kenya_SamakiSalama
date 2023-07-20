@@ -246,8 +246,11 @@ takehome <- data2 %>% dplyr::group_by(survey_id, destination) %>%
 ## Calculating trophic level 
 
 ```{r}
-data2 <- data2 %>% group_by(survey_id) %>%
-  mutate(mean.trophic = mean(TrophLevel, na.rm = TRUE))
+data2_trophic_level <- data2 %>% group_by(survey_id) %>%
+  tidyr::uncount(., number_of_fish, .remove = TRUE) %>%
+  mutate(mean.trophic = mean(TrophLevel, na.rm = TRUE)) %>% dplyr::select(survey_id, mean.trophic) %>% distinct()
+
+data2 <- data2 %>% left_join(., data2_trophic_level, by = "survey_id")
 ```
 
 ## Calculating herbivore/carnivore presence 
@@ -281,8 +284,11 @@ head(diet)
 ## Calculating average length (cm)
 
 ```{r} 
-data2 <- data2 %>% group_by(survey_id) %>%
-  mutate(mean_length = mean(median_length))
+data2_length <- data2 %>% group_by(survey_id) %>%
+  tidyr::uncount(., number_of_fish, .remove = TRUE) %>%
+  mutate(mean_length = mean(median_length), na.rm=TRUE) %>% dplyr::select(survey_id, mean_length) %>% distinct()
+
+data2 <- data2 %>% left_join(., data2_length, by = "survey_id")
 ```
 
 ## Calculating average value (KES)
@@ -389,9 +395,6 @@ group3 <- group3 %>%
   left_join(., diet_group3, by = c("survey_id", "trap_type", "BMU")) %>%
   left_join(., takehome_group3, by = c("survey_id", "trap_type"))
 
-
-group3 %>% subset(trap_type == "Experimental")
-
 ## 73 surveys 
 ## 34 control and 39 experimental 
 ## 41 group 1 control
@@ -399,10 +402,17 @@ group3 %>% subset(trap_type == "Experimental")
 group3$year <- as.character(group3$year)
 group3$day <- as.character(group3$day)
 
-summary <- full_join(group_1_2, group3) %>% filter(Calcium_mg_per_fisherman > 0)
+summary <- full_join(group_1_2, group3) %>% filter(Calcium_mg_per_fisherman > 0) %>%
+  mutate(household_group_collapsed = case_when(
+    household_group == "Control" ~ "Control",
+    household_group == "Social marketing" ~ "Social marketing",
+    household_group == "Social Marketing + Traps: Experimental" ~ "Social Marketing + Traps",
+    household_group == "Social Marketing + Traps: Control" ~ "Social Marketing + Traps"
+  ))
 ## 232 rows (234 before filter fxn) 
 
-summary %>% write.csv("alternate fishing/household_groups_finaldf.csv")
+summary %>%
+ write.csv("alternate fishing/household_groups_finaldf.csv")
 
 ### Group 1 = 41 
 ### Group 2 = 118
@@ -413,25 +423,14 @@ summary %>% write.csv("alternate fishing/household_groups_finaldf.csv")
 
 ```{r}
 summary2 <- summary %>%
-  gather("measurement", "value", 7:25)
-
-plot <- summary2 %>%
-  ggplot(., aes(x=household_group, y=value, color=household_group)) + 
-  geom_boxplot(outlier.shape = NA) + 
-  geom_jitter(size=0.5, alpha=0.5, width=0.2) +
-  facet_wrap(~measurement, scales = "free") + 
-  theme_classic() + ylab("") + xlab("") +
-  theme(strip.text = element_text(face = "bold"),
-        axis.text.x=element_blank())
-
-ggsave(file="alternate fishing/metrics.png", plot, width = 17, height = 12, units = c("in"))
+  gather("measurement", "value", 7:25) 
 
 summary_stats <- summarySE(summary2, measurevar = c("value"), 
-                           groupvars = c("household_group", "measurement"), na.rm = TRUE)
+                           groupvars = c("household_group_collapsed", "measurement"), na.rm = TRUE)
 
 plot2 <- summary_stats %>%
-  ggplot(., aes(x=household_group, y=value, color=household_group)) + 
-  geom_errorbar(aes(x=household_group, y=value, ymin=value-se, ymax=value+se), 
+  ggplot(., aes(x=household_group_collapsed, y=value, color=household_group_collapsed)) + 
+  geom_errorbar(aes(x=household_group_collapsed, y=value, ymin=value-se, ymax=value+se), 
                 position=position_dodge(0.3), alpha=0.9, size=0.75, width=0.2) + 
   geom_point(size=3, position=position_dodge(0.3)) +
   facet_wrap(~factor(measurement, levels=c('Diet_percent_Carnivorous', 
@@ -480,10 +479,11 @@ plot2 <- summary_stats %>%
         strip.text = element_text(face = "bold", size=10),
         axis.text.x=element_blank(),
         panel.background = element_rect(fill = 'white', color = 'black')) + 
-  scale_color_manual(values = c("#53C936", "#E78818", "#48B5B7", "#185AE7")) +
+  #scale_color_manual(values = c("#53C936", "#E78818", "#48B5B7", "#185AE7")) +
+  scale_color_manual(values = c("#53C936", "#E78818", "#48B5B7"))
   labs(color = "Household Group")
 
-ggsave(file="alternate fishing/metrics2.png", plot2, width = 19, height = 12, units = c("in"))
+ggsave(file="alternate fishing/metrics2_collapsed.png", plot2, width = 17, height = 12, units = c("in"))
 ```
 
 

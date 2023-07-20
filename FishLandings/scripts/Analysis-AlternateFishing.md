@@ -288,8 +288,11 @@ takehome <- data2 %>% dplyr::group_by(survey_id, destination) %>%
 ## Calculating trophic level
 
 ``` r
-data2 <- data2 %>% group_by(survey_id) %>%
-  mutate(mean.trophic = mean(TrophLevel, na.rm = TRUE))
+data2_trophic_level <- data2 %>% group_by(survey_id) %>%
+  tidyr::uncount(., number_of_fish, .remove = TRUE) %>%
+  mutate(mean.trophic = mean(TrophLevel, na.rm = TRUE)) %>% dplyr::select(survey_id, mean.trophic) %>% distinct()
+
+data2 <- data2 %>% left_join(., data2_trophic_level, by = "survey_id")
 ```
 
 ## Calculating herbivore/carnivore presence
@@ -343,8 +346,11 @@ head(diet)
 ## Calculating average length (cm)
 
 ``` r
-data2 <- data2 %>% group_by(survey_id) %>%
-  mutate(mean_length = mean(median_length))
+data2_length <- data2 %>% group_by(survey_id) %>%
+  tidyr::uncount(., number_of_fish, .remove = TRUE) %>%
+  mutate(mean_length = mean(median_length), na.rm=TRUE) %>% dplyr::select(survey_id, mean_length) %>% distinct()
+
+data2 <- data2 %>% left_join(., data2_length, by = "survey_id")
 ```
 
 ## Calculating average value (KES)
@@ -896,31 +902,8 @@ summary <- full_join(group_1_2, group3) %>% filter(Calcium_mg_per_fisherman > 0)
 ``` r
 ## 232 rows (234 before filter fxn) 
 
-summary %>% subset(household_group == "Social marketing")
-```
+summary %>% write.csv("alternate fishing/household_groups_finaldf.csv")
 
-    ## # A tibble: 118 × 28
-    ##    survey_id      year  month day   BMU   household_group Total_Biomass_kg_per…¹
-    ##    <chr>          <chr> <chr> <chr> <chr> <chr>                            <dbl>
-    ##  1 2022-04-03 12… 2022  Apr   03    TAKA… Social marketi…                 0.0721
-    ##  2 2022-05-03 12… 2022  May   03    TAKA… Social marketi…                 1.23  
-    ##  3 2022-05-03 09… 2022  May   03    TAKA… Social marketi…                 1.57  
-    ##  4 2022-04-19 09… 2022  Apr   19    KURU… Social marketi…                 0.820 
-    ##  5 2022-04-20 11… 2022  Apr   20    KURU… Social marketi…                 0.379 
-    ##  6 2022-04-26 13… 2022  Apr   26    KURU… Social marketi…                 1.61  
-    ##  7 2022-04-06 11… 2022  Apr   06    KURU… Social marketi…                 1.42  
-    ##  8 2022-04-07 23… 2022  Apr   07    TAKA… Social marketi…                 3.46  
-    ##  9 2022-04-07 23… 2022  Apr   07    TAKA… Social marketi…                 4.40  
-    ## 10 2022-04-07 23… 2022  Apr   07    TAKA… Social marketi…                 1.96  
-    ## # ℹ 108 more rows
-    ## # ℹ abbreviated name: ¹​Total_Biomass_kg_per_fisherman
-    ## # ℹ 21 more variables: Avg_Trophic_Level <dbl>, richness <int>,
-    ## #   total_catch_per_fisherman <dbl>, Total_value_KES_per_fisherman <dbl>,
-    ## #   Mean_length_cm <dbl>, Calcium_mg_per_fisherman <dbl>,
-    ## #   Iron_mg_per_fisherman <dbl>, Omega3_g_per_fisherman <dbl>,
-    ## #   Protein_g_per_fisherman <dbl>, VitaminA_ug_per_fisherman <dbl>, …
-
-``` r
 ### Group 1 = 41 
 ### Group 2 = 118
 ### Group 3 = 73; 34 control and 39 experimental 
