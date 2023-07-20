@@ -402,7 +402,7 @@ group3$day <- as.character(group3$day)
 summary <- full_join(group_1_2, group3) %>% filter(Calcium_mg_per_fisherman > 0)
 ## 232 rows (234 before filter fxn) 
 
-summary %>% subset(household_group == "Social marketing")
+summary %>% write.csv("alternate fishing/household_groups_finaldf.csv")
 
 ### Group 1 = 41 
 ### Group 2 = 118
