@@ -324,6 +324,9 @@ var.test(exp_length$median_length, con_length$median_length)
 t.test(median_length~trap_type, data = data2_length, var.equal = FALSE)
 ## p-value < 2.2e-16
 
+length_df <- summarySE(data2_length, measurevar = c("median_length"), groupvars = c("trap_type", "survey_id"))
+length_df %>% write.csv("output/length_persurvey.csv")
+
 length_stats <- summarySE(data2_length, measurevar = c("median_length"), groupvars = c("trap_type"))
 length_stats2 <- summarySE(data2_length, measurevar = c("median_length"), groupvars = c("trap_type", "BMU"))
 
@@ -1092,6 +1095,53 @@ piechart2 <- ggplot(piechart_df2, aes(x="", y=value, fill=category)) +
 ggsave(file="output/Bycatch_traptype.png", piechart2, width = 4, height = 4, units = c("in"))
 ```
 
+### Average Trophic Level and Diet 
+
+```{r}
+data3 <- data3 %>% group_by(survey_id, trap_type) %>%
+  mutate(mean.trophic = mean(TrophLevel, na.rm = TRUE)) %>% ungroup() 
+
+diet <- data3 %>% group_by(survey_id, trap_type, Diet) %>%
+  mutate(countper_diet = n()) %>% ungroup() %>%
+  select(survey_id, trap_type, BMU, Diet, countper_diet) %>% distinct() %>%
+  group_by(survey_id, trap_type) %>% 
+  spread(Diet, countper_diet) %>% 
+  mutate_all(., ~replace_na(.,0)) %>%
+  mutate(total = sum(c(Carnivorous, `Herbivorous detritivorous`, `Macroalgal herbivorous`,
+                        `Mobile Inverts`, `Omnivorous`, `Planktivorous`))) %>%
+  mutate(Carnivorous = Carnivorous/total*100,
+         `Herbivorous detritivorous` = `Herbivorous detritivorous`/total*100,
+         `Macroalgal herbivorous` = `Macroalgal herbivorous`/total*100,
+         `Mobile Inverts` = `Mobile Inverts`/total*100,
+         `Omnivorous` = `Omnivorous`/total*100,
+         `Planktivorous` = `Planktivorous`/total*100,
+         Carnivorous_total = Carnivorous+`Mobile Inverts`) %>% 
+  dplyr::select(-total, -Carnivorous, -`Mobile Inverts`) %>%
+  dplyr::rename(Diet_percent_Herbivorous_Detritivorous = `Herbivorous detritivorous`) %>%
+  dplyr::rename(Diet_percent_Herbivorous_Macroalgal = `Macroalgal herbivorous`) %>%
+  dplyr::rename(Diet_percent_Omnivorous = Omnivorous) %>%
+  dplyr::rename(Diet_percent_Planktivorous = Planktivorous) %>%
+  dplyr::rename(Diet_percent_Carnivorous = Carnivorous_total)
+
+diet %>% write.csv("output/group3_diet.csv")
+```
+
+### Calculating biomass taken home 
+
+```{r}
+data3 <- data3 %>% group_by(survey_id, trap_type, destination) %>%
+  mutate(kg_perdestination = sum(W_kg)) %>% ungroup()
+
+takehome_kg <- data3 %>%
+  dplyr::select(survey_id, trap_type, destination, kg_perdestination) %>% 
+  distinct() %>% spread(destination, kg_perdestination) %>% 
+  dplyr::select(survey_id, trap_type, HOME)
+
+takehome_kg %>% write.csv("output/takehome_kg.csv")
+```
+
+
+
 ### Exporting analyzed dataframes 
 
 ```{r}
@@ -1104,7 +1154,7 @@ pertrap_final_df <- data3 %>% dplyr::select(survey_id, BMU, landing_site, fisher
                                             CPUE, yield_kg_trap, value_KES_trap, richness,
                                             calculated_biomass_pertrap, KSHpertrap, pertrap_Calcium, 
                                             pertrap_Iron, pertrap_Omega3, pertrap_Protein, pertrap_VitaminA, 
-                                            pertrap_Selenium, pertrap_Zinc) %>% distinct()
+                                            pertrap_Selenium, pertrap_Zinc, mean.trophic) %>% distinct()
 
 perspp_final_df <- data3 %>% dplyr::select(survey_id, BMU, trap_type, Kiswahili_name, scientific_name,
                                            number_of_fish, destination, length_corrected, median_length,

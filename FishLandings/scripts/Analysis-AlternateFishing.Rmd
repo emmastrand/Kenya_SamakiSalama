@@ -89,6 +89,32 @@ data <- data %>%
 - Gear used: Both used spearguns and TAKAUNGU used monofilament 
 - Units of data: Per single fisherman / household
 
+### Read in the Group 3 
+
+```{r}
+##737 rows 
+group3 <- read.csv("output/pertrap_final_df.csv", header=TRUE) %>% dplyr::select(-X) %>% 
+  mutate(total_catch_per_fisherman = (CPUE*total_traps_collected)/`No..of.fishers.in.crew`,
+        Total_Biomass_kg_per_fisherman = (calculated_biomass_pertrap*total_traps_collected)/`No..of.fishers.in.crew`,
+        Total_value_KES_per_fisherman = (KSHpertrap*total_traps_collected)/`No..of.fishers.in.crew`,
+        Calcium_mg_per_fisherman = (pertrap_Calcium*total_traps_collected)/`No..of.fishers.in.crew`,
+        Iron_mg_per_fisherman = (pertrap_Iron*total_traps_collected)/`No..of.fishers.in.crew`,
+        Omega3_g_per_fisherman = (pertrap_Omega3*total_traps_collected)/`No..of.fishers.in.crew`,
+        Protein_g_per_fisherman = (pertrap_Protein*total_traps_collected)/`No..of.fishers.in.crew`,
+        VitaminA_ug_per_fisherman = (pertrap_VitaminA*total_traps_collected)/`No..of.fishers.in.crew`,
+        Selenium_ug_per_fisherman = (pertrap_Selenium*total_traps_collected)/`No..of.fishers.in.crew`,
+        Zinc_mg_per_fisherman = (pertrap_Zinc*total_traps_collected)/`No..of.fishers.in.crew`)
+
+##741 rows
+length_data <- read.csv("output/length_persurvey.csv") %>% dplyr::select(survey_id, trap_type, median_length)
+
+##737 rows -- should match the initial group3 dataframe 
+group3 <- left_join(group3, length_data, by = c("survey_id", "trap_type"))
+
+### will merge these data with group 1 and 2 at the end of this script 
+```
+
+
 ## Check ranges and add filters 
 
 63 unique species total:  
@@ -206,51 +232,6 @@ data2 %>%
   geom_jitter(aes(color=comparison), size=1) + xlab("") + ylab("difference in value")
 ```
 
-### Statistics on the above. 
-
-```{r}
-data2_yield <- data2 %>% 
-  dplyr::select(survey_id, household_group, total_biomass_kg, calculated_total_biomass) %>% distinct()
-
-Control_yield <- data2_yield %>% subset(household_group == "Control") ## 131 data points
-Social_yield <- data2_yield %>% subset(household_group == "Social marketing") ## 448 data points 
-
-### TOTAL BIOMASS KG 
-var.test(Control_yield$total_biomass_kg, Social_yield$total_biomass_kg) 
-## p-value = 5.004e-06; ratio = 0.5002933
-t.test(total_biomass_kg~household_group, data = data2_yield, var.equal = FALSE)
-## p-value = 0.001342
-
-### TOTAL CALCULATED BIOMASS 
-var.test(Control_yield$calculated_total_biomass, Social_yield$calculated_total_biomass) 
-## p-value = 0.0323; ratio = 0.7299033
-t.test(calculated_total_biomass~household_group, data = data2_yield, var.equal = FALSE)
-## p-value = 9.33e-09
-```
-
-### Figures 
-
-```{r}
-calculated_yield_stats <- summarySE(data2_yield, measurevar = c("calculated_total_biomass"), groupvars = c("household_group"))
-total_biomass_stats2 <- summarySE(data2_yield, measurevar = c("total_biomass_kg"), groupvars = c("household_group"))
-
-calculated_yield_stats %>%
-  ggplot(., aes(x=household_group, y=calculated_total_biomass, fill=household_group, group=household_group)) + theme_bw() +
-  geom_errorbar(aes(x=household_group, y=calculated_total_biomass, 
-                    ymin=calculated_total_biomass-se, ymax=calculated_total_biomass+se), 
-                position=position_dodge(0.3), alpha=0.9, size=0.5, width=0.1) +  
-  geom_point(size=6, shape=21, position=position_dodge(0.3)) + ylab("Calculated Total Biomass") +
-  xlab("Household Group") + labs(fill="Household Group")
-# 
-# total_biomass_stats2 %>%
-#   ggplot(., aes(x=household_group, y=total_biomass_kg, fill=household_group, group=household_group)) + theme_bw() +
-#   geom_errorbar(aes(x=household_group, y=total_biomass_kg, 
-#                     ymin=total_biomass_kg-se, ymax=total_biomass_kg+se), 
-#                 position=position_dodge(0.3), alpha=0.9, size=0.5, width=0.1) +  
-#   #scale_y_break(c(1.1, 1.75)) + ylim(0.9,2.4) +
-#   geom_point(size=3, shape=21, position=position_dodge(0.3)) 
-```
-
 ## Calculating take home kg/% 
 
 ```{r}
@@ -262,82 +243,12 @@ takehome <- data2 %>% dplyr::group_by(survey_id, destination) %>%
   dplyr::rename(TakeHome_kg = HOME)
 ```
 
-### Statistics on the above. 
-
-```{r}
-data2_takehome <- takehome %>% 
-  dplyr::select(survey_id, household_group, TakeHome_kg) %>% distinct() %>% 
-  filter(TakeHome_kg > 0) ##99 total observations #23 control #76 marketing
-
-Control_takehome <- data2_takehome %>% subset(household_group == "Control") ## 131 total data points
-Social_takehome <- data2_takehome %>% subset(household_group == "Social marketing") ## 448 total data points 
-
-### TOTAL BIOMASS KG 
-var.test(Control_takehome$TakeHome_kg, Social_takehome$TakeHome_kg) 
-## p-value = 8.383e-05; ratio = 0.198125
-t.test(TakeHome_kg~household_group, data = data2_takehome, var.equal = FALSE)
-## p-value = 0.2809
-```
-
-### Figures 
-
-```{r}
-#data2_takehome_nozero <- data2_takehome %>% filter(TakeHome_kg > 0) ##99 total observations #23 control #76 marketing
-
-TakeHome_stats <- summarySE(data2_takehome, measurevar = c("TakeHome_kg"), groupvars = c("household_group"), 
-                           na.rm = TRUE)
-#TakeHome_stats %>%
-data2_takehome %>%
-  ggplot(., aes(x=household_group, y=TakeHome_kg, fill=household_group, group=household_group)) + theme_bw() +
-  # geom_errorbar(aes(x=household_group, y=TakeHome_kg,
-  #                   ymin=TakeHome_kg-se, ymax=TakeHome_kg+se),
-  #               position=position_dodge(0.3), alpha=0.9, size=0.5, width=0.1) +
-  #geom_point(size=6, shape=21, position=position_dodge(0.3)) + 
-  geom_boxplot() + 
-  geom_jitter(size=1, shape=21, width = 0.2) + 
-  ylab("Take Home Biomass (kg)") +
-  xlab("Household Group") + labs(fill="Household Group")
-```
-
 ## Calculating trophic level 
 
 ```{r}
 data2 <- data2 %>% group_by(survey_id) %>%
   mutate(mean.trophic = mean(TrophLevel, na.rm = TRUE))
 ```
-
-### Statistics on the above. 
-
-```{r}
-data2_trophic <- data2 %>% 
-  dplyr::select(survey_id, household_group, mean.trophic) %>% distinct()
-
-Control_trophic <- data2_trophic %>% subset(household_group == "Control") ## 131 data points
-Social_trophic <- data2_trophic %>% subset(household_group == "Social marketing") ## 448 data points 
-
-### TOTAL BIOMASS KG 
-var.test(Control_trophic$mean.trophic, Social_trophic$mean.trophic) 
-## p-value = 0.3708; ratio = 1.129964
-t.test(mean.trophic~household_group, data = data2_trophic, var.equal = TRUE)
-## p-value = 0.1518
-```
-
-### Figures 
-
-```{r}
-trophic_stats <- summarySE(data2_trophic, measurevar = c("mean.trophic"), groupvars = c("household_group"), 
-                           na.rm = TRUE)
-
-trophic_stats %>%
-  ggplot(., aes(x=household_group, y=mean.trophic, fill=household_group, group=household_group)) + theme_bw() +
-  geom_errorbar(aes(x=household_group, y=mean.trophic, 
-                    ymin=mean.trophic-se, ymax=mean.trophic+se), 
-                position=position_dodge(0.3), alpha=0.9, size=0.5, width=0.1) +  
-  geom_point(size=6, shape=21, position=position_dodge(0.3)) + 
-  ylab("Mean Trophic Level of Catch") +
-  xlab("Household Group") + labs(fill="Household Group")
-```
-
 
 ## Calculating herbivore/carnivore presence 
 
@@ -354,24 +265,226 @@ diet <- data2 %>% group_by(survey_id, Diet) %>%
          `Macroalgal herbivorous` = `Macroalgal herbivorous`/total*100,
          `Mobile Inverts` = `Mobile Inverts`/total*100,
          `Omnivorous` = `Omnivorous`/total*100,
-         `Planktivorous` = `Planktivorous`/total*100) %>% dplyr::select(-total)
+         `Planktivorous` = `Planktivorous`/total*100,
+         Carnivorous_total = Carnivorous+`Mobile Inverts`) %>% 
+  dplyr::select(-total, -Carnivorous, -`Mobile Inverts`) %>%
+  dplyr::rename(Diet_percent_Herbivorous_Detritivorous = `Herbivorous detritivorous`) %>%
+  dplyr::rename(Diet_percent_Herbivorous_Macroalgal = `Macroalgal herbivorous`) %>%
+  dplyr::rename(Diet_percent_Omnivorous = Omnivorous) %>%
+  dplyr::rename(Diet_percent_Planktivorous = Planktivorous) %>%
+  dplyr::rename(Diet_percent_Carnivorous = Carnivorous_total)
   
 head(diet)
 ```
 
-## Summary 
 
-```{r}
-summary <- data2 %>% 
-  dplyr::select(survey_id, BMU, household_group, calculated_total_biomass, mean.trophic) %>%
-  distinct() %>% dplyr::rename(Total_Biomass_kg = calculated_total_biomass) %>%
-  dplyr::rename(Avg_Trophic_Level = mean.trophic) %>%
-  left_join(., takehome, c("survey_id", "BMU", "household_group")) %>%
-  left_join(., diet, by = c("survey_id", "BMU", "household_group")) 
+## Calculating average length (cm)
 
-head(summary)
+```{r} 
+data2 <- data2 %>% group_by(survey_id) %>%
+  mutate(mean_length = mean(median_length))
 ```
 
+## Calculating average value (KES)
+
+```{r}
+data2 <- data2 %>% 
+  mutate(KSHperspp = Price_KSHPerkg*W_kg) %>%
+  group_by(survey_id) %>%
+  filter(!is.na(W_kg)) %>%
+  mutate(calculated_total_value = sum(KSHperspp, na.rm=TRUE)) %>% 
+  ungroup()
+```
+
+## Calculating average catch 
+
+```{r}
+data2 <- data2 %>%
+  group_by(survey_id) %>%
+  mutate(total_catch_per_fisherman = sum(number_of_fish))
+```
+
+## Calculating species richness
+
+```{r}
+data2 <- data2 %>%
+  ## still grouped by survey id from above
+  mutate(richness = n_distinct(scientific_name))
+```
+
+## Calculating nutrient information 
+
+```{r}
+data2 <- data2 %>%
+  mutate(spp_Calcium = (W_g/100)*Calcium_mgPer100g,
+         spp_Iron = (W_g/100)*Iron_mgPer100g,
+         spp_Omega3 = (W_g/100)*Omega3_gPer100g,
+         spp_Protein = (W_g/100)*Protein_gPer100g,
+         spp_VitaminA = (W_g/100)*VitaminA_ugPer100g,
+         spp_Selenium = (W_g/100)*Selenium_ugPer100g,
+         spp_Zinc = (W_g/100)*Zinc_mgPer100g) %>%
+  ### still grouped by survey id from above 
+  mutate(Calcium_mg_per_fisherman = sum(spp_Calcium, na.rm = TRUE),
+         Iron_mg_per_fisherman = sum(spp_Iron, na.rm = TRUE),
+         Omega3_g_per_fisherman = sum(spp_Omega3, na.rm = TRUE),
+         Protein_g_per_fisherman = sum(spp_Protein, na.rm = TRUE),
+         VitaminA_ug_per_fisherman = sum(spp_VitaminA, na.rm = TRUE),
+         Selenium_ug_per_fisherman = sum(spp_Selenium, na.rm = TRUE),
+         Zinc_mg_per_fisherman = sum(spp_Zinc, na.rm = TRUE)) %>% ungroup()
+```
+
+
+## Summary and include Group 3 
+
+```{r}
+group_1_2 <- data2 %>% 
+  dplyr::select(survey_id, year, month, day, BMU, household_group, calculated_total_biomass, mean.trophic,
+                richness, total_catch_per_fisherman, calculated_total_value, mean_length, Calcium_mg_per_fisherman,
+                Iron_mg_per_fisherman, Omega3_g_per_fisherman, Protein_g_per_fisherman, 
+                VitaminA_ug_per_fisherman, Selenium_ug_per_fisherman,
+                Zinc_mg_per_fisherman) %>%
+  distinct() %>% 
+  dplyr::rename(Total_Biomass_kg_per_fisherman = calculated_total_biomass) %>%
+  dplyr::rename(Avg_Trophic_Level = mean.trophic) %>%
+  dplyr::rename(Total_value_KES_per_fisherman = calculated_total_value) %>%
+  dplyr::rename(Mean_length_cm = mean_length) %>%
+  left_join(., takehome, c("survey_id", "BMU", "household_group")) %>%
+  left_join(., diet, by = c("survey_id", "BMU", "household_group")) %>% ungroup() %>%
+  ### subset to months of interest 
+  subset(month == "Apr" | month == "May")
+
+head(group_1_2)
+
+### 161 surveys total for April and May combined 2022 
+## Control = 41 surveys 
+## Social marketing = 120 surveys 
+```
+
+
+### Subsetting group 3's data 
+
+```{r}
+diet_group3 <- read.csv("output/group3_diet.csv", header=TRUE) %>% dplyr::select(-X)
+takehome_group3 <- read.csv("output/takehome_kg.csv", header=TRUE) %>% dplyr::select(-X) %>%
+  dplyr::rename(TakeHome_kg = HOME)
+
+## PRE FILTER = 737 surveys 
+## POST FILTER 228 surveys
+group3 <- group3 %>% 
+  subset(month == "Apr" | month == "May") %>%
+  subset(year == "2022") %>%
+  dplyr::select(survey_id, BMU, trap_type, total_traps_collected, year, month, day, `No..of.fishers.in.crew`,
+                richness, total_catch_per_fisherman, Total_Biomass_kg_per_fisherman, Total_value_KES_per_fisherman,
+                Calcium_mg_per_fisherman, Iron_mg_per_fisherman, Omega3_g_per_fisherman, Protein_g_per_fisherman,
+                VitaminA_ug_per_fisherman, Selenium_ug_per_fisherman, Zinc_mg_per_fisherman, mean.trophic, median_length) %>%
+  mutate(household_group = case_when(
+    trap_type == "Control" ~ "Social Marketing + Traps: Control",
+    trap_type == "Experimental" ~ "Social Marketing + Traps: Experimental"
+  )) %>% 
+  dplyr::rename(No_fishermen = `No..of.fishers.in.crew`) %>%
+  dplyr::rename(Mean_length_cm = median_length) %>%
+  dplyr::rename(Avg_Trophic_Level = mean.trophic) 
+
+group3 <- group3 %>% 
+  left_join(., diet_group3, by = c("survey_id", "trap_type", "BMU")) %>%
+  left_join(., takehome_group3, by = c("survey_id", "trap_type"))
+
+
+group3 %>% subset(trap_type == "Experimental")
+
+## 73 surveys 
+## 34 control and 39 experimental 
+## 41 group 1 control
+
+group3$year <- as.character(group3$year)
+group3$day <- as.character(group3$day)
+
+summary <- full_join(group_1_2, group3) %>% filter(Calcium_mg_per_fisherman > 0)
+## 232 rows (234 before filter fxn) 
+
+summary %>% subset(household_group == "Social marketing")
+
+### Group 1 = 41 
+### Group 2 = 118
+### Group 3 = 73; 34 control and 39 experimental 
+```
+
+### Data exploration 
+
+```{r}
+summary2 <- summary %>%
+  gather("measurement", "value", 7:25)
+
+plot <- summary2 %>%
+  ggplot(., aes(x=household_group, y=value, color=household_group)) + 
+  geom_boxplot(outlier.shape = NA) + 
+  geom_jitter(size=0.5, alpha=0.5, width=0.2) +
+  facet_wrap(~measurement, scales = "free") + 
+  theme_classic() + ylab("") + xlab("") +
+  theme(strip.text = element_text(face = "bold"),
+        axis.text.x=element_blank())
+
+ggsave(file="alternate fishing/metrics.png", plot, width = 17, height = 12, units = c("in"))
+
+summary_stats <- summarySE(summary2, measurevar = c("value"), 
+                           groupvars = c("household_group", "measurement"), na.rm = TRUE)
+
+plot2 <- summary_stats %>%
+  ggplot(., aes(x=household_group, y=value, color=household_group)) + 
+  geom_errorbar(aes(x=household_group, y=value, ymin=value-se, ymax=value+se), 
+                position=position_dodge(0.3), alpha=0.9, size=0.75, width=0.2) + 
+  geom_point(size=3, position=position_dodge(0.3)) +
+  facet_wrap(~factor(measurement, levels=c('Diet_percent_Carnivorous', 
+                                           'Diet_percent_Herbivorous_Detritivorous', 
+                                           'Diet_percent_Herbivorous_Macroalgal',
+                                           'Diet_percent_Omnivorous',
+                                           'Diet_percent_Planktivorous',
+                                           'Iron_mg_per_fisherman',
+                                           'Calcium_mg_per_fisherman',
+                                           'Omega3_g_per_fisherman',
+                                           'Protein_g_per_fisherman',
+                                           'Selenium_ug_per_fisherman',
+                                           'VitaminA_ug_per_fisherman',
+                                           'Zinc_mg_per_fisherman',
+                                           'Avg_Trophic_Level',
+                                           'Mean_length_cm',
+                                           'total_catch_per_fisherman',
+                                           'richness',
+                                           'Total_Biomass_kg_per_fisherman',
+                                           'TakeHome_kg',
+                                           'Total_value_KES_per_fisherman')), 
+             labeller = as_labeller(c(Diet_percent_Carnivorous = "% of catch: Carnivorous",
+                                      Diet_percent_Herbivorous_Detritivorous = "% of catch: Herbivorous Detritivorou",
+                                      Diet_percent_Herbivorous_Macroalgal = "% of catch: Herbivorous Macroalgal",
+                                      Diet_percent_Omnivorous = "% of catch: Omnivorous",
+                                      Diet_percent_Planktivorous = "% of catch: Planktivorous",
+                                      Iron_mg_per_fisherman = "Iron Content (mg) fisherman^-1",
+                                      Calcium_mg_per_fisherman = "Calcium Content (mg) fisherman^-1",
+                                      Omega3_g_per_fisherman = "Omega3 Content (g) fisherman^-1",
+                                      Protein_g_per_fisherman = "Protein Content (g) fisherman^-1",
+                                      Selenium_ug_per_fisherman = "Selenium Content (ug) fisherman^-1",
+                                      VitaminA_ug_per_fisherman = "VitaminA Content (ug) fisherman^-1",
+                                      Zinc_mg_per_fisherman = "Zinc Content (mg) fisherman^-1",
+                                      Avg_Trophic_Level = "Trophic Level",
+                                      Mean_length_cm = "Length (cm)",
+                                      total_catch_per_fisherman = "Catch: # of fish fisherman^-1",
+                                      richness = "# of unique species survey^-1",
+                                      Total_Biomass_kg_per_fisherman = "Biomass (kg) fisherman^-1",
+                                      TakeHome_kg = "Biomass (kg) taken home fisherman^-1",
+                                      Total_value_KES_per_fisherman = "Value (KES) fisherman^-1")),
+             scales = "free", strip.position = 'left') +
+  ylab(NULL) + 
+  xlab("") +
+  theme(strip.background = element_blank(),
+        strip.placement='outside',
+        strip.text = element_text(face = "bold", size=10),
+        axis.text.x=element_blank(),
+        panel.background = element_rect(fill = 'white', color = 'black')) + 
+  scale_color_manual(values = c("#53C936", "#E78818", "#48B5B7", "#185AE7")) +
+  labs(color = "Household Group")
+
+ggsave(file="alternate fishing/metrics2.png", plot2, width = 19, height = 12, units = c("in"))
+```
 
 
 
