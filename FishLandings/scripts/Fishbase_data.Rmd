@@ -22,12 +22,12 @@ library(tidyverse)
 library(rfishbase)
 ```
 
-```{r}
+```{r, results='markup'}
 sp <- c('Siganus sutor')
 
 data <- estimate(sp) %>% data.frame()
 
-view(data)
+head(data)
 ```
 
 ## Extracting Fish Nutrient data 
