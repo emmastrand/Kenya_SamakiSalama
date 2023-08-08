@@ -446,10 +446,7 @@ summary %>%
 
 ```{r}
 summary2 <- summary %>%
-  gather("measurement", "value", 7:26) 
-
-summary_stats <- summarySE(summary2, measurevar = c("value"), 
-                           groupvars = c("household_group_collapsed", "measurement"), na.rm = TRUE) %>%
+  gather("measurement", "value", 7:26) %>%
   mutate(measurement = case_when(
     measurement == "Avg_Trophic_Level" ~ "Trophic Level",
     measurement == "Calcium_mg_per_fisherman" ~ "Calcium (mg)",
@@ -477,6 +474,9 @@ summary_stats <- summarySE(summary2, measurevar = c("value"),
     household_group_collapsed == "Social marketing" ~ "SM",
     household_group_collapsed == "Social Marketing + Traps" ~ "SM + Traps"
   ))
+
+summary_stats <- summarySE(summary2, measurevar = c("value"), 
+                           groupvars = c("household_group_collapsed", "measurement"), na.rm = TRUE)
 ```
 
 
@@ -484,11 +484,15 @@ Individual point range plots
 
 ```{r}
 createPlot <- function(data, y) {
+  ## subset to each input (variable)
   data <- data %>% subset(measurement == y)
-  p <- ggplot(data, aes(x=household_group_collapsed, y=value, color=household_group_collapsed)) +
-    geom_errorbar(aes(x=household_group_collapsed, y=value, ymin=value-se, ymax=value+se), 
+  ## creating plot
+  p <- 
+    ggplot(data, aes(x=household_group_collapsed, y=value, color=household_group_collapsed)) +
+    #geom_jitter(data=data, size=1, alpha=0.4, width=0.2) +
+    geom_errorbar(data=data, aes(x=household_group_collapsed, y=value, ymin=value-se, ymax=value+se), 
                       position=position_dodge(0.3), alpha=0.9, size=0.75, width=0.2) + 
-    geom_point(size=3, position=position_dodge(0.3)) +
+    geom_point(data=data, size=3, position=position_dodge(0.3)) +
     theme_bw() +
     theme(#strip.background = element_blank(),
         #axis.text.x=element_blank(),
@@ -508,7 +512,33 @@ createPlot <- function(data, y) {
 
 cols <- unique(summary_stats$measurement)
 
+## invisible presents the output printing in this script
 invisible(lapply(cols, createPlot, data = summary_stats))
+```
+
+Testing individual geom jitter to see if it's worth it
+
+```{r}
+summary_subset <- summary_stats %>% subset(measurement == "Length (cm)") ### CHANGE VARIABLE HERE
+
+jitter_plot <- summary2 %>% subset(measurement == "Length (cm)") %>% ### CHANGE VARIABLE HERE
+  ggplot(., aes(x=household_group_collapsed, y=value, color=household_group_collapsed)) + 
+  geom_jitter(size=0.6, alpha=0.1, width=0.1) + theme_bw() +
+  scale_color_manual(values = c("#11BF66", "#E78818", "#48B5B7")) +
+  theme(#strip.background = element_blank(),
+        #axis.text.x=element_blank(),
+        #panel.background = element_rect(margin(1, 1, 1, 1, "cm")),
+        #plot.margin = margin(1, 1, 1, 1, "cm"),
+        strip.placement='outside',
+        legend.position="none",
+        strip.text = element_text(face = "bold", size=10),
+        axis.title.y = element_text(margin = margin(t = 0, r = 10, b = 0, l = 0), size=12, face="bold"),
+        axis.text.x = element_text(color="black")) +
+    geom_errorbar(data=summary_subset, aes(x=household_group_collapsed, y=value, ymin=value-se, ymax=value+se), 
+                      position=position_dodge(0.3), alpha=1, size=0.5, width=0.15) + 
+    geom_point(data=summary_subset, aes(x=household_group_collapsed, y=value), size=1.5, position=position_dodge(0.3))
+
+ggsave(jitter_plot, file="household groups/Length_jitter.png", width=3, height=4, units=c("in")) ### CHANGE VARIABLE HERE
 ```
 
 Length frequency plot 
@@ -548,62 +578,72 @@ ggsave(LF, file="household groups/Length_freq.png", width=6, height=7, units=c("
 Large plot altogether
 
 ```{r}
-plot2 <- summary_stats %>%
-  ggplot(., aes(x=household_group_collapsed, y=value, color=household_group_collapsed)) + 
-  geom_errorbar(aes(x=household_group_collapsed, y=value, ymin=value-se, ymax=value+se), 
-                position=position_dodge(0.3), alpha=0.9, size=0.75, width=0.2) + 
-  geom_point(size=3, position=position_dodge(0.3)) +
-  facet_wrap(~factor(measurement, levels=c('Diet_percent_Carnivorous', 
-                                           'Diet_percent_Herbivorous_Detritivorous', 
-                                           'Diet_percent_Herbivorous_Macroalgal',
-                                           'Diet_percent_Omnivorous',
-                                           'Diet_percent_Planktivorous',
-                                           'Iron_mg_per_fisherman',
-                                           'Calcium_mg_per_fisherman',
-                                           'Omega3_g_per_fisherman',
-                                           'Protein_g_per_fisherman',
-                                           'Selenium_ug_per_fisherman',
-                                           'VitaminA_ug_per_fisherman',
-                                           'Zinc_mg_per_fisherman',
-                                           'Avg_Trophic_Level',
-                                           'Mean_length_cm',
-                                           'total_catch_per_fisherman',
-                                           'richness',
-                                           'Total_Biomass_kg_per_fisherman',
-                                           'TakeHome_kg',
-                                           'Total_value_KES_per_fisherman')), 
-             labeller = as_labeller(c(Diet_percent_Carnivorous = "% of catch: Carnivorous",
-                                      Diet_percent_Herbivorous_Detritivorous = "% of catch: Herbivorous Detritivorou",
-                                      Diet_percent_Herbivorous_Macroalgal = "% of catch: Herbivorous Macroalgal",
-                                      Diet_percent_Omnivorous = "% of catch: Omnivorous",
-                                      Diet_percent_Planktivorous = "% of catch: Planktivorous",
-                                      Iron_mg_per_fisherman = "Iron Content (mg) fisherman^-1",
-                                      Calcium_mg_per_fisherman = "Calcium Content (mg) fisherman^-1",
-                                      Omega3_g_per_fisherman = "Omega3 Content (g) fisherman^-1",
-                                      Protein_g_per_fisherman = "Protein Content (g) fisherman^-1",
-                                      Selenium_ug_per_fisherman = "Selenium Content (ug) fisherman^-1",
-                                      VitaminA_ug_per_fisherman = "VitaminA Content (ug) fisherman^-1",
-                                      Zinc_mg_per_fisherman = "Zinc Content (mg) fisherman^-1",
-                                      Avg_Trophic_Level = "Trophic Level",
-                                      Mean_length_cm = "Length (cm)",
-                                      total_catch_per_fisherman = "Catch: # of fish fisherman^-1",
-                                      richness = "# of unique species survey^-1",
-                                      Total_Biomass_kg_per_fisherman = "Biomass (kg) fisherman^-1",
-                                      TakeHome_kg = "Biomass (kg) taken home fisherman^-1",
-                                      Total_value_KES_per_fisherman = "Value (KES) fisherman^-1")),
-             scales = "free", strip.position = 'left') +
-  ylab(NULL) + 
-  xlab("") +
-  theme(strip.background = element_blank(),
-        strip.placement='outside',
-        strip.text = element_text(face = "bold", size=10),
-        axis.text.x=element_blank(),
-        panel.background = element_rect(fill = 'white', color = 'black')) + 
-  #scale_color_manual(values = c("#53C936", "#E78818", "#48B5B7", "#185AE7")) +
-  scale_color_manual(values = c("#11BF66", "#E78818", "#48B5B7"))
-  labs(color = "Household Group")
+# plot2 <- summary_stats %>%
+#   ggplot(., aes(x=household_group_collapsed, y=value, color=household_group_collapsed)) + 
+#   geom_errorbar(aes(x=household_group_collapsed, y=value, ymin=value-se, ymax=value+se), 
+#                 position=position_dodge(0.3), alpha=0.9, size=0.75, width=0.2) + 
+#   geom_point(size=3, position=position_dodge(0.3)) +
+#   facet_wrap(~factor(measurement, levels=c('Diet_percent_Carnivorous', 
+#                                            'Diet_percent_Herbivorous_Detritivorous', 
+#                                            'Diet_percent_Herbivorous_Macroalgal',
+#                                            'Diet_percent_Omnivorous',
+#                                            'Diet_percent_Planktivorous',
+#                                            'Iron_mg_per_fisherman',
+#                                            'Calcium_mg_per_fisherman',
+#                                            'Omega3_g_per_fisherman',
+#                                            'Protein_g_per_fisherman',
+#                                            'Selenium_ug_per_fisherman',
+#                                            'VitaminA_ug_per_fisherman',
+#                                            'Zinc_mg_per_fisherman',
+#                                            'Avg_Trophic_Level',
+#                                            'Mean_length_cm',
+#                                            'total_catch_per_fisherman',
+#                                            'richness',
+#                                            'Total_Biomass_kg_per_fisherman',
+#                                            'TakeHome_kg',
+#                                            'Total_value_KES_per_fisherman')), 
+#              labeller = as_labeller(c(Diet_percent_Carnivorous = "% of catch: Carnivorous",
+#                                       Diet_percent_Herbivorous_Detritivorous = "% of catch: Herbivorous Detritivorou",
+#                                       Diet_percent_Herbivorous_Macroalgal = "% of catch: Herbivorous Macroalgal",
+#                                       Diet_percent_Omnivorous = "% of catch: Omnivorous",
+#                                       Diet_percent_Planktivorous = "% of catch: Planktivorous",
+#                                       Iron_mg_per_fisherman = "Iron Content (mg) fisherman^-1",
+#                                       Calcium_mg_per_fisherman = "Calcium Content (mg) fisherman^-1",
+#                                       Omega3_g_per_fisherman = "Omega3 Content (g) fisherman^-1",
+#                                       Protein_g_per_fisherman = "Protein Content (g) fisherman^-1",
+#                                       Selenium_ug_per_fisherman = "Selenium Content (ug) fisherman^-1",
+#                                       VitaminA_ug_per_fisherman = "VitaminA Content (ug) fisherman^-1",
+#                                       Zinc_mg_per_fisherman = "Zinc Content (mg) fisherman^-1",
+#                                       Avg_Trophic_Level = "Trophic Level",
+#                                       Mean_length_cm = "Length (cm)",
+#                                       total_catch_per_fisherman = "Catch: # of fish fisherman^-1",
+#                                       richness = "# of unique species survey^-1",
+#                                       Total_Biomass_kg_per_fisherman = "Biomass (kg) fisherman^-1",
+#                                       TakeHome_kg = "Biomass (kg) taken home fisherman^-1",
+#                                       Total_value_KES_per_fisherman = "Value (KES) fisherman^-1")),
+#              scales = "free", strip.position = 'left') +
+#   ylab(NULL) + 
+#   xlab("") +
+#   theme(strip.background = element_blank(),
+#         strip.placement='outside',
+#         strip.text = element_text(face = "bold", size=10),
+#         axis.text.x=element_blank(),
+#         panel.background = element_rect(fill = 'white', color = 'black')) + 
+#   #scale_color_manual(values = c("#53C936", "#E78818", "#48B5B7", "#185AE7")) +
+#   scale_color_manual(values = c("#11BF66", "#E78818", "#48B5B7"))
+#   labs(color = "Household Group")
+# 
+# ggsave(file="household groups/metrics2_collapsed.png", plot2, width = 17, height = 12, units = c("in"))
+```
 
-ggsave(file="household groups/metrics2_collapsed.png", plot2, width = 17, height = 12, units = c("in"))
+### Statistics 
+
+ANOVA for all groups 
+
+```{r}
+aov <- aov(Mean_length_cm~household_group_collapsed, data=summary) ## CHANGE VARIABLE HERE
+Anova(length_aov, type = "III")
+TukeyHSD(length_aov)
 ```
 
 
