@@ -484,7 +484,7 @@ createPlot <- function(data, y) {
     scale_x_discrete(labels = function(x) str_wrap(x, width = 17)) +
     ylab(y) + xlab("") +
     labs(color = "Household Group")
-  ggsave(file = paste0("household groups/", y, ".png"), width = 4, height = 4, units = c("in"))
+  ggsave(file = paste0("household groups/", y, ".png"), width = 3, height = 4, units = c("in"))
 }
 
 cols <- unique(summary_stats$measurement)
