@@ -557,7 +557,8 @@ data2 <- data2 %>%
   ### categorizing mature or immature 
   mutate(maturity = if_else(median_length >= Lmat_corrected, "mature", "immature")) %>%
   ### calculating distance from Lmat
-  mutate(length_dist = median_length-Lmat_corrected) 
+  mutate(length_dist = median_length-Lmat_corrected) %>% group_by(survey_id, trap_type) %>%
+  mutate(mean_lengthdist = mean(length_dist)) %>% ungroup()
 
 ## calculating total numbers for stats above 
 data2 %>% dplyr::select(survey_id, trap_type, scientific_name, number_of_fish, maturity) %>% 
@@ -1155,7 +1156,7 @@ pertrap_final_df <- data3 %>% dplyr::select(survey_id, BMU, landing_site, fisher
                                             CPUE, yield_kg_trap, value_KES_trap, richness,
                                             calculated_biomass_pertrap, KSHpertrap, pertrap_Calcium, 
                                             pertrap_Iron, pertrap_Omega3, pertrap_Protein, pertrap_VitaminA, 
-                                            pertrap_Selenium, pertrap_Zinc, mean.trophic) %>% distinct()
+                                            pertrap_Selenium, pertrap_Zinc, mean.trophic, mean_lengthdist) %>% distinct()
 
 perspp_final_df <- data3 %>% dplyr::select(survey_id, BMU, trap_type, Kiswahili_name, scientific_name,
                                            number_of_fish, destination, length_corrected, median_length,

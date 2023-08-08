@@ -353,7 +353,8 @@ head(diet)
 ``` r
 data2_length <- data2 %>% group_by(survey_id) %>%
   tidyr::uncount(., number_of_fish, .remove = TRUE) %>%
-  mutate(mean_length = mean(median_length), na.rm=TRUE) %>% dplyr::select(survey_id, mean_length) %>% distinct()
+  mutate(mean_length = mean(median_length), na.rm=TRUE) %>% 
+  dplyr::select(survey_id, mean_length) %>% distinct()
 
 data2 <- data2 %>% left_join(., data2_length, by = "survey_id")
 ```
@@ -406,6 +407,24 @@ data2 <- data2 %>%
          Zinc_mg_per_fisherman = sum(spp_Zinc, na.rm = TRUE)) %>% ungroup()
 ```
 
+## Calculating % under Lmaturity
+
+``` r
+data2 <- data2 %>%
+  mutate(Lmat_corrected = if_else(is.na(Lmat_cm), Lmat_fishbase, Lmat_cm)) %>%
+  ### categorizing mature or immature 
+  mutate(maturity = if_else(median_length >= Lmat_corrected, "mature", "immature")) %>%
+  ### calculating distance from Lmat
+  mutate(length_dist = median_length-Lmat_corrected) %>% 
+  group_by(survey_id) %>%
+    mutate(mean_lengthdist = mean(length_dist)) %>%
+  ungroup()
+
+hist(data2$mean_lengthdist)
+```
+
+![](Analysis-HouseholdGroups_files/figure-gfm/unnamed-chunk-17-1.png)<!-- -->
+
 ## Summary and include Group 3
 
 ``` r
@@ -413,7 +432,7 @@ group_1_2 <- data2 %>%
   dplyr::select(survey_id, year, month, day, BMU, household_group, calculated_total_biomass, mean.trophic,
                 richness, total_catch_per_fisherman, calculated_total_value, mean_length, Calcium_mg_per_fisherman,
                 Iron_mg_per_fisherman, Omega3_g_per_fisherman, Protein_g_per_fisherman, 
-                VitaminA_ug_per_fisherman, Selenium_ug_per_fisherman,
+                VitaminA_ug_per_fisherman, Selenium_ug_per_fisherman, mean_lengthdist,
                 Zinc_mg_per_fisherman) %>%
   distinct() %>% 
   dplyr::rename(Total_Biomass_kg_per_fisherman = calculated_total_biomass) %>%
@@ -428,7 +447,7 @@ group_1_2 <- data2 %>%
 head(group_1_2)
 ```
 
-    ## # A tibble: 6 × 25
+    ## # A tibble: 6 × 26
     ##   survey_id       year  month day   BMU   household_group Total_Biomass_kg_per…¹
     ##   <chr>           <chr> <fct> <chr> <chr> <chr>                            <dbl>
     ## 1 2022-04-29 23:… 2022  Apr   29    KANA… Control                         1.25  
@@ -438,12 +457,12 @@ head(group_1_2)
     ## 5 2022-05-03 09:… 2022  May   03    TAKA… Social marketi…                 1.57  
     ## 6 2022-04-03 12:… 2022  Apr   03    KANA… Control                         2.24  
     ## # ℹ abbreviated name: ¹​Total_Biomass_kg_per_fisherman
-    ## # ℹ 18 more variables: Avg_Trophic_Level <dbl>, richness <int>,
+    ## # ℹ 19 more variables: Avg_Trophic_Level <dbl>, richness <int>,
     ## #   total_catch_per_fisherman <int>, Total_value_KES_per_fisherman <dbl>,
     ## #   Mean_length_cm <dbl>, Calcium_mg_per_fisherman <dbl>,
     ## #   Iron_mg_per_fisherman <dbl>, Omega3_g_per_fisherman <dbl>,
     ## #   Protein_g_per_fisherman <dbl>, VitaminA_ug_per_fisherman <dbl>,
-    ## #   Selenium_ug_per_fisherman <dbl>, Zinc_mg_per_fisherman <dbl>, …
+    ## #   Selenium_ug_per_fisherman <dbl>, mean_lengthdist <dbl>, …
 
 ``` r
 ### 161 surveys total for April and May combined 2022 
@@ -466,7 +485,8 @@ group3 <- group3 %>%
   dplyr::select(survey_id, BMU, trap_type, total_traps_collected, year, month, day, `No..of.fishers.in.crew`,
                 richness, total_catch_per_fisherman, Total_Biomass_kg_per_fisherman, Total_value_KES_per_fisherman,
                 Calcium_mg_per_fisherman, Iron_mg_per_fisherman, Omega3_g_per_fisherman, Protein_g_per_fisherman,
-                VitaminA_ug_per_fisherman, Selenium_ug_per_fisherman, Zinc_mg_per_fisherman, mean.trophic, median_length) %>%
+                VitaminA_ug_per_fisherman, Selenium_ug_per_fisherman, Zinc_mg_per_fisherman, mean.trophic, median_length,
+                mean_lengthdist) %>%
   mutate(household_group = case_when(
     trap_type == "Control" ~ "Social Marketing + Traps: Control",
     trap_type == "Experimental" ~ "Social Marketing + Traps: Experimental"
@@ -500,9 +520,9 @@ summary <- full_join(group_1_2, group3) %>% filter(Calcium_mg_per_fisherman > 0)
     ## total_catch_per_fisherman, Total_value_KES_per_fisherman, Mean_length_cm,
     ## Calcium_mg_per_fisherman, Iron_mg_per_fisherman, Omega3_g_per_fisherman,
     ## Protein_g_per_fisherman, VitaminA_ug_per_fisherman, Selenium_ug_per_fisherman,
-    ## Zinc_mg_per_fisherman, TakeHome_kg, Diet_percent_Herbivorous_Detritivorous,
-    ## Diet_percent_Herbivorous_Macroalgal, Diet_percent_Omnivorous,
-    ## Diet_percent_Planktivorous, Diet_percent_Carnivorous)`
+    ## mean_lengthdist, Zinc_mg_per_fisherman, TakeHome_kg,
+    ## Diet_percent_Herbivorous_Detritivorous, Diet_percent_Herbivorous_Macroalgal,
+    ## Diet_percent_Omnivorous, Diet_percent_Planktivorous, Diet_percent_Carnivorous)`
 
 ``` r
 ## 232 rows (234 before filter fxn) 
@@ -519,7 +539,7 @@ summary %>%
 
 ``` r
 summary2 <- summary %>%
-  gather("measurement", "value", 7:25) 
+  gather("measurement", "value", 7:26) 
 
 summary_stats <- summarySE(summary2, measurevar = c("value"), 
                            groupvars = c("household_group_collapsed", "measurement"), na.rm = TRUE) %>%
@@ -542,7 +562,8 @@ summary_stats <- summarySE(summary2, measurevar = c("value"),
     measurement == "total_catch_per_fisherman" ~ "CPUE",
     measurement == "Total_value_KES_per_fisherman" ~ "Value (KES)",
     measurement == "VitaminA_ug_per_fisherman" ~ "VitaminA (ug)",
-    measurement == "Zinc_mg_per_fisherman" ~ "Zinc (ug)"
+    measurement == "Zinc_mg_per_fisherman" ~ "Zinc (ug)",
+    measurement == "mean_lengthdist" ~ "Distance from Lmat (cm)"
   )) %>%
   mutate(household_group_collapsed = case_when(
     household_group_collapsed == "Control" ~ "Control",
