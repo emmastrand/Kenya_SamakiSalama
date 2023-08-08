@@ -325,6 +325,7 @@ t.test(median_length~trap_type, data = data2_length, var.equal = FALSE)
 ## p-value < 2.2e-16
 
 length_df <- summarySE(data2_length, measurevar = c("median_length"), groupvars = c("trap_type", "survey_id"))
+data2_length %>% write.csv("output/length_total.csv")
 length_df %>% write.csv("output/length_persurvey.csv")
 
 length_stats <- summarySE(data2_length, measurevar = c("median_length"), groupvars = c("trap_type"))

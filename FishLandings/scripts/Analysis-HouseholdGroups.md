@@ -1,34 +1,19 @@
----
-title: "Analysis of Fishing Landings dataset - alternate dataset"
-author: "Author: Emma Strand; emma_strand@uri.edu"
-output:
-  github_document: default
-  pdf_document:
-    keep_tex: yes
-  html_document:
-    toc: yes
-    toc_depth: 6
-    toc_float: yes
-editor_options: 
-  chunk_output_type: inline
----
+Analysis of Fishing Landings dataset - household groups
+================
+Author: Emma Strand; <emma_strand@uri.edu>
 
-```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
-```
+## Prior Scripts
 
-
-## Prior Scripts 
-
-QC: https://github.com/emmastrand/Kenya_SamakiSalama/blob/main/FishLandings/scripts/QC.md 
-
+QC:
+<https://github.com/emmastrand/Kenya_SamakiSalama/blob/main/FishLandings/scripts/QC.md>
 
 ## <a name="data"></a> **Reading in datafiles**
 
-```{r, message=FALSE, warning=FALSE}
+``` r
 library(plyr)
 library(dplyr)
 library(tidyverse)
+library(purrr)
 library(ggplot2)
 library(readxl)
 library(lubridate)
@@ -44,22 +29,25 @@ library(ggstatsplot)
 library(ggridges)
 library(ggbreak)
 library(emmeans)
+library(cowplot)
 ```
 
-## Read in the data frame that is the output of the QC script. 
+## Read in the data frame that is the output of the QC script.
 
-Summary information so far: 741 total surveys, 591 unmodified traps, 150 modified traps. 
+Summary information so far: 741 total surveys, 591 unmodified traps, 150
+modified traps.
 
-```{r, message=FALSE, warning=FALSE}
+``` r
 # read in excel file
 ## 2,156 rows x 30 variables (this should match the final version of QC script)
-data <- read.csv("alternate fishing/alternate_fishing.csv") %>% #read in excel file 
+data <- read.csv("household groups/alternate_fishing.csv") %>% #read in excel file 
   dplyr::select(-X)
 
 # creating new columns with month year and date
 ## survey ID is master identifier that is based on `date_collected_dd_mm_yyyy` column 
 data <- data %>% 
   separate(date_collected_dd_mm_yyyy, c("year", "month", "day"), remove = FALSE) 
+## now 34 columns 
 
 #changing this column to numeric instead of a character (needed for next fxn)
 data$month <- as.numeric(data$month) 
@@ -77,21 +65,19 @@ data <- data %>%
     BMU == "TAKAUNGU" ~ "Social marketing"))
 ```
 
+**Control households**  
+- KANAMAI (141 surveys): November 2021 and January - May 2022 - Gear
+used: Spearguns - Units of data: Per single fisherman / household
 
-**Control households**   
-- KANAMAI (141 surveys): November 2021 and January - May 2022
-- Gear used: Spearguns
-- Units of data: Per single fisherman / household
-
-**Social marketing households**   
+**Social marketing households**  
 - KURUWITU (382 surveys): July - December 2021 and January - May 2022  
 - TAKAUNGU (105 surveys): January - May 2022  
-- Gear used: Both used spearguns and TAKAUNGU used monofilament 
-- Units of data: Per single fisherman / household
+- Gear used: Both used spearguns and TAKAUNGU used monofilament - Units
+of data: Per single fisherman / household
 
-### Read in the Group 3 
+### Read in the Group 3
 
-```{r}
+``` r
 ##737 rows 
 group3 <- read.csv("output/pertrap_final_df.csv", header=TRUE) %>% dplyr::select(-X) %>% 
   mutate(total_catch_per_fisherman = (CPUE*total_traps_collected)/`No..of.fishers.in.crew`,
@@ -107,6 +93,8 @@ group3 <- read.csv("output/pertrap_final_df.csv", header=TRUE) %>% dplyr::select
 
 ##741 rows
 length_data <- read.csv("output/length_persurvey.csv") %>% dplyr::select(survey_id, trap_type, median_length)
+## 17,824 rows
+length_total <- read.csv("output/length_total.csv") %>% dplyr::select(survey_id, trap_type, median_length)
 
 ##737 rows -- should match the initial group3 dataframe 
 group3 <- left_join(group3, length_data, by = c("survey_id", "trap_type"))
@@ -114,31 +102,77 @@ group3 <- left_join(group3, length_data, by = c("survey_id", "trap_type"))
 ### will merge these data with group 1 and 2 at the end of this script 
 ```
 
-
-## Check ranges and add filters 
+## Check ranges and add filters
 
 63 unique species total:  
 - 40 of those found in KANAMAI  
 - 56 of those found in KURUWITU  
-- 32 of those found in TAKAUNGU  
+- 32 of those found in TAKAUNGU
 
-```{r}
+``` r
 hist(data$total_biomass_kg) ## 0.25 26.00
+```
+
+![](Analysis-HouseholdGroups_files/figure-gfm/unnamed-chunk-4-1.png)<!-- -->
+
+``` r
 hist(data$take_home_weight_kg, na.rm = TRUE) ## 0-4
+```
+
+    ## Warning in plot.window(xlim, ylim, "", ...): "na.rm" is not a graphical
+    ## parameter
+
+    ## Warning in title(main = main, sub = sub, xlab = xlab, ylab = ylab, ...):
+    ## "na.rm" is not a graphical parameter
+
+    ## Warning in axis(1, ...): "na.rm" is not a graphical parameter
+
+    ## Warning in axis(2, at = yt, ...): "na.rm" is not a graphical parameter
+
+![](Analysis-HouseholdGroups_files/figure-gfm/unnamed-chunk-4-2.png)<!-- -->
+
+``` r
 hist(data$total_value_KES) ## 40 - 4800 
+```
+
+![](Analysis-HouseholdGroups_files/figure-gfm/unnamed-chunk-4-3.png)<!-- -->
+
+``` r
 hist(data$take_home_value_KES, na.rm = TRUE) ## 0-600 
+```
 
+    ## Warning in plot.window(xlim, ylim, "", ...): "na.rm" is not a graphical
+    ## parameter
+
+    ## Warning in title(main = main, sub = sub, xlab = xlab, ylab = ylab, ...):
+    ## "na.rm" is not a graphical parameter
+
+    ## Warning in axis(1, ...): "na.rm" is not a graphical parameter
+
+    ## Warning in axis(2, at = yt, ...): "na.rm" is not a graphical parameter
+
+![](Analysis-HouseholdGroups_files/figure-gfm/unnamed-chunk-4-4.png)<!-- -->
+
+``` r
 range(data$`No..of.fishers.in.crew`) ## 1-3 people 
+```
 
+    ## [1] 1 3
+
+``` r
 hist(data$number_of_fish) ## 1 - 19 fish 
+```
 
+![](Analysis-HouseholdGroups_files/figure-gfm/unnamed-chunk-4-5.png)<!-- -->
+
+``` r
 #unique(data$scientific_name) ## 63 fish 
 #data %>% subset(BMU == "TAKAUNGU") %>% dplyr::select(scientific_name) %>% distinct()
 ```
 
-## Calculating median length 
+## Calculating median length
 
-```{r}
+``` r
 data <- data %>% 
   mutate(median_length = case_when(
     length_corrected == "0-10" ~ 5,
@@ -160,12 +194,13 @@ data <- data %>%
 hist(data$median_length) ## majority fall within 10-40 cm 
 ```
 
+![](Analysis-HouseholdGroups_files/figure-gfm/unnamed-chunk-5-1.png)<!-- -->
 
-## Loading Galligan and FishBase dataset 
+## Loading Galligan and FishBase dataset
 
-Most species in the list above have metadata below. 
+Most species in the list above have metadata below.
 
-```{r}
+``` r
 fishbase_lifehistory <- read_excel("data/fishbase.xlsx", sheet = "life history") %>% #read in excel file 
   select(scientific_name, Lm, Lmax) %>% dplyr::rename(Lmat_fishbase = Lm) %>% dplyr::rename(Lmax_fishbase = Lmax) 
 
@@ -192,20 +227,19 @@ metadata <- full_join(fishbase, galligan, by = "scientific_name")
 data2 <- left_join(data, metadata, by = "scientific_name")
 ```
 
-## Calculating total biomass 
+## Calculating total biomass
 
-W=aL^b 
+W=aL^b
 
 W = Biomass  
 L = Length (in our case, median length)  
-a = (taken from fishbase)
-b = (taken from fishbase)
+a = (taken from fishbase) b = (taken from fishbase)
 
-Read in data from fishbase. These units are in cm and grams. 
+Read in data from fishbase. These units are in cm and grams.
 
-https://www.fishbase.de/manual/English/FishbaseThe_LENGTH_WEIGHT_table.htm
+<https://www.fishbase.de/manual/English/FishbaseThe_LENGTH_WEIGHT_table.htm>
 
-```{r}
+``` r
 ### Switching to data3 which will filter out those fish with no nutrient or a and b values 
 data2 <- data2 %>%  
   ## mutating a and b column to be numeric; this will create NAs b/c not all fish had a and b valueus in fishbase
@@ -216,13 +250,24 @@ data2 <- data2 %>%
   filter(!is.na(W_kg)) %>%
   mutate(calculated_total_biomass = sum(W_kg)) %>% 
   ungroup()
+```
 
+    ## Warning: There were 2 warnings in `mutate()`.
+    ## The first warning was:
+    ## ℹ In argument: `a = .Primitive("as.double")(a)`.
+    ## Caused by warning:
+    ## ! NAs introduced by coercion
+    ## ℹ Run `dplyr::last_dplyr_warnings()` to see the 1 remaining warning.
+
+``` r
 range(data2$calculated_total_biomass) ## 0.001832111 kg - 18.201910245 kg
 ```
 
-### Comparing reported vs. calculated 
+    ## [1]  0.001832111 18.201910245
 
-```{r}
+### Comparing reported vs. calculated
+
+``` r
 data2 %>% 
   select(survey_id, total_biomass_kg, calculated_total_biomass) %>%
   distinct() %>% na.omit() %>%
@@ -232,9 +277,11 @@ data2 %>%
   geom_jitter(aes(color=comparison), size=1) + xlab("") + ylab("difference in value")
 ```
 
-## Calculating take home kg/% 
+![](Analysis-HouseholdGroups_files/figure-gfm/unnamed-chunk-8-1.png)<!-- -->
 
-```{r}
+## Calculating take home kg/%
+
+``` r
 takehome <- data2 %>% dplyr::group_by(survey_id, destination) %>%   
   mutate(kg_perdestination = sum(W_kg)) %>% ungroup() %>% 
   dplyr::select(survey_id, BMU, household_group, destination, kg_perdestination) %>%
@@ -243,9 +290,9 @@ takehome <- data2 %>% dplyr::group_by(survey_id, destination) %>%
   dplyr::rename(TakeHome_kg = HOME)
 ```
 
-## Calculating trophic level 
+## Calculating trophic level
 
-```{r}
+``` r
 data2_trophic_level <- data2 %>% group_by(survey_id) %>%
   tidyr::uncount(., number_of_fish, .remove = TRUE) %>%
   mutate(mean.trophic = mean(TrophLevel, na.rm = TRUE)) %>% dplyr::select(survey_id, mean.trophic) %>% distinct()
@@ -253,11 +300,11 @@ data2_trophic_level <- data2 %>% group_by(survey_id) %>%
 data2 <- data2 %>% left_join(., data2_trophic_level, by = "survey_id")
 ```
 
-## Calculating herbivore/carnivore presence 
+## Calculating herbivore/carnivore presence
 
-```{r}
+``` r
 diet <- data2 %>% group_by(survey_id, Diet) %>%
-  mutate(countper_diet = n()) %>% ungroup() %>%
+  dplyr::mutate(countper_diet = n()) %>% ungroup() %>%
   select(survey_id, BMU, household_group, Diet, countper_diet) %>% distinct() %>%
   group_by(survey_id) %>% spread(Diet, countper_diet) %>% dplyr::select(-`<NA>`) %>%
   mutate_all(., ~replace_na(.,0)) %>%
@@ -276,14 +323,34 @@ diet <- data2 %>% group_by(survey_id, Diet) %>%
   dplyr::rename(Diet_percent_Omnivorous = Omnivorous) %>%
   dplyr::rename(Diet_percent_Planktivorous = Planktivorous) %>%
   dplyr::rename(Diet_percent_Carnivorous = Carnivorous_total)
-  
+```
+
+    ## `mutate_all()` ignored the following grouping variables:
+    ## • Column `survey_id`
+    ## ℹ Use `mutate_at(df, vars(-group_cols()), myoperation)` to silence the message.
+
+``` r
 head(diet)
 ```
 
+    ## # A tibble: 6 × 8
+    ## # Groups:   survey_id [6]
+    ##   survey_id  BMU   household_group Diet_percent_Herbivo…¹ Diet_percent_Herbivo…²
+    ##   <chr>      <chr> <chr>                            <dbl>                  <dbl>
+    ## 1 2021-07-2… KURU… Social marketi…                   66.7                      0
+    ## 2 2021-07-2… KURU… Social marketi…                   42.9                      0
+    ## 3 2021-07-2… KURU… Social marketi…                    0                        0
+    ## 4 2021-07-2… KURU… Social marketi…                   66.7                      0
+    ## 5 2021-07-2… KURU… Social marketi…                   20                        0
+    ## 6 2021-07-2… KURU… Social marketi…                   50                        0
+    ## # ℹ abbreviated names: ¹​Diet_percent_Herbivorous_Detritivorous,
+    ## #   ²​Diet_percent_Herbivorous_Macroalgal
+    ## # ℹ 3 more variables: Diet_percent_Omnivorous <dbl>,
+    ## #   Diet_percent_Planktivorous <dbl>, Diet_percent_Carnivorous <dbl>
 
 ## Calculating average length (cm)
 
-```{r} 
+``` r
 data2_length <- data2 %>% group_by(survey_id) %>%
   tidyr::uncount(., number_of_fish, .remove = TRUE) %>%
   mutate(mean_length = mean(median_length), na.rm=TRUE) %>% dplyr::select(survey_id, mean_length) %>% distinct()
@@ -293,7 +360,7 @@ data2 <- data2 %>% left_join(., data2_length, by = "survey_id")
 
 ## Calculating average value (KES)
 
-```{r}
+``` r
 data2 <- data2 %>% 
   mutate(KSHperspp = Price_KSHPerkg*W_kg) %>%
   group_by(survey_id) %>%
@@ -302,9 +369,9 @@ data2 <- data2 %>%
   ungroup()
 ```
 
-## Calculating average catch 
+## Calculating average catch
 
-```{r}
+``` r
 data2 <- data2 %>%
   group_by(survey_id) %>%
   mutate(total_catch_per_fisherman = sum(number_of_fish))
@@ -312,15 +379,15 @@ data2 <- data2 %>%
 
 ## Calculating species richness
 
-```{r}
+``` r
 data2 <- data2 %>%
   ## still grouped by survey id from above
   mutate(richness = n_distinct(scientific_name))
 ```
 
-## Calculating nutrient information 
+## Calculating nutrient information
 
-```{r}
+``` r
 data2 <- data2 %>%
   mutate(spp_Calcium = (W_g/100)*Calcium_mgPer100g,
          spp_Iron = (W_g/100)*Iron_mgPer100g,
@@ -339,10 +406,9 @@ data2 <- data2 %>%
          Zinc_mg_per_fisherman = sum(spp_Zinc, na.rm = TRUE)) %>% ungroup()
 ```
 
+## Summary and include Group 3
 
-## Summary and include Group 3 
-
-```{r}
+``` r
 group_1_2 <- data2 %>% 
   dplyr::select(survey_id, year, month, day, BMU, household_group, calculated_total_biomass, mean.trophic,
                 richness, total_catch_per_fisherman, calculated_total_value, mean_length, Calcium_mg_per_fisherman,
@@ -360,16 +426,34 @@ group_1_2 <- data2 %>%
   subset(month == "Apr" | month == "May")
 
 head(group_1_2)
+```
 
+    ## # A tibble: 6 × 25
+    ##   survey_id       year  month day   BMU   household_group Total_Biomass_kg_per…¹
+    ##   <chr>           <chr> <fct> <chr> <chr> <chr>                            <dbl>
+    ## 1 2022-04-29 23:… 2022  Apr   29    KANA… Control                         1.25  
+    ## 2 2022-04-03 12:… 2022  Apr   03    TAKA… Social marketi…                 0.0721
+    ## 3 2022-04-03 11:… 2022  Apr   03    TAKA… Social marketi…                 0.939 
+    ## 4 2022-05-03 12:… 2022  May   03    TAKA… Social marketi…                 1.23  
+    ## 5 2022-05-03 09:… 2022  May   03    TAKA… Social marketi…                 1.57  
+    ## 6 2022-04-03 12:… 2022  Apr   03    KANA… Control                         2.24  
+    ## # ℹ abbreviated name: ¹​Total_Biomass_kg_per_fisherman
+    ## # ℹ 18 more variables: Avg_Trophic_Level <dbl>, richness <int>,
+    ## #   total_catch_per_fisherman <int>, Total_value_KES_per_fisherman <dbl>,
+    ## #   Mean_length_cm <dbl>, Calcium_mg_per_fisherman <dbl>,
+    ## #   Iron_mg_per_fisherman <dbl>, Omega3_g_per_fisherman <dbl>,
+    ## #   Protein_g_per_fisherman <dbl>, VitaminA_ug_per_fisherman <dbl>,
+    ## #   Selenium_ug_per_fisherman <dbl>, Zinc_mg_per_fisherman <dbl>, …
+
+``` r
 ### 161 surveys total for April and May combined 2022 
 ## Control = 41 surveys 
 ## Social marketing = 120 surveys 
 ```
 
+### Subsetting group 3’s data
 
-### Subsetting group 3's data 
-
-```{r}
+``` r
 diet_group3 <- read.csv("output/group3_diet.csv", header=TRUE) %>% dplyr::select(-X)
 takehome_group3 <- read.csv("output/takehome_kg.csv", header=TRUE) %>% dplyr::select(-X) %>%
   dplyr::rename(TakeHome_kg = HOME)
@@ -409,25 +493,142 @@ summary <- full_join(group_1_2, group3) %>% filter(Calcium_mg_per_fisherman > 0)
     household_group == "Social Marketing + Traps: Experimental" ~ "Social Marketing + Traps",
     household_group == "Social Marketing + Traps: Control" ~ "Social Marketing + Traps"
   ))
+```
+
+    ## Joining with `by = join_by(survey_id, year, month, day, BMU, household_group,
+    ## Total_Biomass_kg_per_fisherman, Avg_Trophic_Level, richness,
+    ## total_catch_per_fisherman, Total_value_KES_per_fisherman, Mean_length_cm,
+    ## Calcium_mg_per_fisherman, Iron_mg_per_fisherman, Omega3_g_per_fisherman,
+    ## Protein_g_per_fisherman, VitaminA_ug_per_fisherman, Selenium_ug_per_fisherman,
+    ## Zinc_mg_per_fisherman, TakeHome_kg, Diet_percent_Herbivorous_Detritivorous,
+    ## Diet_percent_Herbivorous_Macroalgal, Diet_percent_Omnivorous,
+    ## Diet_percent_Planktivorous, Diet_percent_Carnivorous)`
+
+``` r
 ## 232 rows (234 before filter fxn) 
 
 summary %>%
- write.csv("alternate fishing/household_groups_finaldf.csv")
+ write.csv("household groups/household_groups_finaldf.csv")
 
 ### Group 1 = 41 
 ### Group 2 = 118
 ### Group 3 = 73; 34 control and 39 experimental 
 ```
 
-### Data exploration 
+### Data exploration
 
-```{r}
+``` r
 summary2 <- summary %>%
   gather("measurement", "value", 7:25) 
 
 summary_stats <- summarySE(summary2, measurevar = c("value"), 
-                           groupvars = c("household_group_collapsed", "measurement"), na.rm = TRUE)
+                           groupvars = c("household_group_collapsed", "measurement"), na.rm = TRUE) %>%
+  mutate(measurement = case_when(
+    measurement == "Avg_Trophic_Level" ~ "Trophic Level",
+    measurement == "Calcium_mg_per_fisherman" ~ "Calcium (mg)",
+    measurement == "Diet_percent_Carnivorous" ~ "Carnivorous (%)",
+    measurement == "Diet_percent_Herbivorous_Detritivorous" ~ "Herbivorous Detritivorous (%)",
+    measurement == "Diet_percent_Herbivorous_Macroalgal" ~ "Herbivorous Macroalgal (%)",
+    measurement == "Diet_percent_Omnivorous" ~ "Omnivorous (%)",
+    measurement == "Diet_percent_Planktivorous" ~ "Planktivorous (%)",
+    measurement == "Iron_mg_per_fisherman" ~ "Iron (mg)",
+    measurement == "Mean_length_cm" ~ "Length (cm)",
+    measurement == "Omega3_g_per_fisherman" ~ "Omega3 (g)",
+    measurement == "Protein_g_per_fisherman" ~ "Protein (g)",
+    measurement == "richness" ~ "Species Richness",
+    measurement == "Selenium_ug_per_fisherman" ~ "Selenium (ug)",
+    measurement == "TakeHome_kg" ~ "Biomass Taken Home (kg)",
+    measurement == "Total_Biomass_kg_per_fisherman" ~ "Biomass (kg)",
+    measurement == "total_catch_per_fisherman" ~ "CPUE",
+    measurement == "Total_value_KES_per_fisherman" ~ "Value (KES)",
+    measurement == "VitaminA_ug_per_fisherman" ~ "VitaminA (ug)",
+    measurement == "Zinc_mg_per_fisherman" ~ "Zinc (ug)"
+  )) %>%
+  mutate(household_group_collapsed = case_when(
+    household_group_collapsed == "Control" ~ "Control",
+    household_group_collapsed == "Social marketing" ~ "SM",
+    household_group_collapsed == "Social Marketing + Traps" ~ "SM + Traps"
+  ))
+```
 
+Individual point range plots
+
+``` r
+createPlot <- function(data, y) {
+  data <- data %>% subset(measurement == y)
+  p <- ggplot(data, aes(x=household_group_collapsed, y=value, color=household_group_collapsed)) +
+    geom_errorbar(aes(x=household_group_collapsed, y=value, ymin=value-se, ymax=value+se), 
+                      position=position_dodge(0.3), alpha=0.9, size=0.75, width=0.2) + 
+    geom_point(size=3, position=position_dodge(0.3)) +
+    theme_bw() +
+    theme(#strip.background = element_blank(),
+        #axis.text.x=element_blank(),
+        #panel.background = element_rect(margin(1, 1, 1, 1, "cm")),
+        #plot.margin = margin(1, 1, 1, 1, "cm"),
+        strip.placement='outside',
+        legend.position="none",
+        strip.text = element_text(face = "bold", size=10),
+        axis.title.y = element_text(margin = margin(t = 0, r = 10, b = 0, l = 0), size=12, face="bold"),
+        axis.text.x = element_text(color="black")) +
+    scale_color_manual(values = c("#11BF66", "#E78818", "#48B5B7")) +
+    scale_x_discrete(labels = function(x) str_wrap(x, width = 17)) +
+    ylab(y) + xlab("") +
+    labs(color = "Household Group")
+  ggsave(file = paste0("household groups/", y, ".png"), width = 4, height = 4, units = c("in"))
+}
+
+cols <- unique(summary_stats$measurement)
+
+invisible(lapply(cols, createPlot, data = summary_stats))
+```
+
+    ## Warning: Using `size` aesthetic for lines was deprecated in ggplot2 3.4.0.
+    ## ℹ Please use `linewidth` instead.
+    ## This warning is displayed once every 8 hours.
+    ## Call `lifecycle::last_lifecycle_warnings()` to see where this warning was
+    ## generated.
+
+Length frequency plot
+
+``` r
+length_total$household_group <- "SM + Traps"
+## 17,824 rows 
+
+length_groups12 <- data %>% 
+  dplyr::select(survey_id, median_length, household_group) %>%
+  mutate(household_group = case_when(
+    household_group == "Social marketing" ~ "SM",
+    household_group == "Control" ~ "Control"
+  ))
+## 2,156 rows
+
+lengthfreq_df <- full_join(length_total, length_groups12)
+```
+
+    ## Joining with `by = join_by(survey_id, median_length, household_group)`
+
+``` r
+## 19,980 rows
+
+LF <- lengthfreq_df %>%
+  ggplot(aes(x=median_length, fill=household_group)) +
+  geom_histogram(color="black", alpha=0.8, position = 'identity', binwidth = 5) +
+    scale_fill_manual(values = c("#11BF66", "#E78818", "#48B5B7")) + theme_bw() +
+  facet_grid(household_group ~ ., scales="free_y") +
+  theme(panel.background=element_rect(fill='white', colour='black'),
+        strip.background=element_rect(fill='white', colour='black'),
+        strip.text = element_text(size = 12, face="bold"),
+        legend.position="none",
+        axis.title.y = element_text(margin = margin(t = 0, r = 10, b = 0, l = 0), size=12, face="bold"),
+        axis.title.x = element_text(margin = margin(t = 5, r = 0, b = 0, l = 0), size=12, face="bold")) + 
+  ylab("Count") + xlab("Length (cm)")
+
+ggsave(LF, file="household groups/Length_freq.png", width=6, height=7, units=c("in"))
+```
+
+Large plot altogether
+
+``` r
 plot2 <- summary_stats %>%
   ggplot(., aes(x=household_group_collapsed, y=value, color=household_group_collapsed)) + 
   geom_errorbar(aes(x=household_group_collapsed, y=value, ymin=value-se, ymax=value+se), 
@@ -480,12 +681,16 @@ plot2 <- summary_stats %>%
         axis.text.x=element_blank(),
         panel.background = element_rect(fill = 'white', color = 'black')) + 
   #scale_color_manual(values = c("#53C936", "#E78818", "#48B5B7", "#185AE7")) +
-  scale_color_manual(values = c("#53C936", "#E78818", "#48B5B7"))
+  scale_color_manual(values = c("#11BF66", "#E78818", "#48B5B7"))
   labs(color = "Household Group")
-
-ggsave(file="alternate fishing/metrics2_collapsed.png", plot2, width = 17, height = 12, units = c("in"))
 ```
 
+    ## $colour
+    ## [1] "Household Group"
+    ## 
+    ## attr(,"class")
+    ## [1] "labels"
 
-
-
+``` r
+ggsave(file="household groups/metrics2_collapsed.png", plot2, width = 17, height = 12, units = c("in"))
+```
