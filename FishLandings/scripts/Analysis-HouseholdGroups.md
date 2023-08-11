@@ -286,7 +286,8 @@ takehome <- data2 %>% dplyr::group_by(survey_id, destination) %>%
   mutate(kg_perdestination = sum(W_kg)) %>% ungroup() %>% 
   dplyr::select(survey_id, BMU, household_group, destination, kg_perdestination) %>%
   distinct() %>% spread(destination, kg_perdestination) %>%
-  mutate_all(., ~replace_na(.,0)) %>% dplyr::select(survey_id, BMU, household_group, HOME) %>%
+  #mutate_all(., ~replace_na(.,0)) %>% 
+  dplyr::select(survey_id, BMU, household_group, HOME) %>%
   dplyr::rename(TakeHome_kg = HOME)
 ```
 
@@ -295,7 +296,8 @@ takehome <- data2 %>% dplyr::group_by(survey_id, destination) %>%
 ``` r
 data2_trophic_level <- data2 %>% group_by(survey_id) %>%
   tidyr::uncount(., number_of_fish, .remove = TRUE) %>%
-  mutate(mean.trophic = mean(TrophLevel, na.rm = TRUE)) %>% dplyr::select(survey_id, mean.trophic) %>% distinct()
+  mutate(mean.trophic = mean(TrophLevel, na.rm = TRUE)) %>% 
+  dplyr::select(survey_id, mean.trophic) %>% distinct()
 
 data2 <- data2 %>% left_join(., data2_trophic_level, by = "survey_id")
 ```
@@ -375,7 +377,7 @@ data2 <- data2 %>%
 ``` r
 data2 <- data2 %>%
   group_by(survey_id) %>%
-  mutate(total_catch_per_fisherman = sum(number_of_fish))
+  mutate(total_catch_per_fisherman = sum(number_of_fish)/`No..of.fishers.in.crew`)
 ```
 
 ## Calculating species richness
@@ -398,13 +400,13 @@ data2 <- data2 %>%
          spp_Selenium = (W_g/100)*Selenium_ugPer100g,
          spp_Zinc = (W_g/100)*Zinc_mgPer100g) %>%
   ### still grouped by survey id from above 
-  mutate(Calcium_mg_per_fisherman = sum(spp_Calcium, na.rm = TRUE),
-         Iron_mg_per_fisherman = sum(spp_Iron, na.rm = TRUE),
-         Omega3_g_per_fisherman = sum(spp_Omega3, na.rm = TRUE),
-         Protein_g_per_fisherman = sum(spp_Protein, na.rm = TRUE),
-         VitaminA_ug_per_fisherman = sum(spp_VitaminA, na.rm = TRUE),
-         Selenium_ug_per_fisherman = sum(spp_Selenium, na.rm = TRUE),
-         Zinc_mg_per_fisherman = sum(spp_Zinc, na.rm = TRUE)) %>% ungroup()
+  mutate(Calcium_mg_per_fisherman = sum(spp_Calcium, na.rm = TRUE)/`No..of.fishers.in.crew`,
+         Iron_mg_per_fisherman = sum(spp_Iron, na.rm = TRUE)/`No..of.fishers.in.crew`,
+         Omega3_g_per_fisherman = sum(spp_Omega3, na.rm = TRUE)/`No..of.fishers.in.crew`,
+         Protein_g_per_fisherman = sum(spp_Protein, na.rm = TRUE)/`No..of.fishers.in.crew`,
+         VitaminA_ug_per_fisherman = sum(spp_VitaminA, na.rm = TRUE)/`No..of.fishers.in.crew`,
+         Selenium_ug_per_fisherman = sum(spp_Selenium, na.rm = TRUE)/`No..of.fishers.in.crew`,
+         Zinc_mg_per_fisherman = sum(spp_Zinc, na.rm = TRUE)/`No..of.fishers.in.crew`) %>% ungroup()
 ```
 
 ## Calculating % under Lmaturity
@@ -458,7 +460,7 @@ head(group_1_2)
     ## 6 2022-04-03 12:… 2022  Apr   03    KANA… Control                         2.24  
     ## # ℹ abbreviated name: ¹​Total_Biomass_kg_per_fisherman
     ## # ℹ 19 more variables: Avg_Trophic_Level <dbl>, richness <int>,
-    ## #   total_catch_per_fisherman <int>, Total_value_KES_per_fisherman <dbl>,
+    ## #   total_catch_per_fisherman <dbl>, Total_value_KES_per_fisherman <dbl>,
     ## #   Mean_length_cm <dbl>, Calcium_mg_per_fisherman <dbl>,
     ## #   Iron_mg_per_fisherman <dbl>, Omega3_g_per_fisherman <dbl>,
     ## #   Protein_g_per_fisherman <dbl>, VitaminA_ug_per_fisherman <dbl>,
@@ -538,11 +540,15 @@ summary %>%
 ### Data exploration
 
 ``` r
+summary <- summary %>%
+  filter(., mean_lengthdist > -20) %>%
+  filter(., total_catch_per_fisherman < 49) %>%
+  filter(., Selenium_ug_per_fisherman < 7500) %>% ## Selenium
+  filter(., mean_lengthdist > -20) %>% ## Lmat distance
+  filter(., VitaminA_ug_per_fisherman < 10000) ## VitaminA
+  
 summary2 <- summary %>%
-  gather("measurement", "value", 7:26) 
-
-summary_stats <- summarySE(summary2, measurevar = c("value"), 
-                           groupvars = c("household_group_collapsed", "measurement"), na.rm = TRUE) %>%
+  tidyr::gather("measurement", "value", 7:26) %>%
   mutate(measurement = case_when(
     measurement == "Avg_Trophic_Level" ~ "Trophic Level",
     measurement == "Calcium_mg_per_fisherman" ~ "Calcium (mg)",
@@ -569,18 +575,26 @@ summary_stats <- summarySE(summary2, measurevar = c("value"),
     household_group_collapsed == "Control" ~ "Control",
     household_group_collapsed == "Social marketing" ~ "SM",
     household_group_collapsed == "Social Marketing + Traps" ~ "SM + Traps"
-  ))
+  )) 
+  
+
+summary_stats <- summarySE(summary2, measurevar = c("value"), 
+                           groupvars = c("household_group_collapsed", "measurement"), na.rm = TRUE)
 ```
 
 Individual point range plots
 
 ``` r
 createPlot <- function(data, y) {
+  ## subset to each input (variable)
   data <- data %>% subset(measurement == y)
-  p <- ggplot(data, aes(x=household_group_collapsed, y=value, color=household_group_collapsed)) +
-    geom_errorbar(aes(x=household_group_collapsed, y=value, ymin=value-se, ymax=value+se), 
+  ## creating plot
+  p <- 
+    ggplot(data, aes(x=household_group_collapsed, y=value, color=household_group_collapsed)) +
+    #geom_jitter(data=data, size=1, alpha=0.4, width=0.2) +
+    geom_errorbar(data=data, aes(x=household_group_collapsed, y=value, ymin=value-se, ymax=value+se), 
                       position=position_dodge(0.3), alpha=0.9, size=0.75, width=0.2) + 
-    geom_point(size=3, position=position_dodge(0.3)) +
+    geom_point(data=data, size=3, position=position_dodge(0.3)) +
     theme_bw() +
     theme(#strip.background = element_blank(),
         #axis.text.x=element_blank(),
@@ -595,11 +609,12 @@ createPlot <- function(data, y) {
     scale_x_discrete(labels = function(x) str_wrap(x, width = 17)) +
     ylab(y) + xlab("") +
     labs(color = "Household Group")
-  ggsave(file = paste0("household groups/", y, ".png"), width = 3, height = 4, units = c("in"))
+  ggsave(file = paste0("household groups/figures/", y, ".png"), width = 3, height = 4, units = c("in"))
 }
 
 cols <- unique(summary_stats$measurement)
 
+## invisible presents the output printing in this script
 invisible(lapply(cols, createPlot, data = summary_stats))
 ```
 
@@ -608,6 +623,38 @@ invisible(lapply(cols, createPlot, data = summary_stats))
     ## This warning is displayed once every 8 hours.
     ## Call `lifecycle::last_lifecycle_warnings()` to see where this warning was
     ## generated.
+
+Create jitter plots for all variables
+
+``` r
+for (i in cols){
+  summary_subset <- summary_stats %>% filter(measurement==i)
+  
+  summary2 %>% subset(measurement==i) %>% ### CHANGE VARIABLE HERE
+  ggplot(., aes(x=household_group_collapsed, y=value, color=household_group_collapsed)) + 
+  geom_jitter(size=0.6, alpha=0.1, width=0.1, height=0.05) +  ## need to keep the height here for points to be in correct place
+  theme_bw() +
+  scale_color_manual(values = c("#11BF66", "#E78818", "#48B5B7")) +
+  scale_fill_manual(values = c("#11BF66", "#E78818", "#48B5B7")) +
+  theme(#strip.background = element_blank(),
+        #axis.text.x=element_blank()g,
+        #panel.background = element_rect(margin(1, 1, 1, 1, "cm")),
+        #plot.margin = margin(1, 1, 1, 1, "cm"),
+        strip.placement='outside',
+        legend.position="none",
+        strip.text = element_text(face = "bold", size=10),
+        axis.title.y = element_text(margin = margin(t = 0, r = 10, b = 0, l = 0), size=12, face="bold"),
+        axis.text.x = element_text(color="black")) +
+    geom_errorbar(data=summary_subset, aes(x=household_group_collapsed, y=value, ymin=value-se, ymax=value+se), 
+                      position=position_dodge(0.3), alpha=1, size=0.5, width=0.15) + 
+    geom_point(data=summary_subset, aes(x=household_group_collapsed, y=value), size=1.5, position=position_dodge(0.3))
+  
+  ggsave(file = paste0("household groups/figures/", i, " jitter.png"), width = 3, height = 4, units = c("in"))
+  
+}
+```
+
+    ## Warning: Removed 175 rows containing missing values (`geom_point()`).
 
 Length frequency plot
 
@@ -644,74 +691,183 @@ LF <- lengthfreq_df %>%
         axis.title.x = element_text(margin = margin(t = 5, r = 0, b = 0, l = 0), size=12, face="bold")) + 
   ylab("Count") + xlab("Length (cm)")
 
-ggsave(LF, file="household groups/Length_freq.png", width=6, height=7, units=c("in"))
+ggsave(LF, file="household groups/figures/Length_freq.png", width=6, height=7, units=c("in"))
 ```
 
 Large plot altogether
 
 ``` r
-plot2 <- summary_stats %>%
-  ggplot(., aes(x=household_group_collapsed, y=value, color=household_group_collapsed)) + 
-  geom_errorbar(aes(x=household_group_collapsed, y=value, ymin=value-se, ymax=value+se), 
-                position=position_dodge(0.3), alpha=0.9, size=0.75, width=0.2) + 
-  geom_point(size=3, position=position_dodge(0.3)) +
-  facet_wrap(~factor(measurement, levels=c('Diet_percent_Carnivorous', 
-                                           'Diet_percent_Herbivorous_Detritivorous', 
-                                           'Diet_percent_Herbivorous_Macroalgal',
-                                           'Diet_percent_Omnivorous',
-                                           'Diet_percent_Planktivorous',
-                                           'Iron_mg_per_fisherman',
-                                           'Calcium_mg_per_fisherman',
-                                           'Omega3_g_per_fisherman',
-                                           'Protein_g_per_fisherman',
-                                           'Selenium_ug_per_fisherman',
-                                           'VitaminA_ug_per_fisherman',
-                                           'Zinc_mg_per_fisherman',
-                                           'Avg_Trophic_Level',
-                                           'Mean_length_cm',
-                                           'total_catch_per_fisherman',
-                                           'richness',
-                                           'Total_Biomass_kg_per_fisherman',
-                                           'TakeHome_kg',
-                                           'Total_value_KES_per_fisherman')), 
-             labeller = as_labeller(c(Diet_percent_Carnivorous = "% of catch: Carnivorous",
-                                      Diet_percent_Herbivorous_Detritivorous = "% of catch: Herbivorous Detritivorou",
-                                      Diet_percent_Herbivorous_Macroalgal = "% of catch: Herbivorous Macroalgal",
-                                      Diet_percent_Omnivorous = "% of catch: Omnivorous",
-                                      Diet_percent_Planktivorous = "% of catch: Planktivorous",
-                                      Iron_mg_per_fisherman = "Iron Content (mg) fisherman^-1",
-                                      Calcium_mg_per_fisherman = "Calcium Content (mg) fisherman^-1",
-                                      Omega3_g_per_fisherman = "Omega3 Content (g) fisherman^-1",
-                                      Protein_g_per_fisherman = "Protein Content (g) fisherman^-1",
-                                      Selenium_ug_per_fisherman = "Selenium Content (ug) fisherman^-1",
-                                      VitaminA_ug_per_fisherman = "VitaminA Content (ug) fisherman^-1",
-                                      Zinc_mg_per_fisherman = "Zinc Content (mg) fisherman^-1",
-                                      Avg_Trophic_Level = "Trophic Level",
-                                      Mean_length_cm = "Length (cm)",
-                                      total_catch_per_fisherman = "Catch: # of fish fisherman^-1",
-                                      richness = "# of unique species survey^-1",
-                                      Total_Biomass_kg_per_fisherman = "Biomass (kg) fisherman^-1",
-                                      TakeHome_kg = "Biomass (kg) taken home fisherman^-1",
-                                      Total_value_KES_per_fisherman = "Value (KES) fisherman^-1")),
-             scales = "free", strip.position = 'left') +
-  ylab(NULL) + 
-  xlab("") +
-  theme(strip.background = element_blank(),
-        strip.placement='outside',
-        strip.text = element_text(face = "bold", size=10),
-        axis.text.x=element_blank(),
-        panel.background = element_rect(fill = 'white', color = 'black')) + 
-  #scale_color_manual(values = c("#53C936", "#E78818", "#48B5B7", "#185AE7")) +
-  scale_color_manual(values = c("#11BF66", "#E78818", "#48B5B7"))
-  labs(color = "Household Group")
+# plot2 <- summary_stats %>%
+#   ggplot(., aes(x=household_group_collapsed, y=value, color=household_group_collapsed)) + 
+#   geom_errorbar(aes(x=household_group_collapsed, y=value, ymin=value-se, ymax=value+se), 
+#                 position=position_dodge(0.3), alpha=0.9, size=0.75, width=0.2) + 
+#   geom_point(size=3, position=position_dodge(0.3)) +
+#   facet_wrap(~factor(measurement, levels=c('Diet_percent_Carnivorous', 
+#                                            'Diet_percent_Herbivorous_Detritivorous', 
+#                                            'Diet_percent_Herbivorous_Macroalgal',
+#                                            'Diet_percent_Omnivorous',
+#                                            'Diet_percent_Planktivorous',
+#                                            'Iron_mg_per_fisherman',
+#                                            'Calcium_mg_per_fisherman',
+#                                            'Omega3_g_per_fisherman',
+#                                            'Protein_g_per_fisherman',
+#                                            'Selenium_ug_per_fisherman',
+#                                            'VitaminA_ug_per_fisherman',
+#                                            'Zinc_mg_per_fisherman',
+#                                            'Avg_Trophic_Level',
+#                                            'Mean_length_cm',
+#                                            'total_catch_per_fisherman',
+#                                            'richness',
+#                                            'Total_Biomass_kg_per_fisherman',
+#                                            'TakeHome_kg',
+#                                            'Total_value_KES_per_fisherman')), 
+#              labeller = as_labeller(c(Diet_percent_Carnivorous = "% of catch: Carnivorous",
+#                                       Diet_percent_Herbivorous_Detritivorous = "% of catch: Herbivorous Detritivorou",
+#                                       Diet_percent_Herbivorous_Macroalgal = "% of catch: Herbivorous Macroalgal",
+#                                       Diet_percent_Omnivorous = "% of catch: Omnivorous",
+#                                       Diet_percent_Planktivorous = "% of catch: Planktivorous",
+#                                       Iron_mg_per_fisherman = "Iron Content (mg) fisherman^-1",
+#                                       Calcium_mg_per_fisherman = "Calcium Content (mg) fisherman^-1",
+#                                       Omega3_g_per_fisherman = "Omega3 Content (g) fisherman^-1",
+#                                       Protein_g_per_fisherman = "Protein Content (g) fisherman^-1",
+#                                       Selenium_ug_per_fisherman = "Selenium Content (ug) fisherman^-1",
+#                                       VitaminA_ug_per_fisherman = "VitaminA Content (ug) fisherman^-1",
+#                                       Zinc_mg_per_fisherman = "Zinc Content (mg) fisherman^-1",
+#                                       Avg_Trophic_Level = "Trophic Level",
+#                                       Mean_length_cm = "Length (cm)",
+#                                       total_catch_per_fisherman = "Catch: # of fish fisherman^-1",
+#                                       richness = "# of unique species survey^-1",
+#                                       Total_Biomass_kg_per_fisherman = "Biomass (kg) fisherman^-1",
+#                                       TakeHome_kg = "Biomass (kg) taken home fisherman^-1",
+#                                       Total_value_KES_per_fisherman = "Value (KES) fisherman^-1")),
+#              scales = "free", strip.position = 'left') +
+#   ylab(NULL) + 
+#   xlab("") +
+#   theme(strip.background = element_blank(),
+#         strip.placement='outside',
+#         strip.text = element_text(face = "bold", size=10),
+#         axis.text.x=element_blank(),
+#         panel.background = element_rect(fill = 'white', color = 'black')) + 
+#   #scale_color_manual(values = c("#53C936", "#E78818", "#48B5B7", "#185AE7")) +
+#   scale_color_manual(values = c("#11BF66", "#E78818", "#48B5B7"))
+#   labs(color = "Household Group")
+# 
+# ggsave(file="household groups/metrics2_collapsed.png", plot2, width = 17, height = 12, units = c("in"))
 ```
 
-    ## $colour
-    ## [1] "Household Group"
-    ## 
-    ## attr(,"class")
-    ## [1] "labels"
+### Species Richness
 
 ``` r
-ggsave(file="household groups/metrics2_collapsed.png", plot2, width = 17, height = 12, units = c("in"))
+summary %>%
+  ggplot(., aes(x=))
 ```
+
+![](Analysis-HouseholdGroups_files/figure-gfm/unnamed-chunk-25-1.png)<!-- -->
+
+### Statistics
+
+ANOVA for all groups
+
+``` r
+for (i in cols){
+  summary2_subset <- summary2 %>% subset(measurement == i)
+  
+  aov <- aov(value~household_group_collapsed, data = summary2_subset)
+  ANOVA <- Anova(aov, type = "III")
+  TUKEY <- TukeyHSD(aov)
+  
+  ANOVA_results <- as.data.frame(ANOVA)
+  ANOVA_results <- rownames_to_column(ANOVA_results, var = "variable")
+  ANOVA_results$measurement <- i
+  
+  TUKEY_results <- as.data.frame(TUKEY$household_group_collapsed)
+  TUKEY_results <- rownames_to_column(TUKEY_results, var = "variable")
+  TUKEY_results$measurement <- i
+  
+  results <- full_join(ANOVA_results, TUKEY_results, by = c("measurement", "variable")) %>%
+    ## mutating scientific notation to 6 decimal places 
+    mutate_if(is.numeric, round, 6)
+  
+  write_xlsx(results, paste0("household groups/statistics/", i, "_output.xlsx"))
+}
+```
+
+    ## Warning in printHypothesis(L, rhs, names(b)): one or more coefficients in the hypothesis include
+    ##      arithmetic operators in their names;
+    ##   the printed representation of the hypothesis will be omitted
+
+    ## Warning in printHypothesis(L, rhs, names(b)): one or more coefficients in the hypothesis include
+    ##      arithmetic operators in their names;
+    ##   the printed representation of the hypothesis will be omitted
+
+    ## Warning in printHypothesis(L, rhs, names(b)): one or more coefficients in the hypothesis include
+    ##      arithmetic operators in their names;
+    ##   the printed representation of the hypothesis will be omitted
+
+    ## Warning in printHypothesis(L, rhs, names(b)): one or more coefficients in the hypothesis include
+    ##      arithmetic operators in their names;
+    ##   the printed representation of the hypothesis will be omitted
+
+    ## Warning in printHypothesis(L, rhs, names(b)): one or more coefficients in the hypothesis include
+    ##      arithmetic operators in their names;
+    ##   the printed representation of the hypothesis will be omitted
+
+    ## Warning in printHypothesis(L, rhs, names(b)): one or more coefficients in the hypothesis include
+    ##      arithmetic operators in their names;
+    ##   the printed representation of the hypothesis will be omitted
+
+    ## Warning in printHypothesis(L, rhs, names(b)): one or more coefficients in the hypothesis include
+    ##      arithmetic operators in their names;
+    ##   the printed representation of the hypothesis will be omitted
+
+    ## Warning in printHypothesis(L, rhs, names(b)): one or more coefficients in the hypothesis include
+    ##      arithmetic operators in their names;
+    ##   the printed representation of the hypothesis will be omitted
+
+    ## Warning in printHypothesis(L, rhs, names(b)): one or more coefficients in the hypothesis include
+    ##      arithmetic operators in their names;
+    ##   the printed representation of the hypothesis will be omitted
+
+    ## Warning in printHypothesis(L, rhs, names(b)): one or more coefficients in the hypothesis include
+    ##      arithmetic operators in their names;
+    ##   the printed representation of the hypothesis will be omitted
+
+    ## Warning in printHypothesis(L, rhs, names(b)): one or more coefficients in the hypothesis include
+    ##      arithmetic operators in their names;
+    ##   the printed representation of the hypothesis will be omitted
+
+    ## Warning in printHypothesis(L, rhs, names(b)): one or more coefficients in the hypothesis include
+    ##      arithmetic operators in their names;
+    ##   the printed representation of the hypothesis will be omitted
+
+    ## Warning in printHypothesis(L, rhs, names(b)): one or more coefficients in the hypothesis include
+    ##      arithmetic operators in their names;
+    ##   the printed representation of the hypothesis will be omitted
+
+    ## Warning in printHypothesis(L, rhs, names(b)): one or more coefficients in the hypothesis include
+    ##      arithmetic operators in their names;
+    ##   the printed representation of the hypothesis will be omitted
+
+    ## Warning in printHypothesis(L, rhs, names(b)): one or more coefficients in the hypothesis include
+    ##      arithmetic operators in their names;
+    ##   the printed representation of the hypothesis will be omitted
+
+    ## Warning in printHypothesis(L, rhs, names(b)): one or more coefficients in the hypothesis include
+    ##      arithmetic operators in their names;
+    ##   the printed representation of the hypothesis will be omitted
+
+    ## Warning in printHypothesis(L, rhs, names(b)): one or more coefficients in the hypothesis include
+    ##      arithmetic operators in their names;
+    ##   the printed representation of the hypothesis will be omitted
+
+    ## Warning in printHypothesis(L, rhs, names(b)): one or more coefficients in the hypothesis include
+    ##      arithmetic operators in their names;
+    ##   the printed representation of the hypothesis will be omitted
+
+    ## Warning in printHypothesis(L, rhs, names(b)): one or more coefficients in the hypothesis include
+    ##      arithmetic operators in their names;
+    ##   the printed representation of the hypothesis will be omitted
+
+    ## Warning in printHypothesis(L, rhs, names(b)): one or more coefficients in the hypothesis include
+    ##      arithmetic operators in their names;
+    ##   the printed representation of the hypothesis will be omitted

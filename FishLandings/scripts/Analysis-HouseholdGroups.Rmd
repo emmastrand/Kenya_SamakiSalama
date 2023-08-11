@@ -244,7 +244,8 @@ takehome <- data2 %>% dplyr::group_by(survey_id, destination) %>%
   mutate(kg_perdestination = sum(W_kg)) %>% ungroup() %>% 
   dplyr::select(survey_id, BMU, household_group, destination, kg_perdestination) %>%
   distinct() %>% spread(destination, kg_perdestination) %>%
-  mutate_all(., ~replace_na(.,0)) %>% dplyr::select(survey_id, BMU, household_group, HOME) %>%
+  #mutate_all(., ~replace_na(.,0)) %>% 
+  dplyr::select(survey_id, BMU, household_group, HOME) %>%
   dplyr::rename(TakeHome_kg = HOME)
 ```
 
@@ -253,7 +254,8 @@ takehome <- data2 %>% dplyr::group_by(survey_id, destination) %>%
 ```{r}
 data2_trophic_level <- data2 %>% group_by(survey_id) %>%
   tidyr::uncount(., number_of_fish, .remove = TRUE) %>%
-  mutate(mean.trophic = mean(TrophLevel, na.rm = TRUE)) %>% dplyr::select(survey_id, mean.trophic) %>% distinct()
+  mutate(mean.trophic = mean(TrophLevel, na.rm = TRUE)) %>% 
+  dplyr::select(survey_id, mean.trophic) %>% distinct()
 
 data2 <- data2 %>% left_join(., data2_trophic_level, by = "survey_id")
 ```
@@ -313,7 +315,7 @@ data2 <- data2 %>%
 ```{r}
 data2 <- data2 %>%
   group_by(survey_id) %>%
-  mutate(total_catch_per_fisherman = sum(number_of_fish))
+  mutate(total_catch_per_fisherman = sum(number_of_fish)/`No..of.fishers.in.crew`)
 ```
 
 ## Calculating species richness
@@ -336,13 +338,13 @@ data2 <- data2 %>%
          spp_Selenium = (W_g/100)*Selenium_ugPer100g,
          spp_Zinc = (W_g/100)*Zinc_mgPer100g) %>%
   ### still grouped by survey id from above 
-  mutate(Calcium_mg_per_fisherman = sum(spp_Calcium, na.rm = TRUE),
-         Iron_mg_per_fisherman = sum(spp_Iron, na.rm = TRUE),
-         Omega3_g_per_fisherman = sum(spp_Omega3, na.rm = TRUE),
-         Protein_g_per_fisherman = sum(spp_Protein, na.rm = TRUE),
-         VitaminA_ug_per_fisherman = sum(spp_VitaminA, na.rm = TRUE),
-         Selenium_ug_per_fisherman = sum(spp_Selenium, na.rm = TRUE),
-         Zinc_mg_per_fisherman = sum(spp_Zinc, na.rm = TRUE)) %>% ungroup()
+  mutate(Calcium_mg_per_fisherman = sum(spp_Calcium, na.rm = TRUE)/`No..of.fishers.in.crew`,
+         Iron_mg_per_fisherman = sum(spp_Iron, na.rm = TRUE)/`No..of.fishers.in.crew`,
+         Omega3_g_per_fisherman = sum(spp_Omega3, na.rm = TRUE)/`No..of.fishers.in.crew`,
+         Protein_g_per_fisherman = sum(spp_Protein, na.rm = TRUE)/`No..of.fishers.in.crew`,
+         VitaminA_ug_per_fisherman = sum(spp_VitaminA, na.rm = TRUE)/`No..of.fishers.in.crew`,
+         Selenium_ug_per_fisherman = sum(spp_Selenium, na.rm = TRUE)/`No..of.fishers.in.crew`,
+         Zinc_mg_per_fisherman = sum(spp_Zinc, na.rm = TRUE)/`No..of.fishers.in.crew`) %>% ungroup()
 ```
 
 ## Calculating % under Lmaturity 
@@ -445,11 +447,15 @@ summary %>%
 ### Data exploration 
 
 ```{r}
-summary <- summary %>% filter(mean_lengthdist > -20)
-  
+summary <- summary %>%
+  filter(., mean_lengthdist > -20) %>%
+  filter(., total_catch_per_fisherman < 49) %>%
+  filter(., Selenium_ug_per_fisherman < 7500) %>% ## Selenium
+  filter(., mean_lengthdist > -20) %>% ## Lmat distance
+  filter(., VitaminA_ug_per_fisherman < 10000) ## VitaminA
   
 summary2 <- summary %>%
-  gather("measurement", "value", 7:26) %>%
+  tidyr::gather("measurement", "value", 7:26) %>%
   mutate(measurement = case_when(
     measurement == "Avg_Trophic_Level" ~ "Trophic Level",
     measurement == "Calcium_mg_per_fisherman" ~ "Calcium (mg)",
@@ -476,7 +482,7 @@ summary2 <- summary %>%
     household_group_collapsed == "Control" ~ "Control",
     household_group_collapsed == "Social marketing" ~ "SM",
     household_group_collapsed == "Social Marketing + Traps" ~ "SM + Traps"
-  )) %>%
+  )) 
   
 
 summary_stats <- summarySE(summary2, measurevar = c("value"), 
@@ -511,7 +517,7 @@ createPlot <- function(data, y) {
     scale_x_discrete(labels = function(x) str_wrap(x, width = 17)) +
     ylab(y) + xlab("") +
     labs(color = "Household Group")
-  ggsave(file = paste0("household groups/", y, ".png"), width = 3, height = 4, units = c("in"))
+  ggsave(file = paste0("household groups/figures/", y, ".png"), width = 3, height = 4, units = c("in"))
 }
 
 cols <- unique(summary_stats$measurement)
@@ -520,19 +526,20 @@ cols <- unique(summary_stats$measurement)
 invisible(lapply(cols, createPlot, data = summary_stats))
 ```
 
-Testing individual geom jitter to see if it's worth it
+Create jitter plots for all variables
 
 ```{r}
-summary_subset <- summary_stats %>% subset(measurement == "Distance from Lmat (cm)") ### CHANGE VARIABLE HERE
-
-jitter_plot <- summary2 %>% subset(measurement == "Distance from Lmat (cm)") %>% ### CHANGE VARIABLE HERE
-  filter(value > -20) %>%
+for (i in cols){
+  summary_subset <- summary_stats %>% filter(measurement==i)
+  
+  summary2 %>% subset(measurement==i) %>% ### CHANGE VARIABLE HERE
   ggplot(., aes(x=household_group_collapsed, y=value, color=household_group_collapsed)) + 
-  geom_jitter(size=0.6, alpha=0.1, width=0.1) + theme_bw() +
+  geom_jitter(size=0.6, alpha=0.1, width=0.1, height=0.05) +  ## need to keep the height here for points to be in correct place
+  theme_bw() +
   scale_color_manual(values = c("#11BF66", "#E78818", "#48B5B7")) +
   scale_fill_manual(values = c("#11BF66", "#E78818", "#48B5B7")) +
   theme(#strip.background = element_blank(),
-        #axis.text.x=element_blank(),
+        #axis.text.x=element_blank()g,
         #panel.background = element_rect(margin(1, 1, 1, 1, "cm")),
         #plot.margin = margin(1, 1, 1, 1, "cm"),
         strip.placement='outside',
@@ -542,9 +549,11 @@ jitter_plot <- summary2 %>% subset(measurement == "Distance from Lmat (cm)") %>%
         axis.text.x = element_text(color="black")) +
     geom_errorbar(data=summary_subset, aes(x=household_group_collapsed, y=value, ymin=value-se, ymax=value+se), 
                       position=position_dodge(0.3), alpha=1, size=0.5, width=0.15) + 
-    geom_point(data=summary_subset, aes(x=household_group_collapsed, y=value), size=1, position=position_dodge(0.3), shape=21)
-
-ggsave(jitter_plot, file="household groups/DistancefromLmat_jitter.png", width=2.5, height=3, units=c("in")) ### CHANGE VARIABLE HERE
+    geom_point(data=summary_subset, aes(x=household_group_collapsed, y=value), size=1.5, position=position_dodge(0.3))
+  
+  ggsave(file = paste0("household groups/figures/", i, " jitter.png"), width = 3, height = 4, units = c("in"))
+  
+}
 ```
 
 Length frequency plot 
@@ -577,7 +586,7 @@ LF <- lengthfreq_df %>%
         axis.title.x = element_text(margin = margin(t = 5, r = 0, b = 0, l = 0), size=12, face="bold")) + 
   ylab("Count") + xlab("Length (cm)")
 
-ggsave(LF, file="household groups/Length_freq.png", width=6, height=7, units=c("in"))
+ggsave(LF, file="household groups/figures/Length_freq.png", width=6, height=7, units=c("in"))
 ```
 
 
@@ -642,14 +651,41 @@ Large plot altogether
 # ggsave(file="household groups/metrics2_collapsed.png", plot2, width = 17, height = 12, units = c("in"))
 ```
 
+### Species Richness 
+
+```{r}
+
+
+summary %>%
+  ggplot(., aes(x=))
+```
+
 ### Statistics 
 
 ANOVA for all groups 
 
 ```{r}
-aov <- aov(mean_lengthdist~household_group_collapsed, data=summary) ## CHANGE VARIABLE HERE
-Anova(aov, type = "III")
-TukeyHSD(aov)
+for (i in cols){
+  summary2_subset <- summary2 %>% subset(measurement == i)
+  
+  aov <- aov(value~household_group_collapsed, data = summary2_subset)
+  ANOVA <- Anova(aov, type = "III")
+  TUKEY <- TukeyHSD(aov)
+  
+  ANOVA_results <- as.data.frame(ANOVA)
+  ANOVA_results <- rownames_to_column(ANOVA_results, var = "variable")
+  ANOVA_results$measurement <- i
+  
+  TUKEY_results <- as.data.frame(TUKEY$household_group_collapsed)
+  TUKEY_results <- rownames_to_column(TUKEY_results, var = "variable")
+  TUKEY_results$measurement <- i
+  
+  results <- full_join(ANOVA_results, TUKEY_results, by = c("measurement", "variable")) %>%
+    ## mutating scientific notation to 6 decimal places 
+    mutate_if(is.numeric, round, 6)
+  
+  write_xlsx(results, paste0("household groups/statistics/", i, "_output.xlsx"))
+}
 ```
 
 
