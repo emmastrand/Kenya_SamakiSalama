@@ -435,12 +435,13 @@ group_1_2 <- data2 %>%
                 richness, total_catch_per_fisherman, calculated_total_value, mean_length, Calcium_mg_per_fisherman,
                 Iron_mg_per_fisherman, Omega3_g_per_fisherman, Protein_g_per_fisherman, 
                 VitaminA_ug_per_fisherman, Selenium_ug_per_fisherman, mean_lengthdist,
-                Zinc_mg_per_fisherman) %>%
+                Zinc_mg_per_fisherman, `No..of.fishers.in.crew`) %>%
   distinct() %>% 
   dplyr::rename(Total_Biomass_kg_per_fisherman = calculated_total_biomass) %>%
   dplyr::rename(Avg_Trophic_Level = mean.trophic) %>%
   dplyr::rename(Total_value_KES_per_fisherman = calculated_total_value) %>%
   dplyr::rename(Mean_length_cm = mean_length) %>%
+  dplyr::rename(No_fishermen = `No..of.fishers.in.crew`) %>%
   left_join(., takehome, c("survey_id", "BMU", "household_group")) %>%
   left_join(., diet, by = c("survey_id", "BMU", "household_group")) %>% ungroup() %>%
   ### subset to months of interest 
@@ -449,7 +450,7 @@ group_1_2 <- data2 %>%
 head(group_1_2)
 ```
 
-    ## # A tibble: 6 × 26
+    ## # A tibble: 6 × 27
     ##   survey_id       year  month day   BMU   household_group Total_Biomass_kg_per…¹
     ##   <chr>           <chr> <fct> <chr> <chr> <chr>                            <dbl>
     ## 1 2022-04-29 23:… 2022  Apr   29    KANA… Control                         1.25  
@@ -459,7 +460,7 @@ head(group_1_2)
     ## 5 2022-05-03 09:… 2022  May   03    TAKA… Social marketi…                 1.57  
     ## 6 2022-04-03 12:… 2022  Apr   03    KANA… Control                         2.24  
     ## # ℹ abbreviated name: ¹​Total_Biomass_kg_per_fisherman
-    ## # ℹ 19 more variables: Avg_Trophic_Level <dbl>, richness <int>,
+    ## # ℹ 20 more variables: Avg_Trophic_Level <dbl>, richness <int>,
     ## #   total_catch_per_fisherman <dbl>, Total_value_KES_per_fisherman <dbl>,
     ## #   Mean_length_cm <dbl>, Calcium_mg_per_fisherman <dbl>,
     ## #   Iron_mg_per_fisherman <dbl>, Omega3_g_per_fisherman <dbl>,
@@ -514,7 +515,8 @@ summary <- full_join(group_1_2, group3) %>% filter(Calcium_mg_per_fisherman > 0)
     household_group == "Social marketing" ~ "Social marketing",
     household_group == "Social Marketing + Traps: Experimental" ~ "Social Marketing + Traps",
     household_group == "Social Marketing + Traps: Control" ~ "Social Marketing + Traps"
-  ))
+  )) %>%
+  relocate(No_fishermen, .after = last_col())
 ```
 
     ## Joining with `by = join_by(survey_id, year, month, day, BMU, household_group,
@@ -522,7 +524,7 @@ summary <- full_join(group_1_2, group3) %>% filter(Calcium_mg_per_fisherman > 0)
     ## total_catch_per_fisherman, Total_value_KES_per_fisherman, Mean_length_cm,
     ## Calcium_mg_per_fisherman, Iron_mg_per_fisherman, Omega3_g_per_fisherman,
     ## Protein_g_per_fisherman, VitaminA_ug_per_fisherman, Selenium_ug_per_fisherman,
-    ## mean_lengthdist, Zinc_mg_per_fisherman, TakeHome_kg,
+    ## mean_lengthdist, Zinc_mg_per_fisherman, No_fishermen, TakeHome_kg,
     ## Diet_percent_Herbivorous_Detritivorous, Diet_percent_Herbivorous_Macroalgal,
     ## Diet_percent_Omnivorous, Diet_percent_Planktivorous, Diet_percent_Carnivorous)`
 
@@ -632,7 +634,9 @@ for (i in cols){
   
   summary2 %>% subset(measurement==i) %>% ### CHANGE VARIABLE HERE
   ggplot(., aes(x=household_group_collapsed, y=value, color=household_group_collapsed)) + 
-  geom_jitter(size=0.6, alpha=0.1, width=0.1, height=0.05) +  ## need to keep the height here for points to be in correct place
+    geom_boxplot(outlier.shape = NA) +
+  #geom_jitter(size=0.6, alpha=0.1, width=0.1, height=0.05) +  ## need to keep the height here for points to be in correct place
+    geom_jitter(size=1.5, alpha=0.3, width=0.15, height=0.003) +  ## need to keep the height here for points to be in correct place
   theme_bw() +
   scale_color_manual(values = c("#11BF66", "#E78818", "#48B5B7")) +
   scale_fill_manual(values = c("#11BF66", "#E78818", "#48B5B7")) +
@@ -645,14 +649,18 @@ for (i in cols){
         strip.text = element_text(face = "bold", size=10),
         axis.title.y = element_text(margin = margin(t = 0, r = 10, b = 0, l = 0), size=12, face="bold"),
         axis.text.x = element_text(color="black")) +
-    geom_errorbar(data=summary_subset, aes(x=household_group_collapsed, y=value, ymin=value-se, ymax=value+se), 
-                      position=position_dodge(0.3), alpha=1, size=0.5, width=0.15) + 
-    geom_point(data=summary_subset, aes(x=household_group_collapsed, y=value), size=1.5, position=position_dodge(0.3))
+    ylab(i) + xlab("") +
+    labs(color = "Household Group")# +
+    # geom_errorbar(data=summary_subset, aes(x=household_group_collapsed, y=value, ymin=value-se, ymax=value+se),
+    #                   position=position_dodge(0.3), alpha=1, size=0.5, width=0.15) +
+    # geom_point(data=summary_subset, aes(x=household_group_collapsed, y=value), size=1.5, position=position_dodge(0.3))
   
-  ggsave(file = paste0("household groups/figures/", i, " jitter.png"), width = 3, height = 4, units = c("in"))
-  
+  #ggsave(file = paste0("household groups/figures/", i, " jitter.png"), width = 3, height = 4, units = c("in"))
+    ggsave(file = paste0("household groups/figures/", i, " boxplot.png"), width = 3, height = 4, units = c("in"))
 }
 ```
+
+    ## Warning: Removed 175 rows containing non-finite values (`stat_boxplot()`).
 
     ## Warning: Removed 175 rows containing missing values (`geom_point()`).
 
@@ -758,11 +766,30 @@ Large plot altogether
 ### Species Richness
 
 ``` r
-summary %>%
-  ggplot(., aes(x=))
+summary %>% 
+  mutate(total_catch = total_catch_per_fisherman*No_fishermen) %>%
+  ggplot(., aes(x=total_catch, y=richness, fill=household_group_collapsed, color=household_group_collapsed)) + 
+  geom_smooth(alpha=0.1) +
+  geom_point(size=2, alpha=0.7, shape=21) + 
+  scale_fill_manual(values = c("#11BF66", "#E78818", "#48B5B7")) + 
+  scale_color_manual(values = c("#11BF66", "#E78818", "#48B5B7")) +
+  theme_bw()
 ```
 
+    ## `geom_smooth()` using method = 'loess' and formula = 'y ~ x'
+
 ![](Analysis-HouseholdGroups_files/figure-gfm/unnamed-chunk-25-1.png)<!-- -->
+
+``` r
+summary %>%
+  ggplot(., aes(x=household_group_collapsed, y=richness, fill=household_group_collapsed)) + 
+  geom_boxplot(alpha=0.4, width=0.5) + 
+  geom_jitter(size=2, alpha=0.8, width=0.15, height=0.1, shape=21) +
+  scale_fill_manual(values = c("#11BF66", "#E78818", "#48B5B7")) +
+  theme_bw()
+```
+
+![](Analysis-HouseholdGroups_files/figure-gfm/unnamed-chunk-25-2.png)<!-- -->
 
 ### Statistics
 
