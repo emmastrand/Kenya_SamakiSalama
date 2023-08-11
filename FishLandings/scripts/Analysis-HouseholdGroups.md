@@ -582,6 +582,8 @@ summary2 <- summary %>%
 
 summary_stats <- summarySE(summary2, measurevar = c("value"), 
                            groupvars = c("household_group_collapsed", "measurement"), na.rm = TRUE)
+
+summary_stats %>% write_xlsx("household groups/stats_means.xlsx")
 ```
 
 Individual point range plots
