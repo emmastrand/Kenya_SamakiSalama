@@ -547,7 +547,8 @@ summary <- summary %>%
   filter(., total_catch_per_fisherman < 49) %>%
   filter(., Selenium_ug_per_fisherman < 7500) %>% ## Selenium
   filter(., mean_lengthdist > -20) %>% ## Lmat distance
-  filter(., VitaminA_ug_per_fisherman < 10000) ## VitaminA
+  filter(., VitaminA_ug_per_fisherman < 10000) %>% ## VitaminA
+  mutate(TakeHome_kg = replace(TakeHome_kg, TakeHome_kg>4, NA))
   
 summary2 <- summary %>%
   tidyr::gather("measurement", "value", 7:26) %>%
@@ -651,6 +652,8 @@ for (i in cols){
         strip.text = element_text(face = "bold", size=10),
         axis.title.y = element_text(margin = margin(t = 0, r = 10, b = 0, l = 0), size=12, face="bold"),
         axis.text.x = element_text(color="black")) +
+    # Add 20% space on the y-axis above the box plots
+    scale_y_continuous(expand = expansion(mult = c(0, 0.2))) +
     ylab(i) + xlab("") +
     labs(color = "Household Group")# +
     # geom_errorbar(data=summary_subset, aes(x=household_group_collapsed, y=value, ymin=value-se, ymax=value+se),
@@ -662,9 +665,9 @@ for (i in cols){
 }
 ```
 
-    ## Warning: Removed 175 rows containing non-finite values (`stat_boxplot()`).
+    ## Warning: Removed 176 rows containing non-finite values (`stat_boxplot()`).
 
-    ## Warning: Removed 175 rows containing missing values (`geom_point()`).
+    ## Warning: Removed 176 rows containing missing values (`geom_point()`).
 
 Length frequency plot
 
