@@ -571,7 +571,15 @@ data2 %>% dplyr::select(survey_id, trap_type, scientific_name, number_of_fish, m
 data2_maturity <- data2 %>% 
   dplyr::select(survey_id, trap_type, scientific_name, number_of_fish, maturity, length_dist) %>%
   tidyr::uncount(., number_of_fish, .remove = TRUE) %>% 
-  filter(!is.na(length_dist))
+  filter(!is.na(length_dist)) %>%
+  group_by(survey_id) %>%
+    mutate(total_catch = n()) %>% ungroup() %>%
+  group_by(survey_id, maturity) %>%
+    mutate(no_maturity = n(),
+           per_maturity = no_maturity/total_catch) %>% ungroup()
+
+data2_maturity_grouped <- data2_maturity %>% dplyr::select(survey_id, trap_type, maturity, per_maturity) %>%
+  distinct()
 ```
 
 ### Calculating statistics for distance from maturity 
@@ -1147,7 +1155,9 @@ takehome_kg %>% write.csv("output/takehome_kg.csv")
 ### Exporting analyzed dataframes 
 
 ```{r}
-pertrap_final_df <- data3 %>% dplyr::select(survey_id, BMU, landing_site, fisher_id, household_id, 
+## data3 4,151 × 110 pre left join; 4,151 x 111 post left join 
+pertrap_final_df <- data3 %>% left_join(., data2_maturity_grouped, by = c("trap_type", "survey_id", "maturity")) %>%
+  dplyr::select(survey_id, BMU, landing_site, fisher_id, household_id, 
                                             trap_type, total_traps_collected, date_set_dd_mm_yyyy, 
                                             date_collected_dd_mm_yyyy, year, month, day,
                                             total_biomass_kg, take_home_weight_kg, total_value_KES,
@@ -1156,7 +1166,8 @@ pertrap_final_df <- data3 %>% dplyr::select(survey_id, BMU, landing_site, fisher
                                             CPUE, yield_kg_trap, value_KES_trap, richness,
                                             calculated_biomass_pertrap, KSHpertrap, pertrap_Calcium, 
                                             pertrap_Iron, pertrap_Omega3, pertrap_Protein, pertrap_VitaminA, 
-                                            pertrap_Selenium, pertrap_Zinc, mean.trophic, mean_lengthdist) %>% distinct()
+                                            pertrap_Selenium, pertrap_Zinc, mean.trophic, mean_lengthdist,
+                per_maturity) %>% distinct()
 
 perspp_final_df <- data3 %>% dplyr::select(survey_id, BMU, trap_type, Kiswahili_name, scientific_name,
                                            number_of_fish, destination, length_corrected, median_length,
