@@ -415,17 +415,36 @@ data2 <- data2 %>%
 data2 <- data2 %>%
   mutate(Lmat_corrected = if_else(is.na(Lmat_cm), Lmat_fishbase, Lmat_cm)) %>%
   ### categorizing mature or immature 
-  mutate(maturity = if_else(median_length >= Lmat_corrected, "mature", "immature")) %>%
+  mutate(maturity = if_else(median_length >= Lmat_corrected, "mature", "immature")) 
+
+data2_maturity <- data2 %>%
+  tidyr::uncount(., number_of_fish, .remove = FALSE) %>%
   ### calculating distance from Lmat
   mutate(length_dist = median_length-Lmat_corrected) %>% 
   group_by(survey_id) %>%
-    mutate(mean_lengthdist = mean(length_dist)) %>%
-  ungroup()
+    mutate(mean_lengthdist = mean(length_dist),
+           total_catch = n()) %>% ungroup() %>%
+  group_by(survey_id, maturity) %>%
+    mutate(no_maturity = n(),
+           per_maturity = no_maturity/total_catch) %>% ungroup()
+
+percent_mature <- data2_maturity %>%
+  dplyr::select(survey_id, maturity, mean_lengthdist, per_maturity) %>% distinct()
+
+##1,643 x 108 data2 pre join
+##1,643 x 110 data2 post join
+data2 <- data2 %>% left_join(., percent_mature, by = c("survey_id", "maturity"))
 
 hist(data2$mean_lengthdist)
 ```
 
 ![](Analysis-HouseholdGroups_files/figure-gfm/unnamed-chunk-17-1.png)<!-- -->
+
+``` r
+hist(percent_mature$per_maturity)
+```
+
+![](Analysis-HouseholdGroups_files/figure-gfm/unnamed-chunk-17-2.png)<!-- -->
 
 ## Summary and include Group 3
 
@@ -434,8 +453,8 @@ group_1_2 <- data2 %>%
   dplyr::select(survey_id, year, month, day, BMU, household_group, calculated_total_biomass, mean.trophic,
                 richness, total_catch_per_fisherman, calculated_total_value, mean_length, Calcium_mg_per_fisherman,
                 Iron_mg_per_fisherman, Omega3_g_per_fisherman, Protein_g_per_fisherman, 
-                VitaminA_ug_per_fisherman, Selenium_ug_per_fisherman, mean_lengthdist,
-                Zinc_mg_per_fisherman, `No..of.fishers.in.crew`) %>%
+                VitaminA_ug_per_fisherman, Selenium_ug_per_fisherman, mean_lengthdist,per_maturity,
+                Zinc_mg_per_fisherman, `No..of.fishers.in.crew`, per_maturity) %>%
   distinct() %>% 
   dplyr::rename(Total_Biomass_kg_per_fisherman = calculated_total_biomass) %>%
   dplyr::rename(Avg_Trophic_Level = mean.trophic) %>%
@@ -450,7 +469,7 @@ group_1_2 <- data2 %>%
 head(group_1_2)
 ```
 
-    ## # A tibble: 6 × 27
+    ## # A tibble: 6 × 28
     ##   survey_id       year  month day   BMU   household_group Total_Biomass_kg_per…¹
     ##   <chr>           <chr> <fct> <chr> <chr> <chr>                            <dbl>
     ## 1 2022-04-29 23:… 2022  Apr   29    KANA… Control                         1.25  
@@ -458,9 +477,9 @@ head(group_1_2)
     ## 3 2022-04-03 11:… 2022  Apr   03    TAKA… Social marketi…                 0.939 
     ## 4 2022-05-03 12:… 2022  May   03    TAKA… Social marketi…                 1.23  
     ## 5 2022-05-03 09:… 2022  May   03    TAKA… Social marketi…                 1.57  
-    ## 6 2022-04-03 12:… 2022  Apr   03    KANA… Control                         2.24  
+    ## 6 2022-05-03 09:… 2022  May   03    TAKA… Social marketi…                 1.57  
     ## # ℹ abbreviated name: ¹​Total_Biomass_kg_per_fisherman
-    ## # ℹ 20 more variables: Avg_Trophic_Level <dbl>, richness <int>,
+    ## # ℹ 21 more variables: Avg_Trophic_Level <dbl>, richness <int>,
     ## #   total_catch_per_fisherman <dbl>, Total_value_KES_per_fisherman <dbl>,
     ## #   Mean_length_cm <dbl>, Calcium_mg_per_fisherman <dbl>,
     ## #   Iron_mg_per_fisherman <dbl>, Omega3_g_per_fisherman <dbl>,
@@ -489,7 +508,7 @@ group3 <- group3 %>%
                 richness, total_catch_per_fisherman, Total_Biomass_kg_per_fisherman, Total_value_KES_per_fisherman,
                 Calcium_mg_per_fisherman, Iron_mg_per_fisherman, Omega3_g_per_fisherman, Protein_g_per_fisherman,
                 VitaminA_ug_per_fisherman, Selenium_ug_per_fisherman, Zinc_mg_per_fisherman, mean.trophic, median_length,
-                mean_lengthdist) %>%
+                mean_lengthdist,per_maturity) %>%
   mutate(household_group = case_when(
     trap_type == "Control" ~ "Social Marketing + Traps: Control",
     trap_type == "Experimental" ~ "Social Marketing + Traps: Experimental"
@@ -524,9 +543,10 @@ summary <- full_join(group_1_2, group3) %>% filter(Calcium_mg_per_fisherman > 0)
     ## total_catch_per_fisherman, Total_value_KES_per_fisherman, Mean_length_cm,
     ## Calcium_mg_per_fisherman, Iron_mg_per_fisherman, Omega3_g_per_fisherman,
     ## Protein_g_per_fisherman, VitaminA_ug_per_fisherman, Selenium_ug_per_fisherman,
-    ## mean_lengthdist, Zinc_mg_per_fisherman, No_fishermen, TakeHome_kg,
-    ## Diet_percent_Herbivorous_Detritivorous, Diet_percent_Herbivorous_Macroalgal,
-    ## Diet_percent_Omnivorous, Diet_percent_Planktivorous, Diet_percent_Carnivorous)`
+    ## mean_lengthdist, per_maturity, Zinc_mg_per_fisherman, No_fishermen,
+    ## TakeHome_kg, Diet_percent_Herbivorous_Detritivorous,
+    ## Diet_percent_Herbivorous_Macroalgal, Diet_percent_Omnivorous,
+    ## Diet_percent_Planktivorous, Diet_percent_Carnivorous)`
 
 ``` r
 ## 232 rows (234 before filter fxn) 
@@ -548,10 +568,11 @@ summary <- summary %>%
   filter(., Selenium_ug_per_fisherman < 7500) %>% ## Selenium
   filter(., mean_lengthdist > -20) %>% ## Lmat distance
   filter(., VitaminA_ug_per_fisherman < 10000) %>% ## VitaminA
-  mutate(TakeHome_kg = replace(TakeHome_kg, TakeHome_kg>4, NA))
+  mutate(TakeHome_kg = replace(TakeHome_kg, TakeHome_kg>4, NA)) %>%
+  mutate(per_maturity = 100*per_maturity)
   
 summary2 <- summary %>%
-  tidyr::gather("measurement", "value", 7:26) %>%
+  tidyr::gather("measurement", "value", 7:27) %>%
   mutate(measurement = case_when(
     measurement == "Avg_Trophic_Level" ~ "Trophic Level",
     measurement == "Calcium_mg_per_fisherman" ~ "Calcium (mg)",
@@ -572,7 +593,8 @@ summary2 <- summary %>%
     measurement == "Total_value_KES_per_fisherman" ~ "Value (KES)",
     measurement == "VitaminA_ug_per_fisherman" ~ "VitaminA (ug)",
     measurement == "Zinc_mg_per_fisherman" ~ "Zinc (ug)",
-    measurement == "mean_lengthdist" ~ "Distance from Lmat (cm)"
+    measurement == "mean_lengthdist" ~ "Distance from Lmat (cm)",
+    measurement == "per_maturity" ~ "Percent of catch = mature"
   )) %>%
   mutate(household_group_collapsed = case_when(
     household_group_collapsed == "Control" ~ "Control",
@@ -653,7 +675,7 @@ for (i in cols){
         axis.title.y = element_text(margin = margin(t = 0, r = 10, b = 0, l = 0), size=12, face="bold"),
         axis.text.x = element_text(color="black")) +
     # Add 20% space on the y-axis above the box plots
-    scale_y_continuous(expand = expansion(mult = c(0, 0.2))) +
+    scale_y_continuous(expand = expansion(mult = c(0.05, 0.2))) +
     ylab(i) + xlab("") +
     labs(color = "Household Group")# +
     # geom_errorbar(data=summary_subset, aes(x=household_group_collapsed, y=value, ymin=value-se, ymax=value+se),
@@ -665,9 +687,9 @@ for (i in cols){
 }
 ```
 
-    ## Warning: Removed 176 rows containing non-finite values (`stat_boxplot()`).
+    ## Warning: Removed 250 rows containing non-finite values (`stat_boxplot()`).
 
-    ## Warning: Removed 176 rows containing missing values (`geom_point()`).
+    ## Warning: Removed 250 rows containing missing values (`geom_point()`).
 
 Length frequency plot
 
@@ -823,6 +845,10 @@ for (i in cols){
   write_xlsx(results, paste0("household groups/statistics/", i, "_output.xlsx"))
 }
 ```
+
+    ## Warning in printHypothesis(L, rhs, names(b)): one or more coefficients in the hypothesis include
+    ##      arithmetic operators in their names;
+    ##   the printed representation of the hypothesis will be omitted
 
     ## Warning in printHypothesis(L, rhs, names(b)): one or more coefficients in the hypothesis include
     ##      arithmetic operators in their names;
