@@ -115,6 +115,7 @@ range(data$`No. of fishers in crew`) ## 1 - 6 fishermen involved with 1 represen
 range(data$number_of_fish) ## 1 - 19 fish caught per species caught 
 
 unique(data$length_corrected)
+## "26-30" "16-20" "31-35" "11-15" "21-25" "36-40" "41-45" "46-50" "51-60"
 #unique(data$scientific_name)
 #unique(unmodified_metadata$scientific_name)
 ```
@@ -1166,8 +1167,8 @@ pertrap_final_df <- data3 %>% left_join(., data2_maturity_grouped, by = c("trap_
                                             CPUE, yield_kg_trap, value_KES_trap, richness,
                                             calculated_biomass_pertrap, KSHpertrap, pertrap_Calcium, 
                                             pertrap_Iron, pertrap_Omega3, pertrap_Protein, pertrap_VitaminA, 
-                                            pertrap_Selenium, pertrap_Zinc, mean.trophic, mean_lengthdist,
-                per_maturity) %>% distinct()
+                                            pertrap_Selenium, pertrap_Zinc, mean.trophic, mean_lengthdist) %>% distinct()
+## took out per_maturity for now
 
 perspp_final_df <- data3 %>% dplyr::select(survey_id, BMU, trap_type, Kiswahili_name, scientific_name,
                                            number_of_fish, destination, length_corrected, median_length,

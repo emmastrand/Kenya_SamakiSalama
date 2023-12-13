@@ -1189,7 +1189,7 @@ df2 <- inner_join(fishing_operation2, catch_composition2,
 
 ```{r}
 head(df2)
-nrow(df2) ## 4539 rows 
+nrow(df2) ## 4539 rows ##20231212 4508 rows
 
 df2 %>% subset(trap_type == "MODIFIED") %>% select(survey_id) %>% distinct()
 ## 591 surveys from unmodified 
@@ -1256,7 +1256,7 @@ unique(alt_df$trap_type)
 
 unique(alt_df$BMU)
 
-alt_df %>% write.csv("alternate fishing/alternate_fishing.csv") 
+alt_df %>% write.csv("household groups/alternate_fishing.csv") 
 
 # timeframe <- alt_df %>% separate(date_collected_dd_mm_yyyy, c("year", "month", "day"), remove = FALSE)
 # timeframe %>% subset(BMU == "TAKAUNGU") %>% #select(year, month) %>% distinct() 

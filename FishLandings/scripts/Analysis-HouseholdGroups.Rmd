@@ -422,7 +422,7 @@ group3 <- group3 %>%
                 richness, total_catch_per_fisherman, Total_Biomass_kg_per_fisherman, Total_value_KES_per_fisherman,
                 Calcium_mg_per_fisherman, Iron_mg_per_fisherman, Omega3_g_per_fisherman, Protein_g_per_fisherman,
                 VitaminA_ug_per_fisherman, Selenium_ug_per_fisherman, Zinc_mg_per_fisherman, mean.trophic, median_length,
-                mean_lengthdist,per_maturity) %>%
+                mean_lengthdist) %>%  
   mutate(household_group = case_when(
     trap_type == "Control" ~ "Social Marketing + Traps: Control",
     trap_type == "Experimental" ~ "Social Marketing + Traps: Experimental"
@@ -501,7 +501,7 @@ summary2 <- summary %>%
     household_group_collapsed == "Control" ~ "Control",
     household_group_collapsed == "Social marketing" ~ "SM",
     household_group_collapsed == "Social Marketing + Traps" ~ "SM + Traps"
-  )) 
+  )) %>% distinct()
   
 
 summary_stats <- summarySE(summary2, measurevar = c("value"), 
@@ -509,6 +509,14 @@ summary_stats <- summarySE(summary2, measurevar = c("value"),
 
 summary_stats %>% write_xlsx("household groups/stats_means.xlsx")
 ```
+
+```{r}
+summary_stats %>%
+  ggplot() + 
+  geom_point()
+```
+
+
 
 
 Individual point range plots 
@@ -555,10 +563,11 @@ for (i in cols){
   
   summary2 %>% subset(measurement==i) %>% ### CHANGE VARIABLE HERE
   ggplot(., aes(x=household_group_collapsed, y=value, color=household_group_collapsed)) + 
-    geom_boxplot(outlier.shape = NA) +
+    geom_violin(outlier.shape = NA, width=0.8) +
   #geom_jitter(size=0.6, alpha=0.1, width=0.1, height=0.05) +  ## need to keep the height here for points to be in correct place
     geom_jitter(size=1.5, alpha=0.3, width=0.15, height=0.003) +  ## need to keep the height here for points to be in correct place
-  theme_bw() +
+  geom_boxplot(outlier.shape = NA, width=0.2, color="grey50", alpha=0.3) +
+    theme_bw() +
   scale_color_manual(values = c("#11BF66", "#E78818", "#48B5B7")) +
   scale_fill_manual(values = c("#11BF66", "#E78818", "#48B5B7")) +
   theme(#strip.background = element_blank(),
@@ -579,7 +588,8 @@ for (i in cols){
     # geom_point(data=summary_subset, aes(x=household_group_collapsed, y=value), size=1.5, position=position_dodge(0.3))
   
   #ggsave(file = paste0("household groups/figures/", i, " jitter.png"), width = 3, height = 4, units = c("in"))
-    ggsave(file = paste0("household groups/figures/", i, " boxplot.png"), width = 3, height = 4, units = c("in"))
+    #ggsave(file = paste0("household groups/figures/", i, " boxplot.png"), width = 3, height = 4, units = c("in"))
+    ggsave(file = paste0("household groups/figures/", i, " violin-box.png"), width = 3, height = 4, units = c("in"))
 }
 ```
 
