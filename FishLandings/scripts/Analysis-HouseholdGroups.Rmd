@@ -510,14 +510,6 @@ summary_stats <- summarySE(summary2, measurevar = c("value"),
 summary_stats %>% write_xlsx("household groups/stats_means.xlsx")
 ```
 
-```{r}
-summary_stats %>%
-  ggplot() + 
-  geom_point()
-```
-
-
-
 
 Individual point range plots 
 
