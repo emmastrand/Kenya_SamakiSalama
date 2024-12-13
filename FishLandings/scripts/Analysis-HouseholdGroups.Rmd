@@ -26,7 +26,6 @@ QC: https://github.com/emmastrand/Kenya_SamakiSalama/blob/main/FishLandings/scri
 ## <a name="data"></a> **Reading in datafiles**
 
 ```{r, message=FALSE, warning=FALSE}
-library(plyr)
 library(dplyr)
 library(tidyverse)
 library(purrr)
@@ -41,7 +40,7 @@ library(stats)
 library(lme4)
 library(car)
 library(forcats)
-library(ggstatsplot)
+#library(ggstatsplot)
 library(ggridges)
 library(ggbreak)
 library(emmeans)
